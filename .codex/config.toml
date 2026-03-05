@@ -6,25 +6,21 @@
 # Docs: https://github.com/openai/codex
 
 # Model selection
-model = "o4-mini"
+model = "gpt-5.3-codex"
 model_provider = "openai"
 
 # Permissions
 [permissions]
 # "untrusted" = no writes, "on-request" = ask per action, "never" = full auto
 approval_policy = "on-request"
-# "off", "workspace-read", "workspace-write", "danger-full-access"
+# "read-only", "workspace-write", "danger-full-access"
 sandbox_mode = "workspace-write"
 
-# Notifications (macOS)
-[notify]
-command = "terminal-notifier -title 'Codex ECC' -message 'Task completed!' -sound default"
-on_complete = true
+# Notifications (macOS) — notify is an array of shell command strings
+notify = ["terminal-notifier -title 'Codex ECC' -message 'Task completed!' -sound default"]
 
-# History - persistent instructions applied to every session
-[history]
-# These are prepended to every conversation
-persistent_instructions = """
+# Persistent instructions applied to every session
+instructions = """
 Follow ECC principles:
 1. Test-Driven Development (TDD) - write tests first, 80%+ coverage required
 2. Immutability - always create new objects, never mutate
@@ -40,18 +36,22 @@ Follow ECC principles:
 [mcp_servers.github]
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-github"]
+startup_timeout_sec = 60
 
 [mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp@latest"]
+startup_timeout_sec = 60
 
 [mcp_servers.memory]
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-memory"]
+startup_timeout_sec = 60
 
 [mcp_servers.sequential-thinking]
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+startup_timeout_sec = 60
 
 # Additional MCP servers (uncomment as needed):
 # [mcp_servers.supabase]
@@ -67,14 +67,25 @@ args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
 # args = ["-y", "@anthropic/railway-mcp"]
 
 # Features
-[features]
-web_search_request = true
+web_search = "live"
 
 # Profiles — switch with CODEX_PROFILE=<name>
 [profiles.strict]
 approval_policy = "on-request"
-sandbox_mode = "workspace-read"
+sandbox_mode = "read-only"
 
 [profiles.yolo]
 approval_policy = "never"
 sandbox_mode = "workspace-write"
+
+[profiles.offline]
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "disabled"
+mcp_servers.github.enabled = false
+mcp_servers.context7.enabled = false
+mcp_servers.memory.enabled = false
+mcp_servers.sequential-thinking.enabled = false
+
+# Fallback for non-profile contexts:
+# codex -c mcp_servers.github.enabled=false -c mcp_servers.context7.enabled=false -c mcp_servers.memory.enabled=false -c mcp_servers.sequential-thinking.enabled=false
