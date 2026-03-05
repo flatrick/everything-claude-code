@@ -707,18 +707,31 @@ function runTests() {
   else failed++;
 
   if (test('defaults to npm when no config found', () => {
-    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-default-'));
+    const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-default-'));
+    const projDir = path.join(tmpHome, 'proj');
+    fs.mkdirSync(projDir, { recursive: true });
     const originalEnv = process.env.CLAUDE_PACKAGE_MANAGER;
+    const origHome = process.env.HOME;
+    const origUserProfile = process.env.USERPROFILE;
     try {
       delete process.env.CLAUDE_PACKAGE_MANAGER;
-      const result = pm.getPackageManager({ projectDir: testDir });
+      process.env.HOME = tmpHome;
+      process.env.USERPROFILE = tmpHome;
+      delete require.cache[require.resolve('../../scripts/lib/detect-env')];
+      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+      const freshPM = require('../../scripts/lib/package-manager');
+      const result = freshPM.getPackageManager({ projectDir: projDir });
       assert.strictEqual(result.name, 'npm', 'Should default to npm');
       assert.strictEqual(result.source, 'default');
     } finally {
-      if (originalEnv !== undefined) {
-        process.env.CLAUDE_PACKAGE_MANAGER = originalEnv;
-      }
-      fs.rmSync(testDir, { recursive: true, force: true });
+      if (originalEnv !== undefined) process.env.CLAUDE_PACKAGE_MANAGER = originalEnv;
+      process.env.HOME = origHome;
+      process.env.USERPROFILE = origUserProfile;
+      delete require.cache[require.resolve('../../scripts/lib/detect-env')];
+      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+      fs.rmSync(tmpHome, { recursive: true, force: true });
     }
   })) passed++;
   else failed++;
@@ -1277,21 +1290,20 @@ function runTests() {
     const origPM = process.env.CLAUDE_PACKAGE_MANAGER;
 
     try {
-      // Create corrupted global config file
-      const claudeDir = path.join(tmpDir, '.claude');
-      fs.mkdirSync(claudeDir, { recursive: true });
-      fs.writeFileSync(path.join(claudeDir, 'package-manager.json'), '{ invalid json !!!', 'utf8');
-
       process.env.HOME = tmpDir;
       process.env.USERPROFILE = tmpDir;
       delete process.env.CLAUDE_PACKAGE_MANAGER;
 
-      // Re-require to pick up new HOME
-      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+      delete require.cache[require.resolve('../../scripts/lib/detect-env')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
+      const utils = require('../../scripts/lib/utils');
+      const configDir = utils.getConfigDir();
+      fs.mkdirSync(configDir, { recursive: true });
+      fs.writeFileSync(path.join(configDir, 'package-manager.json'), '{ invalid json !!!', 'utf8');
+
+      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
       const freshPM = require('../../scripts/lib/package-manager');
 
-      // Empty project dir: no lock file, no package.json, no project config
       const result = freshPM.getPackageManager({ projectDir: projDir });
       assert.strictEqual(result.name, 'npm', 'Should fall through to npm default');
       assert.strictEqual(result.source, 'default', 'Source should be default');
@@ -1300,8 +1312,9 @@ function runTests() {
       process.env.USERPROFILE = origUserProfile;
       if (origPM !== undefined) process.env.CLAUDE_PACKAGE_MANAGER = origPM;
 
-      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+      delete require.cache[require.resolve('../../scripts/lib/detect-env')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
+      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
       cleanupTestDir(tmpDir);
     }
   })) passed++;
@@ -1320,18 +1333,24 @@ function runTests() {
     const origPM = process.env.CLAUDE_PACKAGE_MANAGER;
 
     try {
-      // Create valid global config with pnpm preference
-      const claudeDir = path.join(tmpDir, '.claude');
-      fs.mkdirSync(claudeDir, { recursive: true });
-      fs.writeFileSync(path.join(claudeDir, 'package-manager.json'), JSON.stringify({ packageManager: 'pnpm', setAt: '2026-01-01T00:00:00Z' }), 'utf8');
-
       process.env.HOME = tmpDir;
       process.env.USERPROFILE = tmpDir;
       delete process.env.CLAUDE_PACKAGE_MANAGER;
 
-      // Re-require to pick up new HOME
+      // Re-require to pick up new HOME / configDir
       delete require.cache[require.resolve('../../scripts/lib/package-manager')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
+      const freshUtils = require('../../scripts/lib/utils');
+      const configDir = freshUtils.getConfigDir();
+
+      // Create valid global config with pnpm preference at detected configDir
+      fs.mkdirSync(configDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(configDir, 'package-manager.json'),
+        JSON.stringify({ packageManager: 'pnpm', setAt: '2026-01-01T00:00:00Z' }),
+        'utf8'
+      );
+
       const freshPM = require('../../scripts/lib/package-manager');
 
       // Empty project dir: no lock file, no package.json, no project config

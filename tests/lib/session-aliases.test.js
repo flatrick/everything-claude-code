@@ -67,6 +67,8 @@ function runTests() {
 
   if (test('returns default structure for corrupted JSON', () => {
     const aliasesPath = aliases.getAliasesPath();
+    // Ensure parent directory exists regardless of config root (.cursor, .claude, .codex, or repo-local)
+    fs.mkdirSync(path.dirname(aliasesPath), { recursive: true });
     fs.writeFileSync(aliasesPath, 'NOT VALID JSON!!!');
     const data = aliases.loadAliases();
     assert.ok(data.aliases);
@@ -76,6 +78,8 @@ function runTests() {
 
   if (test('returns default structure for invalid structure', () => {
     const aliasesPath = aliases.getAliasesPath();
+    // Ensure parent directory exists regardless of config root
+    fs.mkdirSync(path.dirname(aliasesPath), { recursive: true });
     fs.writeFileSync(aliasesPath, JSON.stringify({ noAliasesKey: true }));
     const data = aliases.loadAliases();
     assert.ok(data.aliases);
@@ -773,8 +777,8 @@ function runTests() {
     resetAliases();
     aliases.setAlias('backup-test', '/path/backup');
 
-    // After successful save, .bak file should NOT exist
-    const aliasesPath = path.join(tmpHome, '.claude', 'session-aliases.json');
+    // After successful save, .bak file should NOT exist at the active aliases path
+    const aliasesPath = aliases.getAliasesPath();
     const backupPath = aliasesPath + '.bak';
     assert.ok(!fs.existsSync(backupPath), 'Backup should be removed after successful save');
     assert.ok(fs.existsSync(aliasesPath), 'Main aliases file should exist');
@@ -785,7 +789,7 @@ function runTests() {
     aliases.setAlias('before-fail', '/path/safe');
 
     // Verify the file exists
-    const aliasesPath = path.join(tmpHome, '.claude', 'session-aliases.json');
+    const aliasesPath = aliases.getAliasesPath();
     assert.ok(fs.existsSync(aliasesPath), 'Aliases file should exist');
 
     // Attempt to save circular data — will fail

@@ -318,8 +318,8 @@ if ($Target -eq 'cursor') {
         }
     }
 
-    # --- Skills ---
-    $skillsSrc = Join-Path $CURSOR_SRC "skills"
+    # --- Skills (from top-level skills/) ---
+    $skillsSrc = Join-Path $SCRIPT_DIR "skills"
     if (Test-Path $skillsSrc) {
         $skillsDest = Join-Path $DEST_DIR "skills"
         Write-Host "Installing skills -> $skillsDest/"

@@ -7,11 +7,14 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { execSync, spawnSync } = require('child_process');
+const { detectEnv } = require('./detect-env');
 
-// Platform detection
-const isWindows = process.platform === 'win32';
-const isMacOS = process.platform === 'darwin';
-const isLinux = process.platform === 'linux';
+// Platform detection (delegated to detect-env for cross-environment consistency)
+const isWindows = detectEnv.isWindows;
+const isMacOS = detectEnv.isMacOS;
+const isLinux = detectEnv.isLinux;
+
+let hasLoggedClaudeDirDeprecation = false;
 
 /**
  * Get the user's home directory (cross-platform)
@@ -21,24 +24,54 @@ function getHomeDir() {
 }
 
 /**
+ * Get the config directory as resolved by detect-env.
+ * Prefer this over getClaudeDir for new code.
+ */
+function getConfigDir() {
+  return detectEnv.getConfigDir();
+}
+
+/**
+ * Get the data directory (homunculus root) as resolved by detect-env.
+ */
+function getDataDir() {
+  return detectEnv.getDataDir();
+}
+
+/**
  * Get the Claude config directory
+ *
+ * Deprecated: use getConfigDir()/getDataDir() instead. This now delegates
+ * to detect-env so callers automatically respect Cursor/Claude/unknown
+ * tool detection.
  */
 function getClaudeDir() {
-  return path.join(getHomeDir(), '.claude');
+  if (!hasLoggedClaudeDirDeprecation) {
+    hasLoggedClaudeDirDeprecation = true;
+    try {
+      // Best-effort warning; ignore if stderr is not available
+      console.error(
+        '[utils] getClaudeDir() is deprecated; use getConfigDir()/getDataDir() from detect-env instead.'
+      );
+    } catch {
+      // ignore logging failures
+    }
+  }
+  return getConfigDir();
 }
 
 /**
  * Get the sessions directory
  */
 function getSessionsDir() {
-  return path.join(getClaudeDir(), 'sessions');
+  return path.join(getConfigDir(), 'sessions');
 }
 
 /**
  * Get the learned skills directory
  */
 function getLearnedSkillsDir() {
-  return path.join(getClaudeDir(), 'skills', 'learned');
+  return path.join(getConfigDir(), 'skills', 'learned');
 }
 
 /**
@@ -491,6 +524,8 @@ module.exports = {
 
   // Directories
   getHomeDir,
+  getConfigDir,
+  getDataDir,
   getClaudeDir,
   getSessionsDir,
   getLearnedSkillsDir,

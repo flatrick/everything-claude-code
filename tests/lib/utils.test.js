@@ -57,11 +57,12 @@ function runTests() {
     assert.ok(fs.existsSync(home), 'Home dir should exist');
   })) passed++; else failed++;
 
-  if (test('getClaudeDir returns path under home', () => {
+  if (test('getClaudeDir delegates to config dir under home', () => {
     const claudeDir = utils.getClaudeDir();
     const homeDir = utils.getHomeDir();
-    assert.ok(claudeDir.startsWith(homeDir), 'Claude dir should be under home');
-    assert.ok(claudeDir.includes('.claude'), 'Should contain .claude');
+    assert.strictEqual(typeof claudeDir, 'string');
+    assert.ok(claudeDir.length > 0, 'Config dir should not be empty');
+    assert.ok(claudeDir.startsWith(homeDir), 'Config dir should be under home');
   })) passed++; else failed++;
 
   if (test('getSessionsDir returns path under Claude dir', () => {
@@ -498,11 +499,13 @@ function runTests() {
   // getLearnedSkillsDir() test
   console.log('\ngetLearnedSkillsDir():');
 
-  if (test('getLearnedSkillsDir returns path under Claude dir', () => {
+  if (test('getLearnedSkillsDir returns path under config dir and includes skills', () => {
     const dir = utils.getLearnedSkillsDir();
-    assert.ok(dir.includes('.claude'));
-    assert.ok(dir.includes('skills'));
-    assert.ok(dir.includes('learned'));
+    const configDir = utils.getConfigDir();
+    assert.strictEqual(typeof dir, 'string');
+    assert.ok(dir.length > 0, 'Learned skills dir should not be empty');
+    assert.ok(dir.startsWith(configDir), 'Learned skills dir should be under config dir');
+    assert.ok(dir.includes('skills'), 'Learned skills dir should include skills segment');
   })) passed++; else failed++;
 
   // replaceInFile behavior tests

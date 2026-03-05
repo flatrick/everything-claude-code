@@ -11,6 +11,7 @@ const fs = require('fs');
 
 const testsDir = __dirname;
 const testFiles = [
+  'lib/detect-env.test.js',
   'lib/utils.test.js',
   'lib/package-manager.test.js',
   'lib/session-manager.test.js',

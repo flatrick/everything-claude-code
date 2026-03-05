@@ -9,7 +9,14 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const sessionManager = require('../../scripts/lib/session-manager');
+let sessionManager = require('../../scripts/lib/session-manager');
+const utils = require('../../scripts/lib/utils');
+
+function clearSessionManagerCache() {
+  delete require.cache[require.resolve('../../scripts/lib/detect-env')];
+  delete require.cache[require.resolve('../../scripts/lib/utils')];
+  delete require.cache[require.resolve('../../scripts/lib/session-manager')];
+}
 
 // Test helper
 function test(name, fn) {
@@ -334,10 +341,13 @@ src/main.ts
   // Override HOME to a temp dir for isolated getAllSessions/getSessionById tests
   // On Windows, os.homedir() uses USERPROFILE, not HOME — set both for cross-platform
   const tmpHome = path.join(os.tmpdir(), `ecc-session-mgr-test-${Date.now()}`);
-  const tmpSessionsDir = path.join(tmpHome, '.claude', 'sessions');
-  fs.mkdirSync(tmpSessionsDir, { recursive: true });
   const origHome = process.env.HOME;
   const origUserProfile = process.env.USERPROFILE;
+  process.env.HOME = tmpHome;
+  process.env.USERPROFILE = tmpHome;
+  // Use the same sessions dir the implementation uses (tool-agnostic: .cursor or .claude)
+  const tmpSessionsDir = utils.getSessionsDir();
+  fs.mkdirSync(tmpSessionsDir, { recursive: true });
 
   // Create test session files with controlled modification times
   const testSessions = [
@@ -354,9 +364,6 @@ src/main.ts
     const mtime = new Date(Date.now() - (testSessions.length - i) * 60000);
     fs.utimesSync(filePath, mtime, mtime);
   }
-
-  process.env.HOME = tmpHome;
-  process.env.USERPROFILE = tmpHome;
 
   if (test('getAllSessions returns all sessions', () => {
     const result = sessionManager.getAllSessions({ limit: 100 });
@@ -973,8 +980,9 @@ src/main.ts
     const result = sessionManager.getSessionPath(filename);
     assert.ok(path.isAbsolute(result), 'Should return an absolute path');
     assert.ok(result.endsWith(filename), `Path should end with filename, got: ${result}`);
-    // Since HOME is overridden, sessions dir should be under tmpHome
-    assert.ok(result.includes('.claude'), 'Path should include .claude directory');
+    // Sessions dir is under tool config (.cursor, .claude, or .codex) — be tool-agnostic
+    const configDir = utils.getConfigDir();
+    assert.ok(result.includes(configDir), `Path should include config dir, got: ${result}`);
     assert.ok(result.includes('sessions'), 'Path should include sessions directory');
   })) passed++; else failed++;
 
@@ -1070,19 +1078,21 @@ src/main.ts
 
   // Use HOME override approach (consistent with existing getAllSessions tests)
   const r33Home = path.join(os.tmpdir(), `ecc-r33-birthtime-${Date.now()}`);
-  const r33SessionsDir = path.join(r33Home, '.claude', 'sessions');
-  fs.mkdirSync(r33SessionsDir, { recursive: true });
   const r33OrigHome = process.env.HOME;
   const r33OrigProfile = process.env.USERPROFILE;
   process.env.HOME = r33Home;
   process.env.USERPROFILE = r33Home;
-
+  clearSessionManagerCache();
+  const r33Utils = require('../../scripts/lib/utils');
+  const r33SessionsDir = r33Utils.getSessionsDir();
+  fs.mkdirSync(r33SessionsDir, { recursive: true });
   const r33Filename = '2026-02-13-r33birth-session.tmp';
   const r33FilePath = path.join(r33SessionsDir, r33Filename);
   fs.writeFileSync(r33FilePath, '{"type":"test"}');
+  const r33SM = require('../../scripts/lib/session-manager');
 
   if (test('getAllSessions returns createdTime from birthtime when available', () => {
-    const result = sessionManager.getAllSessions({ limit: 100 });
+    const result = r33SM.getAllSessions({ limit: 100 });
     assert.ok(result.sessions.length > 0, 'Should find the test session');
     const session = result.sessions[0];
     assert.ok(session.createdTime instanceof Date, 'createdTime should be a Date');
@@ -1098,7 +1108,7 @@ src/main.ts
   })) passed++; else failed++;
 
   if (test('getSessionById returns createdTime field', () => {
-    const session = sessionManager.getSessionById('r33birth');
+    const session = r33SM.getSessionById('r33birth');
     assert.ok(session, 'Should find the session');
     assert.ok(session.createdTime instanceof Date, 'createdTime should be a Date');
     assert.ok(session.createdTime.getTime() > 0, 'createdTime should be non-zero');
@@ -1124,6 +1134,8 @@ src/main.ts
   } else {
     delete process.env.USERPROFILE;
   }
+  clearSessionManagerCache();
+  sessionManager = require('../../scripts/lib/session-manager');
   try { fs.rmSync(r33Home, { recursive: true, force: true }); } catch (_e) { /* ignore cleanup errors */ }
 
   // ── Round 46: path heuristic and checklist edge cases ──
@@ -1234,19 +1246,18 @@ src/main.ts
 
   if (test('getAllSessions hasContent is true for non-empty and false for empty files', () => {
     const isoHome = path.join(os.tmpdir(), `ecc-hascontent-${Date.now()}`);
-    const isoSessions = path.join(isoHome, '.claude', 'sessions');
-    fs.mkdirSync(isoSessions, { recursive: true });
     const savedHome = process.env.HOME;
     const savedProfile = process.env.USERPROFILE;
     try {
-      // Create one non-empty session and one empty session
+      process.env.HOME = isoHome;
+      process.env.USERPROFILE = isoHome;
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const isoSessions = freshUtils.getSessionsDir();
+      fs.mkdirSync(isoSessions, { recursive: true });
       fs.writeFileSync(path.join(isoSessions, '2026-04-01-nonempty-session.tmp'), '# Has content');
       fs.writeFileSync(path.join(isoSessions, '2026-04-02-emptyfile-session.tmp'), '');
 
-      process.env.HOME = isoHome;
-      process.env.USERPROFILE = isoHome;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
       const freshSM = require('../../scripts/lib/session-manager');
 
       const result = freshSM.getAllSessions({ limit: 100 });
@@ -1262,8 +1273,8 @@ src/main.ts
     } finally {
       process.env.HOME = savedHome;
       process.env.USERPROFILE = savedProfile;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(isoHome, { recursive: true, force: true });
     }
   })) passed++; else failed++;
@@ -1315,24 +1326,22 @@ src/main.ts
     // getAllSessions at line 241-246: statSync throws for broken symlinks,
     // the catch causes `continue`, skipping that entry entirely.
     const isoHome = path.join(os.tmpdir(), `ecc-r83-toctou-${Date.now()}`);
-    const sessionsDir = path.join(isoHome, '.claude', 'sessions');
-    fs.mkdirSync(sessionsDir, { recursive: true });
-
-    // Create one real session file
-    const realFile = '2026-02-10-abcd1234-session.tmp';
-    fs.writeFileSync(path.join(sessionsDir, realFile), '# Real session\n');
-
-    // Create a broken symlink that matches the session filename pattern
-    const brokenSymlink = '2026-02-10-deadbeef-session.tmp';
-    fs.symlinkSync('/nonexistent/path/that/does/not/exist', path.join(sessionsDir, brokenSymlink));
-
     const origHome = process.env.HOME;
     const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = isoHome;
     process.env.USERPROFILE = isoHome;
     try {
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const sessionsDir = freshUtils.getSessionsDir();
+      fs.mkdirSync(sessionsDir, { recursive: true });
+
+      const realFile = '2026-02-10-abcd1234-session.tmp';
+      fs.writeFileSync(path.join(sessionsDir, realFile), '# Real session\n');
+
+      const brokenSymlink = '2026-02-10-deadbeef-session.tmp';
+      fs.symlinkSync('/nonexistent/path/that/does/not/exist', path.join(sessionsDir, brokenSymlink));
+
       const freshManager = require('../../scripts/lib/session-manager');
       const result = freshManager.getAllSessions({ limit: 100 });
 
@@ -1343,8 +1352,8 @@ src/main.ts
     } finally {
       process.env.HOME = origHome;
       process.env.USERPROFILE = origUserProfile;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(isoHome, { recursive: true, force: true });
     }
   })) passed++; else failed++;
@@ -1356,20 +1365,19 @@ src/main.ts
     // getSessionById at line 307-310: statSync throws for broken symlinks,
     // the catch returns null (file deleted between readdir and stat).
     const isoHome = path.join(os.tmpdir(), `ecc-r84-getbyid-toctou-${Date.now()}`);
-    const sessionsDir = path.join(isoHome, '.claude', 'sessions');
-    fs.mkdirSync(sessionsDir, { recursive: true });
-
-    // Create a broken symlink that matches a session ID pattern
-    const brokenFile = '2026-02-11-deadbeef-session.tmp';
-    fs.symlinkSync('/nonexistent/target/that/does/not/exist', path.join(sessionsDir, brokenFile));
-
     const origHome = process.env.HOME;
     const origUserProfile = process.env.USERPROFILE;
     try {
       process.env.HOME = isoHome;
       process.env.USERPROFILE = isoHome;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const sessionsDir = freshUtils.getSessionsDir();
+      fs.mkdirSync(sessionsDir, { recursive: true });
+
+      const brokenFile = '2026-02-11-deadbeef-session.tmp';
+      fs.symlinkSync('/nonexistent/target/that/does/not/exist', path.join(sessionsDir, brokenFile));
+
       const freshSM = require('../../scripts/lib/session-manager');
 
       // Search by the short ID "deadbeef" — should match the broken symlink
@@ -1379,8 +1387,8 @@ src/main.ts
     } finally {
       process.env.HOME = origHome;
       process.env.USERPROFILE = origUserProfile;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(isoHome, { recursive: true, force: true });
     }
   })) passed++; else failed++;
@@ -1406,31 +1414,26 @@ src/main.ts
 
   if (test('getAllSessions skips subdirectories inside sessions dir', () => {
     // session-manager.js line 220: if (!entry.isFile() || ...) continue;
-    // Existing tests create non-.tmp FILES to test filtering (e.g., notes.txt).
-    // This test creates a DIRECTORY — entry.isFile() returns false, so it should be skipped.
     const isoHome = path.join(os.tmpdir(), `ecc-r89-subdir-skip-${Date.now()}`);
-    const sessionsDir = path.join(isoHome, '.claude', 'sessions');
-    fs.mkdirSync(sessionsDir, { recursive: true });
-
-    // Create a real session file
-    const realFile = '2026-02-11-abcd1234-session.tmp';
-    fs.writeFileSync(path.join(sessionsDir, realFile), '# Test session');
-
-    // Create a subdirectory inside sessions dir — should be skipped by !entry.isFile()
-    const subdir = path.join(sessionsDir, 'some-nested-dir');
-    fs.mkdirSync(subdir);
-
-    // Also create a subdirectory whose name ends in .tmp — still not a file
-    const tmpSubdir = path.join(sessionsDir, '2026-02-11-fakeid00-session.tmp');
-    fs.mkdirSync(tmpSubdir);
-
     const origHome = process.env.HOME;
     const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = isoHome;
     process.env.USERPROFILE = isoHome;
     try {
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const sessionsDir = freshUtils.getSessionsDir();
+      fs.mkdirSync(sessionsDir, { recursive: true });
+
+      const realFile = '2026-02-11-abcd1234-session.tmp';
+      fs.writeFileSync(path.join(sessionsDir, realFile), '# Test session');
+
+      const subdir = path.join(sessionsDir, 'some-nested-dir');
+      fs.mkdirSync(subdir);
+
+      const tmpSubdir = path.join(sessionsDir, '2026-02-11-fakeid00-session.tmp');
+      fs.mkdirSync(tmpSubdir);
+
       const freshManager = require('../../scripts/lib/session-manager');
       const result = freshManager.getAllSessions({ limit: 100 });
 
@@ -1442,8 +1445,8 @@ src/main.ts
     } finally {
       process.env.HOME = origHome;
       process.env.USERPROFILE = origUserProfile;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(isoHome, { recursive: true, force: true });
     }
   })) passed++; else failed++;
@@ -1490,12 +1493,13 @@ src/main.ts
 
   // Re-establish test environment for Rounds 95-98 (these tests need sessions to exist)
   const tmpHome2 = path.join(os.tmpdir(), `ecc-session-mgr-test-2-${Date.now()}`);
-  const tmpSessionsDir2 = path.join(tmpHome2, '.claude', 'sessions');
-  fs.mkdirSync(tmpSessionsDir2, { recursive: true });
   const origHome2 = process.env.HOME;
   const origUserProfile2 = process.env.USERPROFILE;
-
-  // Create test session files for these tests
+  process.env.HOME = tmpHome2;
+  process.env.USERPROFILE = tmpHome2;
+  clearSessionManagerCache();
+  const tmpSessionsDir2 = require('../../scripts/lib/utils').getSessionsDir();
+  fs.mkdirSync(tmpSessionsDir2, { recursive: true });
   const testSessions2 = [
     { name: '2026-01-15-aaaa1111-session.tmp', content: '# Test Session 1' },
     { name: '2026-02-01-bbbb2222-session.tmp', content: '# Test Session 2' },
@@ -1505,9 +1509,7 @@ src/main.ts
     const filePath = path.join(tmpSessionsDir2, session.name);
     fs.writeFileSync(filePath, session.content);
   }
-
-  process.env.HOME = tmpHome2;
-  process.env.USERPROFILE = tmpHome2;
+  sessionManager = require('../../scripts/lib/session-manager');
 
   // ── Round 95: getAllSessions with both negative offset AND negative limit ──
   console.log('\nRound 95: getAllSessions (both negative offset and negative limit):');
@@ -1778,23 +1780,22 @@ file.ts
   console.log('\nRound 106: getAllSessions (array/object limit coercion — Number([5])→5, Number({})→NaN→50):');
   if (test('getAllSessions coerces array/object limit via Number() with NaN fallback to 50', () => {
     const isoHome = path.join(os.tmpdir(), `ecc-r106-limit-coerce-${Date.now()}`);
-    const isoSessionsDir = path.join(isoHome, '.claude', 'sessions');
-    fs.mkdirSync(isoSessionsDir, { recursive: true });
-    // Create 3 test sessions
-    for (let i = 0; i < 3; i++) {
-      const name = `2026-03-0${i + 1}-aaaa${i}${i}${i}${i}-session.tmp`;
-      const filePath = path.join(isoSessionsDir, name);
-      fs.writeFileSync(filePath, `# Session ${i}`);
-      const mtime = new Date(Date.now() - (3 - i) * 60000);
-      fs.utimesSync(filePath, mtime, mtime);
-    }
     const origHome = process.env.HOME;
     const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = isoHome;
     process.env.USERPROFILE = isoHome;
     try {
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const isoSessionsDir = freshUtils.getSessionsDir();
+      fs.mkdirSync(isoSessionsDir, { recursive: true });
+      for (let i = 0; i < 3; i++) {
+        const name = `2026-03-0${i + 1}-aaaa${i}${i}${i}${i}-session.tmp`;
+        const filePath = path.join(isoSessionsDir, name);
+        fs.writeFileSync(filePath, `# Session ${i}`);
+        const mtime = new Date(Date.now() - (3 - i) * 60000);
+        fs.utimesSync(filePath, mtime, mtime);
+      }
       const freshManager = require('../../scripts/lib/session-manager');
       // Object limit: Number({}) → NaN → fallback to 50
       const objResult = freshManager.getAllSessions({ limit: {} });
@@ -1814,8 +1815,8 @@ file.ts
     } finally {
       process.env.HOME = origHome;
       process.env.USERPROFILE = origUserProfile;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(isoHome, { recursive: true, force: true });
     }
   })) passed++; else failed++;
@@ -1824,22 +1825,20 @@ file.ts
   console.log('\nRound 109: getAllSessions (non-session .tmp files — parseSessionFilename returns null → skip):');
   if (test('getAllSessions ignores .tmp files with non-matching filenames', () => {
     const isoHome = path.join(os.tmpdir(), `ecc-r109-nonsession-${Date.now()}`);
-    const isoSessionsDir = path.join(isoHome, '.claude', 'sessions');
-    fs.mkdirSync(isoSessionsDir, { recursive: true });
-    // Create one valid session file
-    const validName = '2026-03-01-abcd1234-session.tmp';
-    fs.writeFileSync(path.join(isoSessionsDir, validName), '# Valid Session');
-    // Create non-session .tmp files that don't match the expected pattern
-    fs.writeFileSync(path.join(isoSessionsDir, 'notes.tmp'), 'personal notes');
-    fs.writeFileSync(path.join(isoSessionsDir, 'scratch.tmp'), 'scratch data');
-    fs.writeFileSync(path.join(isoSessionsDir, 'backup-2026.tmp'), 'backup');
     const origHome = process.env.HOME;
     const origUserProfile = process.env.USERPROFILE;
     process.env.HOME = isoHome;
     process.env.USERPROFILE = isoHome;
     try {
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const isoSessionsDir = freshUtils.getSessionsDir();
+      fs.mkdirSync(isoSessionsDir, { recursive: true });
+      const validName = '2026-03-01-abcd1234-session.tmp';
+      fs.writeFileSync(path.join(isoSessionsDir, validName), '# Valid Session');
+      fs.writeFileSync(path.join(isoSessionsDir, 'notes.tmp'), 'personal notes');
+      fs.writeFileSync(path.join(isoSessionsDir, 'scratch.tmp'), 'scratch data');
+      fs.writeFileSync(path.join(isoSessionsDir, 'backup-2026.tmp'), 'backup');
       const freshManager = require('../../scripts/lib/session-manager');
       const result = freshManager.getAllSessions({ limit: 100 });
       assert.strictEqual(result.total, 1,
@@ -1849,8 +1848,8 @@ file.ts
     } finally {
       process.env.HOME = origHome;
       process.env.USERPROFILE = origUserProfile;
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(isoHome, { recursive: true, force: true });
     }
   })) passed++; else failed++;
@@ -2367,22 +2366,19 @@ file.ts
     const origUserProfile = process.env.USERPROFILE;
     const origDir = process.env.CLAUDE_DIR;
     try {
-      // Set up isolated environment
-      const claudeDir = path.join(tmpDir, '.claude');
-      const sessionsDir = path.join(claudeDir, 'sessions');
-      fs.mkdirSync(sessionsDir, { recursive: true });
       process.env.HOME = tmpDir;
-      process.env.USERPROFILE = tmpDir; // Windows: os.homedir() uses USERPROFILE
+      process.env.USERPROFILE = tmpDir;
       delete process.env.CLAUDE_DIR;
 
-      // Clear require cache for fresh module with new HOME
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      const freshSM = require('../../scripts/lib/session-manager');
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const sessionsDir = freshUtils.getSessionsDir();
+      fs.mkdirSync(sessionsDir, { recursive: true });
 
-      // Create old-format session file (no short ID)
       const oldFile = path.join(sessionsDir, '2026-01-15-session.tmp');
       fs.writeFileSync(oldFile, '# Old Format Session\n\n**Date:** 2026-01-15\n');
+
+      const freshSM = require('../../scripts/lib/session-manager');
 
       // Search by date — triggers noIdMatch path
       const result = freshSM.getSessionById('2026-01-15');
@@ -2401,8 +2397,8 @@ file.ts
       if (origUserProfile !== undefined) process.env.USERPROFILE = origUserProfile;
       else delete process.env.USERPROFILE;
       if (origDir) process.env.CLAUDE_DIR = origDir;
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   })) passed++; else failed++;
@@ -2485,30 +2481,25 @@ file.ts
   console.log('\nRound 124: getAllSessions (invalid date format — strict !== comparison):');
   if (test('getAllSessions date filter uses strict equality so wrong format returns empty', () => {
     // session-manager.js line 228: `if (date && metadata.date !== date)` — strict inequality.
-    // metadata.date is always "YYYY-MM-DD" format. Passing a different format like
-    // "2026/01/15" or "Jan 15 2026" will never match, silently returning empty.
-    // No validation or normalization occurs on the date parameter.
     const origHome = process.env.HOME;
     const origUserProfile = process.env.USERPROFILE;
     const origDir = process.env.CLAUDE_DIR;
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'r124-date-format-'));
     const homeDir = path.join(tmpDir, 'home');
-    fs.mkdirSync(path.join(homeDir, '.claude', 'sessions'), { recursive: true });
 
     try {
       process.env.HOME = homeDir;
-      process.env.USERPROFILE = homeDir; // Windows: os.homedir() uses USERPROFILE
+      process.env.USERPROFILE = homeDir;
       delete process.env.CLAUDE_DIR;
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      const freshSM = require('../../scripts/lib/session-manager');
-
-      // Create a session file with valid date
-      const sessionsDir = path.join(homeDir, '.claude', 'sessions');
+      clearSessionManagerCache();
+      const freshUtils = require('../../scripts/lib/utils');
+      const sessionsDir = freshUtils.getSessionsDir();
+      fs.mkdirSync(sessionsDir, { recursive: true });
       fs.writeFileSync(
         path.join(sessionsDir, '2026-01-15-abcd1234-session.tmp'),
         '# Test Session'
       );
+      const freshSM = require('../../scripts/lib/session-manager');
 
       // Correct format — should find 1 session
       const correct = freshSM.getAllSessions({ date: '2026-01-15' });
@@ -2539,8 +2530,8 @@ file.ts
       if (origUserProfile !== undefined) process.env.USERPROFILE = origUserProfile;
       else delete process.env.USERPROFILE;
       if (origDir) process.env.CLAUDE_DIR = origDir;
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
+      clearSessionManagerCache();
+      sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   })) passed++; else failed++;

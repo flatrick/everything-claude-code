@@ -148,11 +148,11 @@ if [[ "$TARGET" == "cursor" ]]; then
         cp -r "$CURSOR_SRC/agents/." "$DEST_DIR/agents/"
     fi
 
-    # --- Skills ---
-    if [[ -d "$CURSOR_SRC/skills" ]]; then
+    # --- Skills (from top-level skills/) ---
+    if [[ -d "$SCRIPT_DIR/skills" ]]; then
         echo "Installing skills -> $DEST_DIR/skills/"
         mkdir -p "$DEST_DIR/skills"
-        cp -r "$CURSOR_SRC/skills/." "$DEST_DIR/skills/"
+        cp -r "$SCRIPT_DIR/skills/." "$DEST_DIR/skills/"
     fi
 
     # --- Commands ---

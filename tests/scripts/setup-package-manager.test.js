@@ -269,10 +269,13 @@ function runTests() {
       assert.strictEqual(result.code, 0, `Expected exit 0, got ${result.code}. stderr: ${result.stderr}`);
       assert.ok(result.stdout.includes('Global preference set to'), 'Should show success message');
       assert.ok(result.stdout.includes('npm'), 'Should mention npm');
-      // Verify config file was created
-      const configPath = path.join(tmpDir, '.claude', 'package-manager.json');
-      assert.ok(fs.existsSync(configPath), 'Config file should be created');
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      // Verify config file was created in one of the supported global config dirs
+      const candidates = ['.cursor', '.claude', '.codex'].map(dir =>
+        path.join(tmpDir, dir, 'package-manager.json')
+      );
+      const existingPath = candidates.find(p => fs.existsSync(p));
+      assert.ok(existingPath, 'Config file should be created');
+      const config = JSON.parse(fs.readFileSync(existingPath, 'utf8'));
       assert.strictEqual(config.packageManager, 'npm', 'Config should contain npm');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -288,10 +291,13 @@ function runTests() {
       const result = run(['npm'], { HOME: tmpDir, USERPROFILE: tmpDir });
       assert.strictEqual(result.code, 0, `Expected exit 0, got ${result.code}. stderr: ${result.stderr}`);
       assert.ok(result.stdout.includes('Global preference set to'), 'Should show success message');
-      // Verify config file was created
-      const configPath = path.join(tmpDir, '.claude', 'package-manager.json');
-      assert.ok(fs.existsSync(configPath), 'Config file should be created');
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      // Verify config file was created in one of the supported global config dirs
+      const candidates = ['.cursor', '.claude', '.codex'].map(dir =>
+        path.join(tmpDir, dir, 'package-manager.json')
+      );
+      const existingPath = candidates.find(p => fs.existsSync(p));
+      assert.ok(existingPath, 'Config file should be created');
+      const config = JSON.parse(fs.readFileSync(existingPath, 'utf8'));
       assert.strictEqual(config.packageManager, 'npm', 'Config should contain npm');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
