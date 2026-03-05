@@ -13,8 +13,8 @@ The command targets the following paths **relative to the directory where it is 
 
 | Path | Description |
 |------|-------------|
-| `~/.claude/skills/` | Global skills (all projects) |
-| `{cwd}/.claude/skills/` | Project-level skills (if the directory exists) |
+| `<config>/skills/` | Global skills (all projects). `<config>` = ~/.cursor or ~/.claude (auto-detected). |
+| `{cwd}/.cursor/skills/` or `{cwd}/.claude/skills/` | Project-level skills (if the directory exists) |
 
 **At the start of Phase 1, the command explicitly lists which paths were found and scanned.**
 
@@ -36,33 +36,26 @@ If the project has no `.claude/skills/` directory, only global skills and comman
 | Quick Scan | `results.json` exists (default) | 5–10 min |
 | Full Stocktake | `results.json` absent, or `/skill-stocktake full` | 20–30 min |
 
-**Results cache:** `~/.claude/skills/skill-stocktake/results.json`
+**Results cache:** `<config>/skills/skill-stocktake/results.json`
 
 ## Quick Scan Flow
 
 Re-evaluate only skills that have changed since the last run (5–10 min).
 
-1. Read `~/.claude/skills/skill-stocktake/results.json`
-2. Run: `bash ~/.claude/skills/skill-stocktake/scripts/quick-diff.sh \
-         ~/.claude/skills/skill-stocktake/results.json`
-   Windows: `pwsh -File ~/.claude/skills/skill-stocktake/scripts/quick-diff.ps1 \
-            ~/.claude/skills/skill-stocktake/results.json`
-   (Project dir is auto-detected from `$PWD/.claude/skills`; pass it explicitly only if needed)
+1. Read `<config>/skills/skill-stocktake/results.json`
+2. Run: `node <config>/skills/skill-stocktake/scripts/quick-diff.js <config>/skills/skill-stocktake/results.json`
+   (Project dir is auto-detected from `$PWD/.cursor/skills` or `$PWD/.claude/skills`; override via `SKILL_STOCKTAKE_PROJECT_DIR` if needed)
 3. If output is `[]`: report "No changes since last run." and stop
 4. Re-evaluate only those changed files using the same Phase 2 criteria
 5. Carry forward unchanged skills from previous results
 6. Output only the diff
-7. Run: `bash ~/.claude/skills/skill-stocktake/scripts/save-results.sh \
-         ~/.claude/skills/skill-stocktake/results.json <<< "$EVAL_RESULTS"`
-   Windows: `$EVAL_RESULTS | pwsh -File ~/.claude/skills/skill-stocktake/scripts/save-results.ps1 \
-            ~/.claude/skills/skill-stocktake/results.json`
+7. Run: `node <config>/skills/skill-stocktake/scripts/save-results.js <config>/skills/skill-stocktake/results.json` with EVAL_RESULTS on stdin
 
 ## Full Stocktake Flow
 
 ### Phase 1 — Inventory
 
-Run: `bash ~/.claude/skills/skill-stocktake/scripts/scan.sh`
-Windows: `pwsh -File ~/.claude/skills/skill-stocktake/scripts/scan.ps1`
+Run: `node <config>/skills/skill-stocktake/scripts/scan.js`
 
 The script enumerates skill files, extracts frontmatter, and collects UTC mtimes.
 Project dir is auto-detected from `$PWD/.claude/skills`; pass it explicitly only if needed.
@@ -70,8 +63,8 @@ Present the scan summary and inventory table from the script output:
 
 ```
 Scanning:
-  ✓ ~/.claude/skills/         (17 files)
-  ✗ {cwd}/.claude/skills/    (not found — global skills only)
+  ✓ <config>/skills/         (17 files)
+  ✗ {cwd}/.cursor/skills/    (not found — global skills only)
 ```
 
 | Skill | 7d use | 30d use | Description |
@@ -149,10 +142,10 @@ Evaluation is **holistic AI judgment** — not a numeric rubric. Guiding dimensi
 
 ## Results File Schema
 
-`~/.claude/skills/skill-stocktake/results.json`:
+`<config>/skills/skill-stocktake/results.json`:
 
 **`evaluated_at`**: Must be set to the actual UTC time of evaluation completion.
-Obtain via Bash: `date -u +%Y-%m-%dT%H:%M:%SZ`. Never use a date-only approximation like `T00:00:00Z`.
+The `save-results.js` script sets this automatically. Never use a date-only approximation like `T00:00:00Z`.
 
 ```json
 {
@@ -165,7 +158,7 @@ Obtain via Bash: `date -u +%Y-%m-%dT%H:%M:%SZ`. Never use a date-only approximat
   },
   "skills": {
     "skill-name": {
-      "path": "~/.claude/skills/skill-name/SKILL.md",
+      "path": "<config>/skills/skill-name/SKILL.md",
       "verdict": "Keep",
       "reason": "Concrete, actionable, unique value for X workflow",
       "mtime": "2026-01-15T08:30:00Z"

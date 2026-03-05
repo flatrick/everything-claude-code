@@ -43,6 +43,7 @@ The project is organized into several core components:
 
 ## Development Notes
 
+- **Runtime:** ECC is **JavaScript/Node only**. No PowerShell or Bash scripts; install via `node scripts/install-ecc.js`, hooks and skills run via Node (see `scripts/lib/detect-env.js` for config/data paths).
 - Package manager detection: npm, pnpm, yarn, bun (configurable via `CLAUDE_PACKAGE_MANAGER` env var or project config)
 - Cross-platform: Windows, macOS, Linux support via Node.js scripts
 - Agent format: Markdown with YAML frontmatter (name, description, tools, model)

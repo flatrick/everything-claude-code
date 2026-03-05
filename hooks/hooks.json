@@ -47,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/suggest-compact.js\""
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/strategic-compact/suggest-compact.js\""
           }
         ],
         "description": "Suggest manual compaction at logical intervals"
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh pre",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.js\" pre",
             "async": true,
             "timeout": 10
           }
@@ -147,7 +147,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh post",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.js\" post",
             "async": true,
             "timeout": 10
           }

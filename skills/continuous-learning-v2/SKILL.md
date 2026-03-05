@@ -149,14 +149,14 @@ Add to your `~/.claude/settings.json`.
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh pre"
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.js\" pre"
       }]
     }],
     "PostToolUse": [{
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh post"
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.js\" post"
       }]
     }]
   }
@@ -172,14 +172,14 @@ Add to your `~/.claude/settings.json`.
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh pre"
+        "command": "node ~/.claude/skills/continuous-learning-v2/hooks/observe.js pre"
       }]
     }],
     "PostToolUse": [{
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh post"
+        "command": "node ~/.claude/skills/continuous-learning-v2/hooks/observe.js post"
       }]
     }]
   }
@@ -240,9 +240,9 @@ Edit `config.json` to control the background observer:
 | `observer.run_interval_minutes` | `5` | How often the observer analyzes observations |
 | `observer.min_observations_to_analyze` | `20` | Minimum observations before analysis runs |
 
-On Windows, `install.ps1` automatically switches hook commands from `.sh` to `.ps1` when a matching PowerShell script exists (for example, `hooks/observe.ps1`).
+All scripts are Node.js (`.js`); no shell or PowerShell variants. Same commands work on Windows, macOS, and Linux.
 
-Other behavior (observation capture, instinct thresholds, project scoping, promotion criteria) is configured via code defaults in `instinct-cli.py` and the observe hook scripts.
+Other behavior (observation capture, instinct thresholds, project scoping, promotion criteria) is configured via code defaults in `instinct-cli.js` and the observe hook script.
 
 ## File Structure
 

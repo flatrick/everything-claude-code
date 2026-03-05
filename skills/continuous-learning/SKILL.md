@@ -70,15 +70,14 @@ Add to your `~/.claude/settings.json`:
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "~/.claude/skills/continuous-learning/evaluate-session.sh"
+        "command": "node ~/.claude/skills/continuous-learning/evaluate-session.js"
       }]
     }]
   }
 }
 ```
 
-On Windows, run the PowerShell version instead:
-`powershell -NonInteractive -NoProfile -ExecutionPolicy Bypass -File ~/.claude/skills/continuous-learning/evaluate-session.ps1`
+Same command works on Windows, macOS, and Linux (Node.js required).
 
 ## Why Stop Hook?
 

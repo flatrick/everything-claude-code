@@ -29,13 +29,13 @@ rules/
 
 ```bash
 # Install common + one or more language-specific rule sets
-./install.sh typescript
-./install.sh python
-./install.sh golang
-./install.sh swift
+node scripts/install-ecc.js typescript
+node scripts/install-ecc.js python
+node scripts/install-ecc.js golang
+node scripts/install-ecc.js swift
 
 # Install multiple languages at once
-./install.sh typescript python
+node scripts/install-ecc.js typescript python
 ```
 
 ### Option 2: Manual Installation

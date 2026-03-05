@@ -19,6 +19,8 @@ const os = require('os');
 const { spawnSync } = require('child_process');
 const readline = require('readline');
 
+const detectEnv = require(path.join(__dirname, 'lib', 'detect-env.js')).detectEnv;
+
 // ─── Session name validation ────────────────────────────────────────────────
 
 const SESSION_NAME_RE = /^[a-zA-Z0-9][-a-zA-Z0-9]*$/;
@@ -30,7 +32,7 @@ function isValidSessionName(name) {
 // ─── Storage Adapter (Markdown-as-Database) ─────────────────────────────────
 
 function getClawDir() {
-  return path.join(os.homedir(), '.claude', 'claw');
+  return path.join(detectEnv.getDataDir(), 'claw');
 }
 
 function getSessionPath(name) {
