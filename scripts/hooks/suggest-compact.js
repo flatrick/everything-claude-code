@@ -8,7 +8,7 @@ const path = require('path');
 const { getTempDir, writeFile, log } = require('../lib/utils');
 
 function getCompactContext(env = process.env) {
-  const sessionId = env.CLAUDE_SESSION_ID || 'default';
+  const sessionId = env.CLAUDE_SESSION_ID || env.CURSOR_TRACE_ID || 'default';
   const counterFile = path.join(getTempDir(), `claude-tool-count-${sessionId}`);
   const rawThreshold = parseInt(env.COMPACT_THRESHOLD || '50', 10);
   const threshold = Number.isFinite(rawThreshold) && rawThreshold > 0 && rawThreshold <= 10000

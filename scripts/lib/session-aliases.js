@@ -1,13 +1,13 @@
 /**
  * Session Aliases Library for Claude Code
- * Manages session aliases stored in ~/.claude/session-aliases.json
+ * Manages session aliases stored in the active tool config directory.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const {
-  getClaudeDir,
+  getConfigDir,
   ensureDir,
   readFile,
   log
@@ -15,7 +15,7 @@ const {
 
 // Aliases file path
 function getAliasesPath() {
-  return path.join(getClaudeDir(), 'session-aliases.json');
+  return path.join(getConfigDir(), 'session-aliases.json');
 }
 
 // Current alias storage format version

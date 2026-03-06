@@ -7,7 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { commandExists, getClaudeDir, readFile, writeFile } = require('./utils');
+const { commandExists, getConfigDir, readFile, writeFile } = require('./utils');
 
 // Package manager definitions
 const PACKAGE_MANAGERS = {
@@ -58,7 +58,7 @@ const DETECTION_PRIORITY = ['pnpm', 'bun', 'yarn', 'npm'];
 
 // Config file path
 function getConfigPath() {
-  return path.join(getClaudeDir(), 'package-manager.json');
+  return path.join(getConfigDir(), 'package-manager.json');
 }
 
 /**

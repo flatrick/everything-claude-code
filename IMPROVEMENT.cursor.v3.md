@@ -30,6 +30,7 @@ Source chain: `IMPROVEMENT.codex.md` + `IMPROVEMENT.claude.md` + `IMPROVEMENT.cu
 - Refactored hook/validator scripts for direct-call testing to reduce subprocess-only test coupling.
 - Added subprocess capability gating + strict mode and enabled strict mode in CI (`ECC_REQUIRE_SUBPROCESS_TESTS=1`).
 - Replaced inline `node -e` command hooks in `hooks/hooks.json` with script-backed Node commands using `scripts/hooks/command-hooks.js`, and updated integration tests to execute both inline and script-form hook commands.
+- Consolidated `suggest-compact` implementation into shared `scripts/hooks/suggest-compact.js`; `skills/strategic-compact/suggest-compact.js` now delegates to shared logic.
 
 ---
 
