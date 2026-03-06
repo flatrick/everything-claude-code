@@ -34,7 +34,7 @@ function handleMode(mode, input) {
     if (
       process.platform !== 'win32' &&
       !process.env.TMUX &&
-      /(npm (install|test)|pnpm (install|test)|yarn (install|test)?|bun (install|test)|cargo build|make\b|docker\b|pytest|vitest|playwright)/.test(cmd)
+      /(npm (install|test)|pnpm (install|test)|yarn (install|test)|bun (install|test)|cargo build|make\b|docker\b|pytest|vitest|playwright)/.test(cmd)
     ) {
       console.error('[Hook] Consider running in tmux for session persistence');
       console.error('[Hook] tmux new -s dev  |  tmux attach -t dev');

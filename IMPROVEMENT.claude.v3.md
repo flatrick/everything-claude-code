@@ -36,6 +36,7 @@ listed in the **Dropped / Disputed** section at the end.
 - Added missing `Glob` tool to `agents/tdd-guide.md` to align write-capable agent tooling with repository conventions.
 - Expanded `schemas/plugin.schema.json` to model all active component families used by this fork (`commands`, `rules`, `hooks`, `mcp_configs` in addition to `skills`/`agents`).
 - Renamed `tests/scripts/powershell-scripts.test.js` to `tests/scripts/node-runtime-scripts.test.js` and updated test runner wiring to match Node-only runtime coverage scope.
+- Corrected tmux reminder command matching in `scripts/hooks/command-hooks.js` by requiring explicit `yarn install|test` (no optional group false-positive on bare `yarn`).
 - Restricted installer payload to runtime scripts only (`scripts/hooks` and `scripts/lib`) for Claude/Cursor installs and added dedicated installer tests (`tests/scripts/install-ecc.test.js`) to guard copy-scope and settings-merge behavior.
 - CI security checks are now blocking by configuration (`npm audit` in `.github/workflows/ci.yml`), and `.github/workflows/release.yml` now uses a dynamic heredoc delimiter for changelog output safety.
 - Added shared markdown normalization utilities for CI validators and strengthened structural checks: skills require heading + "When to Use/Activate"; rules require heading + non-empty body content. Validator tests and affected skill docs were updated to match.
