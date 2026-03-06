@@ -79,7 +79,7 @@ function runTests() {
     test('falls back to ~/.cursor for Cursor when CONFIG_DIR missing', () => {
       const home = '/home/test';
       const env = { CURSOR_AGENT: '1', CONFIG_DIR: '/does/not/exist' };
-      const existsSync = (p) => false;
+      const existsSync = () => false;
       const logs = [];
       const d = createDetectEnv({
         env,
@@ -187,7 +187,6 @@ function runTests() {
   if (
     test('falls back to legacy ~/.claude when homunculus exists there', () => {
       const home = '/home/test';
-      const configDir = path.join(home, '.cursor');
       const legacyHomunculus = path.join(home, '.claude', 'homunculus');
       const env = { CURSOR_AGENT: '1' };
       const existsSync = (p) => p === legacyHomunculus;

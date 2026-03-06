@@ -8,7 +8,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
-const { runValidatorWithDir, runValidatorWithDirs, runValidator } = require('../helpers/validator-test-utils');
+const { runValidatorWithDir, runValidatorWithDirs } = require('../helpers/validator-test-utils');
 
 function runTests() {
   console.log('\n=== Testing CI Validators (Round Cases) ===\n');

@@ -45,11 +45,6 @@ function parseArgs() {
   return { target, globalScope, languages };
 }
 
-function copyFileSync(src, dest) {
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(src, dest);
-}
-
 function copyRecursiveSync(srcDir, destDir, filter = () => true) {
   if (!fs.existsSync(srcDir)) return;
   const entries = fs.readdirSync(srcDir, { withFileTypes: true });
@@ -289,7 +284,7 @@ function installCursor(languages, globalScope) {
       content = content.replace(/node \.cursor\/hooks\//g, 'node ' + absoluteHooksDir + '/');
     }
     let hooksParsed = JSON.parse(content);
-    if (hooksParsed.version == null) hooksParsed.version = 1;
+    if (hooksParsed.version === null || hooksParsed.version === undefined) hooksParsed.version = 1;
     fs.mkdirSync(destDir, { recursive: true });
     fs.writeFileSync(hooksDestPath, JSON.stringify(hooksParsed, null, 2), 'utf8');
     console.log('Installing hooks config -> ' + hooksDestPath);

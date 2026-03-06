@@ -9,7 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { ensureSubprocessCapability } = require('../helpers/subprocess-capability');
-const { test, asyncTest, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
+const { asyncTest, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 const { runScript, getSessionsDirForHome } = require('../helpers/hook-test-utils');
 
 // Test suite

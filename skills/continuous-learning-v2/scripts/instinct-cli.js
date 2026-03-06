@@ -9,8 +9,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
-const { execFileSync } = require('child_process');
 const https = require('https');
 const http = require('http');
 
@@ -253,7 +251,7 @@ function cmdExport(args) {
   return 0;
 }
 
-function cmdEvolve(args) {
+function cmdEvolve(_args) {
   const project = detectProject(process.cwd());
   const instincts = loadAllInstincts(project);
 

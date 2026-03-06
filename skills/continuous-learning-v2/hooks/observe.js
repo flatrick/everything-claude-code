@@ -54,7 +54,9 @@ function main() {
       try {
         fs.mkdirSync(path.dirname(errFile), { recursive: true });
         fs.appendFileSync(errFile, parseErrorLine, { encoding: 'utf8', flag: 'a' });
-      } catch (_) {}
+      } catch (_err) {
+        // Ignore parse-error logging failures.
+      }
       process.exit(0);
       return;
     }
@@ -81,10 +83,10 @@ function main() {
     let toolOutput = inputJson.tool_output || inputJson.output;
 
     if (typeof toolInput === 'object') toolInput = JSON.stringify(toolInput);
-    else if (toolInput != null) toolInput = String(toolInput);
+    else if (toolInput !== null && toolInput !== undefined) toolInput = String(toolInput);
     else toolInput = '';
     if (typeof toolOutput === 'object') toolOutput = JSON.stringify(toolOutput);
-    else if (toolOutput != null) toolOutput = String(toolOutput);
+    else if (toolOutput !== null && toolOutput !== undefined) toolOutput = String(toolOutput);
     else toolOutput = '';
 
     const inputStr = toolInput.slice(0, TRUNCATE_INPUT);

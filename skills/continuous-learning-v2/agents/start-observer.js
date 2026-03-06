@@ -18,7 +18,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const skillRoot = path.join(__dirname, '..');
-const { detectProject, homunculusDir } = require(path.join(skillRoot, 'scripts', 'detect-project.js'));
+const { detectProject } = require(path.join(skillRoot, 'scripts', 'detect-project.js'));
 
 const project = detectProject(process.cwd());
 const configFile = path.join(skillRoot, 'config.json');
@@ -39,7 +39,9 @@ if (fs.existsSync(configFile)) {
     config.run_interval_minutes = obs.run_interval_minutes ?? 5;
     config.min_observations_to_analyze = obs.min_observations_to_analyze ?? 20;
     config.enabled = obs.enabled === true;
-  } catch (_) {}
+  } catch (_err) {
+    // Keep defaults when config parsing fails.
+  }
 }
 
 const intervalSeconds = config.run_interval_minutes * 60;
@@ -52,71 +54,6 @@ function isPidAlive(pid) {
   } catch {
     return false;
   }
-}
-
-function runAnalyze() {
-  if (!fs.existsSync(observationsFile)) return;
-  const lines = fs.readFileSync(observationsFile, 'utf8').split('\n').filter(Boolean);
-  if (lines.length < minObservations) return;
-
-  const logLine = `[${new Date().toISOString()}] Analyzing ${lines.length} observations for project ${project.name}...\n`;
-  fs.appendFileSync(logFile, logLine, 'utf8');
-
-  const prompt = `Read ${observationsFile} and identify patterns for the project '${project.name}' (user corrections, error resolutions, repeated workflows, tool preferences).
-If you find 3+ occurrences of the same pattern, create an instinct file in ${instinctsDir}/<id>.md.
-
-CRITICAL: Every instinct file MUST use this exact format:
-
----
-id: kebab-case-name
-trigger: "when <specific condition>"
-confidence: <0.3-0.85 based on frequency: 3-5 times=0.5, 6-10=0.7, 11+=0.85>
-domain: <one of: code-style, testing, git, debugging, workflow, file-patterns>
-source: session-observation
-scope: project
-project_id: ${project.id}
-project_name: ${project.name}
----
-
-# Title
-
-## Action
-<what to do, one clear sentence>
-
-## Evidence
-- Observed N times in session <id>
-- Pattern: <description>
-- Last observed: <date>
-
-Rules:
-- Be conservative, only clear patterns with 3+ observations
-- Use narrow, specific triggers
-- Never include actual code snippets, only describe patterns
-- If a similar instinct already exists in ${instinctsDir}/, update it instead of creating a duplicate
-- The YAML frontmatter (between --- markers) with id field is MANDATORY
-- If a pattern seems universal (not project-specific), set scope to 'global' instead of 'project'`;
-
-  const child = spawn('claude', ['--model', 'haiku', '--max-turns', '3', '--print', prompt], {
-    stdio: ['pipe', 'pipe', 'pipe'],
-    detached: true,
-    cwd: project.root || process.cwd()
-  });
-
-  let stderr = '';
-  child.stderr.on('data', (chunk) => { stderr += chunk; });
-  child.on('close', (code) => {
-    if (code !== 0) {
-      fs.appendFileSync(logFile, `[${new Date().toISOString()}] Claude analysis failed (exit ${code})\n`, 'utf8');
-    }
-    const archiveDir = path.join(project.project_dir, 'observations.archive');
-    if (fs.existsSync(observationsFile)) {
-      fs.mkdirSync(archiveDir, { recursive: true });
-      const archiveName = `processed-${new Date().toISOString().replace(/[:.]/g, '-')}-${process.pid}.jsonl`;
-      try {
-        fs.renameSync(observationsFile, path.join(archiveDir, archiveName));
-      } catch (_) {}
-    }
-  });
 }
 
 function runLoop() {
@@ -151,7 +88,9 @@ function runLoop() {
         fs.mkdirSync(archiveDir, { recursive: true });
         try {
           fs.renameSync(observationsFile, path.join(archiveDir, `processed-${Date.now()}.jsonl`));
-        } catch (_) {}
+        } catch (_err) {
+          // Best-effort archive move.
+        }
       }
     });
   }
@@ -176,7 +115,11 @@ function main() {
       const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
       if (isPidAlive(pid)) {
         console.log(`Stopping observer for ${project.name} (PID: ${pid})...`);
-        try { process.kill(pid, 'SIGTERM'); } catch (_) {}
+        try {
+          process.kill(pid, 'SIGTERM');
+        } catch (_err) {
+          // Process may already be gone.
+        }
         fs.unlinkSync(pidFile);
         console.log('Observer stopped.');
       } else {
@@ -267,7 +210,11 @@ function main() {
       console.log(`Log: ${logFile}`);
     } else {
       console.log(`Failed to start observer (process died, check ${logFile})`);
-      try { fs.unlinkSync(pidFile); } catch (_) {}
+      try {
+        fs.unlinkSync(pidFile);
+      } catch (_err) {
+        // Best-effort stale PID cleanup.
+      }
       process.exit(1);
     }
   }, 2000);

@@ -13,7 +13,6 @@ const { clearSessionManagerCache, createTempSessionDir, cleanup } = require('../
 const { withEnv } = require('../helpers/env-test-utils');
 
 let sessionManager = require('../../scripts/lib/session-manager');
-const utils = require('../../scripts/lib/utils');
 
 function runTests() {
   console.log('\n=== Testing session-manager.js (Round Cases) ===\n');

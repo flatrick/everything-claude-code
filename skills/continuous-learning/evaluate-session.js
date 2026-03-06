@@ -71,7 +71,9 @@ process.stdin.on('end', () => {
         if (config.learned_skills_path) {
           learnedSkillsPath = config.learned_skills_path.replace(/^~/, require('os').homedir());
         }
-      } catch (_) {}
+      } catch (_err) {
+        // Keep defaults when config parsing fails.
+      }
     }
 
     ensureDir(learnedSkillsPath);

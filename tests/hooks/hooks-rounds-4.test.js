@@ -8,8 +8,8 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const { ensureSubprocessCapability } = require('../helpers/subprocess-capability');
-const { test, asyncTest, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
-const { runScript, getSessionsDirForHome } = require('../helpers/hook-test-utils');
+const { asyncTest, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
+const { runScript } = require('../helpers/hook-test-utils');
 
 // Test suite
 async function runTests() {

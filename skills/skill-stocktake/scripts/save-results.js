@@ -11,8 +11,6 @@
  */
 
 const fs = require('fs');
-const path = require('path');
-const os = require('os');
 
 const resultsJson = process.argv[2];
 
@@ -32,7 +30,7 @@ function main() {
     let inputJson;
     try {
       inputJson = JSON.parse(inputData);
-    } catch (err) {
+    } catch (_err) {
       console.error('Error: stdin is not valid JSON');
       process.exit(1);
     }

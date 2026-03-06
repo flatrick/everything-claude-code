@@ -9,7 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { test } = require('../helpers/test-runner');
-const { clearSessionManagerCache, createTempSessionDir, cleanup } = require('../helpers/session-manager-test-utils');
+const { createTempSessionDir, cleanup } = require('../helpers/session-manager-test-utils');
 const { withEnv } = require('../helpers/env-test-utils');
 
 let sessionManager = require('../../scripts/lib/session-manager');

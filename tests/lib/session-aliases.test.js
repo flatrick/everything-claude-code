@@ -10,7 +10,6 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
 const { test } = require('../helpers/test-runner');
 const { setupSessionAliasesTestEnv } = require('../helpers/session-aliases-test-env');
 
