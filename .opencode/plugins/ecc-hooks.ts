@@ -312,7 +312,6 @@ export const ECCHooksPlugin = async ({
         "tsconfig.json": "typescript",
         "pyproject.toml": "python",
         "Cargo.toml": "rust",
-        "Package.swift": "swift",
       }
       const detected: string[] = []
       for (const [file, lang] of Object.entries(langDetectors)) {
@@ -387,7 +386,7 @@ export const ECCHooksPlugin = async ({
       }
 
       // Auto-approve: formatters
-      if (event.tool === "bash" && /^(npx )?(prettier|biome|black|rustfmt|swift-format)/.test(cmd)) {
+      if (event.tool === "bash" && /^(npx )?(prettier|biome|black|rustfmt)/.test(cmd)) {
         return { approved: true, reason: "Formatter execution" }
       }
 

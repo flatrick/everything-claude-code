@@ -51,11 +51,6 @@ const LANGUAGE_RULES = [
     extensions: ['.cs', '.csproj', '.sln']
   },
   {
-    type: 'swift',
-    markers: ['Package.swift'],
-    extensions: ['.swift']
-  },
-  {
     type: 'kotlin',
     markers: [],
     extensions: ['.kt', '.kts']

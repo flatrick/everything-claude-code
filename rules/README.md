@@ -16,7 +16,7 @@ rules/
 │   └── security.md
 ├── typescript/      # TypeScript/JavaScript specific
 ├── python/          # Python specific
-└── swift/           # Swift specific
+└── bash/            # Bash/shell specific
 ```
 
 - **common/** contains universal principles — no language-specific code examples.
@@ -30,7 +30,6 @@ rules/
 # Install common + one or more language-specific rule sets
 node scripts/install-ecc.js typescript
 node scripts/install-ecc.js python
-node scripts/install-ecc.js swift
 
 # Install multiple languages at once
 node scripts/install-ecc.js typescript python
@@ -51,7 +50,6 @@ cp -r rules/common ~/.claude/rules/common
 # Install language-specific rules based on your project's tech stack
 cp -r rules/typescript ~/.claude/rules/typescript
 cp -r rules/python ~/.claude/rules/python
-cp -r rules/swift ~/.claude/rules/swift
 
 # Attention ! ! ! Configure according to your actual project requirements; the configuration here is for reference only.
 ```

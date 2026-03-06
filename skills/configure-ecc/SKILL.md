@@ -87,7 +87,7 @@ There are 27 skills organized into 4 categories. Use `AskUserQuestion` with `mul
 ```
 Question: "Which skill categories do you want to install?"
 Options:
-  - "Framework & Language" — "Django, Spring Boot, Python, Java, Frontend, Backend patterns"
+  - "Framework & Language" — "Django, Spring Boot, Python, Java, .NET, Rust, Bash, Frontend, Backend patterns"
   - "Database" — "PostgreSQL, ClickHouse, JPA/Hibernate patterns"
   - "Workflow & Quality" — "TDD, verification, learning, security review, compaction"
   - "All skills" — "Install every available skill"
@@ -175,6 +175,7 @@ Options:
   - "Common rules (Recommended)" — "Language-agnostic principles: coding style, git workflow, testing, security, etc. (8 files)"
   - "TypeScript/JavaScript" — "TS/JS patterns, hooks, testing with Playwright (5 files)"
   - "Python" — "Python patterns, pytest, black/ruff formatting (5 files)"
+  - "Bash" — "Bash scripting patterns, safety, portability, bats-core testing (5 files)"
 ```
 
 Execute installation:
@@ -185,6 +186,7 @@ cp -r $ECC_ROOT/rules/common/* $TARGET/rules/
 # Language-specific rules (flat copy into rules/)
 cp -r $ECC_ROOT/rules/typescript/* $TARGET/rules/   # if selected
 cp -r $ECC_ROOT/rules/python/* $TARGET/rules/        # if selected
+cp -r $ECC_ROOT/rules/bash/* $TARGET/rules/          # if selected
 ```
 
 **Important**: If the user selects any language-specific rules but NOT common rules, warn them:
