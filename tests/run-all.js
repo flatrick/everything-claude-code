@@ -18,10 +18,12 @@ const SUITE_TIMEOUT_MS = Number.isFinite(parsedTimeoutMs) && parsedTimeoutMs > 0
 const testFiles = [
   'lib/detect-env.test.js',
   'lib/utils.test.js',
+  'lib/utils-rounds.test.js',
   'lib/package-manager.test.js',
   'lib/session-manager.test.js',
   'lib/session-manager-rounds.test.js',
   'lib/session-aliases.test.js',
+  'lib/session-aliases-rounds.test.js',
   'lib/project-detect.test.js',
   'hooks/hooks.test.js',
   'hooks/hooks-rounds.test.js',

@@ -39,6 +39,8 @@ Source chain: `IMPROVEMENT.codex.md` + `IMPROVEMENT.claude.md` + `IMPROVEMENT.cu
 - Split `tests/ci/validators.test.js` into core + rounds suites (`validators.test.js`, `validators-rounds.test.js`) and updated `tests/run-all.js` so both execute in CI/test orchestration.
 - Split `tests/lib/session-manager.test.js` into core + rounds suites (`session-manager.test.js`, `session-manager-rounds.test.js`) with isolated round-fixture setup and updated `tests/run-all.js` to execute both suites.
 - Split `tests/hooks/hooks.test.js` into core + rounds suites (`hooks.test.js`, `hooks-rounds.test.js`) and updated `tests/run-all.js` to execute both suites.
+- Split `tests/lib/session-aliases.test.js` into core + rounds suites (`session-aliases.test.js`, `session-aliases-rounds.test.js`) and updated `tests/run-all.js` to execute both suites.
+- Split `tests/lib/utils.test.js` into core + rounds suites (`utils.test.js`, `utils-rounds.test.js`) and updated `tests/run-all.js` to execute both suites.
 
 ---
 
