@@ -11,6 +11,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const detectEnv = require(path.join(__dirname, '..', '..', 'scripts', 'lib', 'detect-env.js')).detectEnv;
+const { test: baseTest } = require('../helpers/test-runner');
 
 const {
   getClawDir,
@@ -25,19 +26,7 @@ const {
   handleClear
 } = require(path.join(__dirname, '..', '..', 'scripts', 'claw.js'));
 
-// Test helper — matches ECC's custom test pattern
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${err.message}`);
-    if (err.stack) { console.log(`    Stack: ${err.stack}`); }
-    return false;
-  }
-}
+const test = (name, fn) => baseTest(name, fn, { showStack: true });
 
 function makeTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'claw-test-'));

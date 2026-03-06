@@ -8,18 +8,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
+const { test } = require('../helpers/test-runner');
 
 function withEnv(overrides, fn) {
   const previous = {};

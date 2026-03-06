@@ -6,18 +6,7 @@
 
 const assert = require('assert');
 const { checkDependencies } = require('../../scripts/ci/check-dependencies');
-
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
+const { test } = require('../helpers/test-runner');
 
 function runTests() {
   console.log('\n=== Testing check-dependencies.js ===\n');

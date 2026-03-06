@@ -43,6 +43,7 @@ execution slices with acceptance criteria.
 - CI security scan is now intentionally blocking (`continue-on-error: false` for `npm audit --audit-level=high`), and release changelog output uses a dynamic heredoc delimiter to avoid truncation collisions.
 - Added shared markdown normalization helper (`scripts/ci/markdown-utils.js`) and upgraded validator depth: `validate-skills.js` now enforces heading + "When to Use/Activate", and `validate-rules.js` now enforces heading + body content; validator tests and affected skills were updated accordingly.
 - Removed unused reusable workflow files (`reusable-test.yml`, `reusable-validate.yml`, `reusable-release.yml`) to make inline workflows (`ci.yml`, `release.yml`) canonical and prevent future drift.
+- Introduced shared test harness helpers in `tests/helpers/test-runner.js` and migrated multiple script-focused suites to use it (`check-dependencies`, `setup-package-manager`, `install-ecc`, `powershell-scripts`, `claw`).
 
 ## P0 - Breakage and Install/CI Integrity
 

@@ -7,21 +7,9 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
 const { spawnSync } = require('child_process');
 const { ensureSubprocessCapability } = require('../helpers/subprocess-capability');
-
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
+const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 
 function runNode(scriptPath, stdin = '', options = {}) {
   return spawnSync('node', [scriptPath], {
@@ -32,14 +20,6 @@ function runNode(scriptPath, stdin = '', options = {}) {
     cwd: options.cwd || path.join(__dirname, '..', '..'),
     ...options
   });
-}
-
-function makeTempDir(prefix) {
-  return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
-}
-
-function cleanup(dir) {
-  fs.rmSync(dir, { recursive: true, force: true });
 }
 
 function runTests() {
@@ -102,7 +82,7 @@ function runTests() {
   })) passed++; else failed++;
 
   if (test('save-results.js bootstraps results file from stdin JSON', () => {
-    const tmpDir = makeTempDir('js-save-');
+    const tmpDir = createTestDir('js-save-');
     const resultsPath = path.join(tmpDir, 'results.json');
     try {
       const stdin = JSON.stringify({ mode: 'quick', skills: { demo: { path: '~/.claude/skills/demo/SKILL.md', verdict: 'Keep' } } });
@@ -117,12 +97,12 @@ function runTests() {
       assert.ok(saved.evaluated_at, 'Expected evaluated_at field');
       assert.ok(saved.skills && saved.skills.demo, 'Expected merged skills');
     } finally {
-      cleanup(tmpDir);
+      cleanupTestDir(tmpDir);
     }
   })) passed++; else failed++;
 
   if (test('quick-diff.js reports new skill files after old evaluated_at', () => {
-    const tmpDir = makeTempDir('js-diff-');
+    const tmpDir = createTestDir('js-diff-');
     try {
       const globalSkillsDir = path.join(tmpDir, '.claude', 'skills', 'demo-skill');
       fs.mkdirSync(globalSkillsDir, { recursive: true });
@@ -143,7 +123,7 @@ function runTests() {
       assert.ok(payload.length >= 1, 'Expected at least one changed/new entry');
       assert.strictEqual(payload[0].is_new, true, 'Expected new entry to be marked is_new=true');
     } finally {
-      cleanup(tmpDir);
+      cleanupTestDir(tmpDir);
     }
   })) passed++; else failed++;
 
