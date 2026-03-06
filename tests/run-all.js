@@ -45,6 +45,7 @@ const testFiles = [
   'ci/validators-rounds-2.test.js',
   'scripts/claw.test.js',
   'scripts/check-dependencies.test.js',
+  'scripts/install-ecc-unit.test.js',
   'scripts/install-ecc.test.js',
   'scripts/setup-package-manager.test.js',
   'scripts/skill-create-output.test.js',

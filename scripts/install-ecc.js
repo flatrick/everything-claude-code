@@ -28,8 +28,14 @@ const CODEX_SRC = path.join(REPO_ROOT, '.codex');
 
 function parseArgs() {
   const args = process.argv.slice(2);
+  return parseArgsFrom(args);
+}
+
+function parseArgsFrom(args) {
   let target = 'claude';
   let globalScope = false;
+  let listMode = false;
+  let dryRun = false;
   const languages = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -37,12 +43,72 @@ function parseArgs() {
       target = args[++i];
     } else if (args[i] === '--global') {
       globalScope = true;
+    } else if (args[i] === '--list') {
+      listMode = true;
+    } else if (args[i] === '--dry-run') {
+      dryRun = true;
     } else if (!args[i].startsWith('-')) {
       languages.push(args[i]);
     }
   }
 
-  return { target, globalScope, languages };
+  return { target, globalScope, listMode, dryRun, languages };
+}
+
+function getAvailableLanguages() {
+  if (!fs.existsSync(RULES_DIR)) {
+    return [];
+  }
+  return fs.readdirSync(RULES_DIR, { withFileTypes: true })
+    .filter(e => e.isDirectory() && e.name !== 'common')
+    .map(e => e.name)
+    .sort();
+}
+
+function printAvailableOptions(target) {
+  console.log('Available targets: claude, cursor, codex');
+  if (target !== 'codex') {
+    const langs = getAvailableLanguages();
+    console.log('Available languages:');
+    if (langs.length === 0) {
+      console.log('  (none found under rules/)');
+    } else {
+      langs.forEach((lang) => console.log('  - ' + lang));
+    }
+  }
+}
+
+function buildInstallPlan({ target, globalScope, languages }) {
+  const targetDisplay = target + (globalScope ? ' (global)' : '');
+  const lines = [
+    `[dry-run] Target: ${targetDisplay}`
+  ];
+
+  if (target === 'codex') {
+    lines.push(`[dry-run] Would install from ${CODEX_SRC} to ${path.join(os.homedir(), '.codex')}`);
+    return lines;
+  }
+
+  const rules = languages.length > 0 ? languages.join(', ') : '(none provided)';
+  lines.push(`[dry-run] Languages: ${rules}`);
+
+  if (target === 'claude') {
+    const homeDir = os.homedir();
+    const claudeBase = process.env.CLAUDE_BASE_DIR || path.join(homeDir, '.claude');
+    lines.push(`[dry-run] Would install into ${claudeBase}`);
+    lines.push('[dry-run] Would copy rules, agents, commands, skills, hooks, and runtime scripts (scripts/hooks + scripts/lib)');
+    return lines;
+  }
+
+  const cursorBase = globalScope ? path.join(os.homedir(), '.cursor') : path.join(process.cwd(), '.cursor');
+  lines.push(`[dry-run] Would install into ${cursorBase}`);
+  lines.push('[dry-run] Would copy agents, skills, commands, hook scripts, hooks config, mcp config, and runtime scripts (scripts/hooks + scripts/lib)');
+  if (globalScope) {
+    lines.push('[dry-run] Would skip file-based rules (Cursor global mode limitation)');
+  } else {
+    lines.push('[dry-run] Would install matching Cursor rules for provided languages');
+  }
+  return lines;
 }
 
 function copyRecursiveSync(srcDir, destDir, filter = () => true) {
@@ -72,7 +138,7 @@ function copyRuntimeScripts(destScriptsDir) {
 }
 
 function usage(target) {
-  console.error('Usage: node scripts/install-ecc.js [--target claude|cursor|codex] [--global] [language ...]');
+  console.error('Usage: node scripts/install-ecc.js [--target claude|cursor|codex] [--global] [--list] [--dry-run] [language ...]');
   console.error('');
   console.error('Targets:');
   console.error('  claude (default) — Install rules, agents, commands, hooks, skills to ~/.claude/');
@@ -81,13 +147,12 @@ function usage(target) {
   console.error('');
   console.error('Options:');
   console.error('  --global         — For cursor, install to ~/.cursor/ instead of current directory.');
+  console.error('  --list           — Show available targets/languages and exit.');
+  console.error('  --dry-run        — Print planned install actions without writing files.');
   console.error('');
   if (target !== 'codex') {
     console.error('Available languages:');
-    if (fs.existsSync(RULES_DIR)) {
-      const dirs = fs.readdirSync(RULES_DIR, { withFileTypes: true }).filter(e => e.isDirectory() && e.name !== 'common');
-      dirs.forEach(d => console.error('  - ' + d.name));
-    }
+    getAvailableLanguages().forEach((lang) => console.error('  - ' + lang));
   }
   process.exit(1);
 }
@@ -354,11 +419,20 @@ function installCodex() {
 }
 
 function main() {
-  const { target, globalScope, languages } = parseArgs();
+  const { target, globalScope, listMode, dryRun, languages } = parseArgs();
 
   if (target !== 'claude' && target !== 'cursor' && target !== 'codex') {
     console.error("Error: unknown target '" + target + "'. Must be claude, cursor, or codex.");
     process.exit(1);
+  }
+  if (listMode) {
+    printAvailableOptions(target);
+    process.exit(0);
+  }
+  if (dryRun) {
+    const plan = buildInstallPlan({ target, globalScope, languages });
+    plan.forEach((line) => console.log(line));
+    process.exit(0);
   }
   if (globalScope && target !== 'cursor') {
     console.error("Warning: --global is only supported for cursor target. Ignored.");
@@ -369,4 +443,12 @@ function main() {
   else installCodex();
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  parseArgsFrom,
+  getAvailableLanguages,
+  buildInstallPlan
+};
