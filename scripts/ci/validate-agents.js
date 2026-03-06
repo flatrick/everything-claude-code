@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readMarkdownFile } = require('./markdown-utils');
 
 const DEFAULT_AGENTS_DIR = path.join(__dirname, '../../agents');
 const REQUIRED_FIELDS = ['model', 'tools'];
@@ -45,7 +46,7 @@ function validateAgents(options = {}) {
     const filePath = path.join(agentsDir, file);
     let content;
     try {
-      content = fs.readFileSync(filePath, 'utf-8');
+      content = readMarkdownFile(filePath);
     } catch (err) {
       io.error(`ERROR: ${file} - ${err.message}`);
       hasErrors = true;

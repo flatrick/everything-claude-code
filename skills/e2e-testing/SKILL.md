@@ -8,6 +8,10 @@ origin: ECC
 
 Comprehensive Playwright patterns for building stable, fast, and maintainable E2E test suites.
 
+## When to Activate
+
+Use this skill when implementing or reviewing end-to-end tests, Playwright configuration, flaky test mitigation, or CI artifact strategy.
+
 ## Test File Organization
 
 ```

@@ -8,6 +8,10 @@ origin: ECC
 
 Systematizes the "search for existing solutions before implementing" workflow.
 
+## When to Activate
+
+Use this skill when you are about to implement new functionality and need to evaluate whether an existing library, pattern, or internal skill already solves the problem.
+
 ## Trigger
 
 Use this skill when:

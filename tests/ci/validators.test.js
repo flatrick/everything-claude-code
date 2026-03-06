@@ -447,7 +447,7 @@ function runTests() {
     const testDir = createTestDir();
     const skillDir = path.join(testDir, 'good-skill');
     fs.mkdirSync(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '# My Skill\nDescription here.');
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '# My Skill\n\n## When to Use\nUse this skill when appropriate.');
 
     const result = runValidatorWithDir('validate-skills', 'SKILLS_DIR', testDir);
     assert.strictEqual(result.code, 0, 'Should pass for valid skill');
@@ -460,7 +460,7 @@ function runTests() {
     fs.writeFileSync(path.join(testDir, 'not-a-skill.md'), '# README');
     const skillDir = path.join(testDir, 'real-skill');
     fs.mkdirSync(skillDir);
-    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '# Skill');
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '# Skill\n\n## When to Activate\nUse this skill when needed.');
 
     const result = runValidatorWithDir('validate-skills', 'SKILLS_DIR', testDir);
     assert.strictEqual(result.code, 0, 'Should ignore non-directory entries');
@@ -477,6 +477,32 @@ function runTests() {
     const result = runValidatorWithDir('validate-skills', 'SKILLS_DIR', testDir);
     assert.strictEqual(result.code, 1, 'Should reject whitespace-only SKILL.md');
     assert.ok(result.stderr.includes('Empty file'), 'Should report empty file');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('fails when SKILL.md is missing "When to Use/Activate" section', () => {
+    const testDir = createTestDir();
+    const skillDir = path.join(testDir, 'missing-section-skill');
+    fs.mkdirSync(skillDir);
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '# Skill without section\n\nJust description.');
+
+    const result = runValidatorWithDir('validate-skills', 'SKILLS_DIR', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail when required section is missing');
+    assert.ok(result.stderr.includes('When to Use'), 'Should mention missing section requirement');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('accepts SKILL.md with UTF-8 BOM', () => {
+    const testDir = createTestDir();
+    const skillDir = path.join(testDir, 'bom-skill');
+    fs.mkdirSync(skillDir);
+    fs.writeFileSync(
+      path.join(skillDir, 'SKILL.md'),
+      '\uFEFF# BOM Skill\n\n## When to Activate\nUse this skill when validating BOM handling.'
+    );
+
+    const result = runValidatorWithDir('validate-skills', 'SKILLS_DIR', testDir);
+    assert.strictEqual(result.code, 0, 'Should accept BOM-prefixed SKILL.md');
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 
@@ -766,12 +792,41 @@ function runTests() {
     const testDir = createTestDir();
     const subDir = path.join(testDir, 'sub');
     fs.mkdirSync(subDir);
-    fs.writeFileSync(path.join(testDir, 'top.md'), '# Top Level Rule');
-    fs.writeFileSync(path.join(subDir, 'nested.md'), '# Nested Rule');
+    fs.writeFileSync(path.join(testDir, 'top.md'), '# Top Level Rule\nAlways validate input.');
+    fs.writeFileSync(path.join(subDir, 'nested.md'), '# Nested Rule\nNever mutate shared state.');
 
     const result = runValidatorWithDir('validate-rules', 'RULES_DIR', testDir);
     assert.strictEqual(result.code, 0, 'Should validate nested rules');
     assert.ok(result.stdout.includes('Validated 2'), 'Should find both rules');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('fails on rule file missing heading', () => {
+    const testDir = createTestDir();
+    fs.writeFileSync(path.join(testDir, 'no-heading.md'), 'This is content with no markdown heading.');
+
+    const result = runValidatorWithDir('validate-rules', 'RULES_DIR', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail when heading is missing');
+    assert.ok(result.stderr.includes('Missing markdown heading'), 'Should report missing heading');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('fails on rule file with heading but no body content', () => {
+    const testDir = createTestDir();
+    fs.writeFileSync(path.join(testDir, 'heading-only.md'), '# Heading Only');
+
+    const result = runValidatorWithDir('validate-rules', 'RULES_DIR', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail when heading has no body content');
+    assert.ok(result.stderr.includes('Missing rule content below heading'), 'Should report missing body content');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('accepts rule file with UTF-8 BOM', () => {
+    const testDir = createTestDir();
+    fs.writeFileSync(path.join(testDir, 'bom-rule.md'), '\uFEFF# Rule Title\nRule body content.');
+
+    const result = runValidatorWithDir('validate-rules', 'RULES_DIR', testDir);
+    assert.strictEqual(result.code, 0, 'Should accept BOM-prefixed rule file');
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 
@@ -1341,7 +1396,7 @@ function runTests() {
     // Valid skill
     const goodSkill = path.join(testDir, 'good-skill');
     fs.mkdirSync(goodSkill);
-    fs.writeFileSync(path.join(goodSkill, 'SKILL.md'), '# Good Skill');
+    fs.writeFileSync(path.join(goodSkill, 'SKILL.md'), '# Good Skill\n\n## When to Use\nUse this for valid examples.');
     // Missing SKILL.md
     const badSkill = path.join(testDir, 'bad-skill');
     fs.mkdirSync(badSkill);
@@ -1473,7 +1528,7 @@ function runTests() {
     const testDir = createTestDir();
     // Create a directory named "tricky.md" — stat.isFile() should skip it
     fs.mkdirSync(path.join(testDir, 'tricky.md'));
-    fs.writeFileSync(path.join(testDir, 'real.md'), '# A real rule');
+    fs.writeFileSync(path.join(testDir, 'real.md'), '# A real rule\nDo not mutate shared objects.');
 
     const result = runValidatorWithDir('validate-rules', 'RULES_DIR', testDir);
     assert.strictEqual(result.code, 0, 'Should skip directory entries');
@@ -1485,7 +1540,7 @@ function runTests() {
     const testDir = createTestDir();
     const deepDir = path.join(testDir, 'cat1', 'sub1');
     fs.mkdirSync(deepDir, { recursive: true });
-    fs.writeFileSync(path.join(deepDir, 'deep-rule.md'), '# Deep nested rule');
+    fs.writeFileSync(path.join(deepDir, 'deep-rule.md'), '# Deep nested rule\nValidate input at boundaries.');
 
     const result = runValidatorWithDir('validate-rules', 'RULES_DIR', testDir);
     assert.strictEqual(result.code, 0, 'Should validate deeply nested rules');
@@ -1676,14 +1731,14 @@ function runTests() {
 
   console.log('\nRound 52: validate-rules (code-only content):');
 
-  if (test('passes rule file containing only a fenced code block', () => {
+  if (test('fails rule file containing only a fenced code block (missing heading)', () => {
     const testDir = createTestDir();
     fs.writeFileSync(path.join(testDir, 'code-only.md'),
       '```javascript\nfunction example() {\n  return true;\n}\n```');
 
     const result = runValidatorWithDir('validate-rules', 'RULES_DIR', testDir);
-    assert.strictEqual(result.code, 0, 'Rule with only code block should pass (non-empty)');
-    assert.ok(result.stdout.includes('Validated 1'), 'Should count the code-only file');
+    assert.strictEqual(result.code, 1, 'Rule with only code block should fail without heading');
+    assert.ok(result.stderr.includes('Missing markdown heading'), 'Should report missing heading');
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 

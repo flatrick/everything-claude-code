@@ -3,7 +3,13 @@ name: visa-doc-translate
 description: Translate visa application documents (images) to English and create a bilingual PDF with original and translation
 ---
 
+# Visa Document Translation
+
 You are helping translate visa application documents for visa applications.
+
+## When to Activate
+
+Use this skill when the user needs visa document OCR + translation + bilingual PDF output from image inputs.
 
 ## Instructions
 

@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readMarkdownFile } = require('./markdown-utils');
 
 const ROOT_DIR = path.join(__dirname, '../..');
 const DEFAULT_COMMANDS_DIR = path.join(ROOT_DIR, 'commands');
@@ -59,7 +60,7 @@ function validateCommands(options = {}) {
     const filePath = path.join(commandsDir, file);
     let content;
     try {
-      content = fs.readFileSync(filePath, 'utf-8');
+      content = readMarkdownFile(filePath);
     } catch (err) {
       io.error(`ERROR: ${file} - ${err.message}`);
       hasErrors = true;

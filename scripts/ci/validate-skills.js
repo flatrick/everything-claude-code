@@ -5,8 +5,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readMarkdownFile, hasMarkdownHeading } = require('./markdown-utils');
 
 const DEFAULT_SKILLS_DIR = path.join(__dirname, '../../skills');
+const WHEN_TO_SECTION_REGEX = /^#{1,6}\s+When to (Use|Activate)\b/im;
 
 function validateSkills(options = {}) {
   const skillsDir = options.skillsDir || DEFAULT_SKILLS_DIR;
@@ -31,7 +33,7 @@ function validateSkills(options = {}) {
 
     let content;
     try {
-      content = fs.readFileSync(skillMd, 'utf-8');
+      content = readMarkdownFile(skillMd);
     } catch (err) {
       io.error(`ERROR: ${dir}/SKILL.md - ${err.message}`);
       hasErrors = true;
@@ -39,6 +41,16 @@ function validateSkills(options = {}) {
     }
     if (content.trim().length === 0) {
       io.error(`ERROR: ${dir}/SKILL.md - Empty file`);
+      hasErrors = true;
+      continue;
+    }
+    if (!hasMarkdownHeading(content)) {
+      io.error(`ERROR: ${dir}/SKILL.md - Missing markdown heading`);
+      hasErrors = true;
+      continue;
+    }
+    if (!WHEN_TO_SECTION_REGEX.test(content)) {
+      io.error(`ERROR: ${dir}/SKILL.md - Missing required section: "When to Use" or "When to Activate"`);
       hasErrors = true;
       continue;
     }

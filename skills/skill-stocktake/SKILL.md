@@ -7,6 +7,10 @@ origin: ECC
 
 Slash command (`/skill-stocktake`) that audits all Claude skills and commands using a quality checklist + AI holistic judgment. Supports two modes: Quick Scan for recently changed skills, and Full Stocktake for a complete review.
 
+## When to Activate
+
+Use this skill when you want a quality audit of skills/commands, especially after adding new skills, changing command behavior, or before release.
+
 ## Scope
 
 The command targets the following paths **relative to the directory where it is invoked**:

@@ -5,8 +5,19 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readMarkdownFile, hasMarkdownHeading, stripFrontmatter } = require('./markdown-utils');
 
 const DEFAULT_RULES_DIR = path.join(__dirname, '../../rules');
+
+function hasRuleBodyContent(content) {
+  const withoutFrontmatter = stripFrontmatter(content);
+  const withoutHeadings = withoutFrontmatter
+    .split(/\r?\n/)
+    .filter(line => !/^#{1,6}\s+/.test(line))
+    .join('\n')
+    .trim();
+  return withoutHeadings.length > 0;
+}
 
 function validateRules(options = {}) {
   const rulesDir = options.rulesDir || DEFAULT_RULES_DIR;
@@ -27,9 +38,19 @@ function validateRules(options = {}) {
       const stat = fs.statSync(filePath);
       if (!stat.isFile()) continue;
 
-      const content = fs.readFileSync(filePath, 'utf-8');
+      const content = readMarkdownFile(filePath);
       if (content.trim().length === 0) {
         io.error(`ERROR: ${file} - Empty rule file`);
+        hasErrors = true;
+        continue;
+      }
+      if (!hasMarkdownHeading(content)) {
+        io.error(`ERROR: ${file} - Missing markdown heading`);
+        hasErrors = true;
+        continue;
+      }
+      if (!hasRuleBodyContent(content)) {
+        io.error(`ERROR: ${file} - Missing rule content below heading`);
         hasErrors = true;
         continue;
       }
@@ -54,5 +75,6 @@ if (require.main === module) {
 }
 
 module.exports = {
+  hasRuleBodyContent,
   validateRules
 };
