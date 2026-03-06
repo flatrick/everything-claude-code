@@ -46,6 +46,7 @@ execution slices with acceptance criteria.
 - Introduced shared test harness helpers in `tests/helpers/test-runner.js` and migrated multiple script-focused suites to use it (`check-dependencies`, `setup-package-manager`, `install-ecc`, `powershell-scripts`, `claw`).
 - Split oversized CI validator suite by concern into core and rounds files: `tests/ci/validators.test.js` (core) + `tests/ci/validators-rounds.test.js` (edge/rounds), and wired both in `tests/run-all.js`.
 - Split `tests/lib/session-manager.test.js` into core + rounds suites (`session-manager.test.js`, `session-manager-rounds.test.js`) and wired both into `tests/run-all.js` with isolated seeded-session fixture setup for moved round cases.
+- Split `tests/hooks/hooks.test.js` into core + rounds suites (`hooks.test.js`, `hooks-rounds.test.js`) and wired both into `tests/run-all.js`.
 
 ## P0 - Breakage and Install/CI Integrity
 

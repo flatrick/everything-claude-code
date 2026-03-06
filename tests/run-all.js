@@ -24,6 +24,7 @@ const testFiles = [
   'lib/session-aliases.test.js',
   'lib/project-detect.test.js',
   'hooks/hooks.test.js',
+  'hooks/hooks-rounds.test.js',
   'hooks/evaluate-session.test.js',
   'hooks/suggest-compact.test.js',
   'integration/hooks.test.js',
