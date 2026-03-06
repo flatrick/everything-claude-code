@@ -12,28 +12,9 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { test } = require('../helpers/test-runner');
+const { setupSessionAliasesTestEnv } = require('../helpers/session-aliases-test-env');
 
-// We need to mock getClaudeDir to point to a temp dir.
-// The simplest approach: set HOME to a temp dir before requiring the module.
-const tmpHome = path.join(os.tmpdir(), `ecc-alias-test-${Date.now()}`);
-fs.mkdirSync(path.join(tmpHome, '.claude'), { recursive: true });
-const origHome = process.env.HOME;
-const origUserProfile = process.env.USERPROFILE;
-process.env.HOME = tmpHome;
-process.env.USERPROFILE = tmpHome; // Windows: os.homedir() uses USERPROFILE
-
-const aliases = require('../../scripts/lib/session-aliases');
-
-function resetAliases() {
-  const aliasesPath = aliases.getAliasesPath();
-  try {
-    if (fs.existsSync(aliasesPath)) {
-      fs.unlinkSync(aliasesPath);
-    }
-  } catch {
-    // ignore
-  }
-}
+const { aliases, resetAliases } = setupSessionAliasesTestEnv();
 
 function runTests() {
   console.log('\n=== Testing session-aliases.js ===\n');
@@ -230,19 +211,6 @@ function runTests() {
     aliases.deleteAlias('atomic-test');
     aliases.deleteAlias('atomic-test-2');
   })) passed++; else failed++;
-
-  // Cleanup â restore both HOME and USERPROFILE (Windows)
-  process.env.HOME = origHome;
-  if (origUserProfile !== undefined) {
-    process.env.USERPROFILE = origUserProfile;
-  } else {
-    delete process.env.USERPROFILE;
-  }
-  try {
-    fs.rmSync(tmpHome, { recursive: true, force: true });
-  } catch {
-    // best-effort
-  }
 
   // ââ Round 48: rapid sequential saves data integrity ââ
   console.log('\nRound 48: rapid sequential saves:');
