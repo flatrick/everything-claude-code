@@ -23,6 +23,7 @@ const testFiles = [
   'lib/package-manager-rounds.test.js',
   'lib/session-manager.test.js',
   'lib/session-manager-rounds.test.js',
+  'lib/session-manager-rounds-2.test.js',
   'lib/session-aliases.test.js',
   'lib/session-aliases-rounds.test.js',
   'lib/project-detect.test.js',
