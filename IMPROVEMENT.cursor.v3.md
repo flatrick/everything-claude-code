@@ -43,6 +43,7 @@ Source chain: `IMPROVEMENT.codex.md` + `IMPROVEMENT.claude.md` + `IMPROVEMENT.cu
 - Split `tests/lib/utils.test.js` into core + rounds suites (`utils.test.js`, `utils-rounds.test.js`) and updated `tests/run-all.js` to execute both suites.
 - Split `tests/lib/package-manager.test.js` into core + rounds suites (`package-manager.test.js`, `package-manager-rounds.test.js`) and updated `tests/run-all.js` to execute both suites.
 - Further split oversized hook round coverage by adding `tests/hooks/hooks-rounds-2.test.js` and updated `tests/run-all.js` to execute both rounds suites.
+- Split `tests/hooks/hooks.test.js` by concern by extracting post-edit hook coverage into `tests/hooks/hooks-post-edit.test.js`, and updated `tests/run-all.js` to execute it.
 
 ---
 

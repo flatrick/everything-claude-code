@@ -44,6 +44,7 @@ listed in the **Dropped / Disputed** section at the end.
 - Split `tests/lib/utils.test.js` into core + rounds suites (`tests/lib/utils.test.js`, `tests/lib/utils-rounds.test.js`) and wired both suites into `tests/run-all.js`.
 - Split `tests/lib/package-manager.test.js` into core + rounds suites (`tests/lib/package-manager.test.js`, `tests/lib/package-manager-rounds.test.js`) and wired both suites into `tests/run-all.js`.
 - Further split oversized hooks round coverage by adding `tests/hooks/hooks-rounds-2.test.js` and wiring both hook-round suites into `tests/run-all.js`.
+- Split `tests/hooks/hooks.test.js` by concern by extracting post-edit hook coverage into `tests/hooks/hooks-post-edit.test.js`, and wired it into `tests/run-all.js`.
 
 ---
 
