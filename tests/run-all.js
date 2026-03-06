@@ -27,6 +27,7 @@ const testFiles = [
   'lib/session-manager-rounds-2.test.js',
   'lib/session-aliases.test.js',
   'lib/session-aliases-rounds.test.js',
+  'lib/session-aliases-rounds-2.test.js',
   'lib/project-detect.test.js',
   'hooks/hooks.test.js',
   'hooks/hooks-post-edit.test.js',
