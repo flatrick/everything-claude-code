@@ -10,6 +10,7 @@ const fs = require('fs');
 const os = require('os');
 const { test } = require('../helpers/test-runner');
 const { clearSessionManagerCache, createTempSessionDir, cleanup } = require('../helpers/session-manager-test-utils');
+const { withEnv } = require('../helpers/env-test-utils');
 
 let sessionManager = require('../../scripts/lib/session-manager');
 const utils = require('../../scripts/lib/utils');
@@ -309,13 +310,13 @@ src/main.ts
   // Override HOME to a temp dir for isolated getAllSessions/getSessionById tests
   // On Windows, os.homedir() uses USERPROFILE, not HOME  set both for cross-platform
   const tmpHome = path.join(os.tmpdir(), `ecc-session-mgr-test-${Date.now()}`);
-  const origHome = process.env.HOME;
-  const origUserProfile = process.env.USERPROFILE;
-  process.env.HOME = tmpHome;
-  process.env.USERPROFILE = tmpHome;
+  const inTmpSessionHome = fn => withEnv({ HOME: tmpHome, USERPROFILE: tmpHome }, fn);
   // Use the same sessions dir the implementation uses (tool-agnostic: .cursor or .claude)
-  const tmpSessionsDir = utils.getSessionsDir();
-  fs.mkdirSync(tmpSessionsDir, { recursive: true });
+  const tmpSessionsDir = inTmpSessionHome(() => {
+    const dir = utils.getSessionsDir();
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  });
 
   // Create test session files with controlled modification times
   const testSessions = [
@@ -334,41 +335,41 @@ src/main.ts
   }
 
   if (test('getAllSessions returns all sessions', () => {
-    const result = sessionManager.getAllSessions({ limit: 100 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ limit: 100 }));
     assert.strictEqual(result.total, 5);
     assert.strictEqual(result.sessions.length, 5);
     assert.strictEqual(result.hasMore, false);
   })) passed++; else failed++;
 
   if (test('getAllSessions paginates correctly', () => {
-    const page1 = sessionManager.getAllSessions({ limit: 2, offset: 0 });
+    const page1 = inTmpSessionHome(() => sessionManager.getAllSessions({ limit: 2, offset: 0 }));
     assert.strictEqual(page1.sessions.length, 2);
     assert.strictEqual(page1.hasMore, true);
     assert.strictEqual(page1.total, 5);
 
-    const page2 = sessionManager.getAllSessions({ limit: 2, offset: 2 });
+    const page2 = inTmpSessionHome(() => sessionManager.getAllSessions({ limit: 2, offset: 2 }));
     assert.strictEqual(page2.sessions.length, 2);
     assert.strictEqual(page2.hasMore, true);
 
-    const page3 = sessionManager.getAllSessions({ limit: 2, offset: 4 });
+    const page3 = inTmpSessionHome(() => sessionManager.getAllSessions({ limit: 2, offset: 4 }));
     assert.strictEqual(page3.sessions.length, 1);
     assert.strictEqual(page3.hasMore, false);
   })) passed++; else failed++;
 
   if (test('getAllSessions filters by date', () => {
-    const result = sessionManager.getAllSessions({ date: '2026-02-01', limit: 100 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ date: '2026-02-01', limit: 100 }));
     assert.strictEqual(result.total, 2);
     assert.ok(result.sessions.every(s => s.date === '2026-02-01'));
   })) passed++; else failed++;
 
   if (test('getAllSessions filters by search (short ID)', () => {
-    const result = sessionManager.getAllSessions({ search: 'abcd', limit: 100 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ search: 'abcd', limit: 100 }));
     assert.strictEqual(result.total, 1);
     assert.strictEqual(result.sessions[0].shortId, 'abcd1234');
   })) passed++; else failed++;
 
   if (test('getAllSessions returns sorted by newest first', () => {
-    const result = sessionManager.getAllSessions({ limit: 100 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ limit: 100 }));
     for (let i = 1; i < result.sessions.length; i++) {
       assert.ok(
         result.sessions[i - 1].modifiedTime >= result.sessions[i].modifiedTime,
@@ -378,14 +379,14 @@ src/main.ts
   })) passed++; else failed++;
 
   if (test('getAllSessions handles offset beyond total', () => {
-    const result = sessionManager.getAllSessions({ offset: 999, limit: 10 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: 999, limit: 10 }));
     assert.strictEqual(result.sessions.length, 0);
     assert.strictEqual(result.total, 5);
     assert.strictEqual(result.hasMore, false);
   })) passed++; else failed++;
 
   if (test('getAllSessions returns empty for non-existent date', () => {
-    const result = sessionManager.getAllSessions({ date: '2099-12-31', limit: 100 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ date: '2099-12-31', limit: 100 }));
     assert.strictEqual(result.total, 0);
     assert.strictEqual(result.sessions.length, 0);
   })) passed++; else failed++;
@@ -393,7 +394,7 @@ src/main.ts
   if (test('getAllSessions ignores non-.tmp files', () => {
     fs.writeFileSync(path.join(tmpSessionsDir, 'notes.txt'), 'not a session');
     fs.writeFileSync(path.join(tmpSessionsDir, 'compaction-log.txt'), 'log');
-    const result = sessionManager.getAllSessions({ limit: 100 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ limit: 100 }));
     assert.strictEqual(result.total, 5, 'Should only count .tmp session files');
   })) passed++; else failed++;
 
@@ -401,52 +402,52 @@ src/main.ts
   console.log('\ngetSessionById:');
 
   if (test('getSessionById finds by short ID prefix', () => {
-    const result = sessionManager.getSessionById('abcd1234');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('abcd1234'));
     assert.ok(result, 'Should find session by exact short ID');
     assert.strictEqual(result.shortId, 'abcd1234');
   })) passed++; else failed++;
 
   if (test('getSessionById finds by short ID prefix match', () => {
-    const result = sessionManager.getSessionById('abcd');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('abcd'));
     assert.ok(result, 'Should find session by short ID prefix');
     assert.strictEqual(result.shortId, 'abcd1234');
   })) passed++; else failed++;
 
   if (test('getSessionById finds by full filename', () => {
-    const result = sessionManager.getSessionById('2026-01-15-abcd1234-session.tmp');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('2026-01-15-abcd1234-session.tmp'));
     assert.ok(result, 'Should find session by full filename');
     assert.strictEqual(result.shortId, 'abcd1234');
   })) passed++; else failed++;
 
   if (test('getSessionById finds by filename without .tmp', () => {
-    const result = sessionManager.getSessionById('2026-01-15-abcd1234-session');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('2026-01-15-abcd1234-session'));
     assert.ok(result, 'Should find session by filename without extension');
   })) passed++; else failed++;
 
   if (test('getSessionById returns null for non-existent ID', () => {
-    const result = sessionManager.getSessionById('zzzzzzzz');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('zzzzzzzz'));
     assert.strictEqual(result, null);
   })) passed++; else failed++;
 
   if (test('getSessionById includes content when requested', () => {
-    const result = sessionManager.getSessionById('abcd1234', true);
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('abcd1234', true));
     assert.ok(result, 'Should find session');
     assert.ok(result.content, 'Should include content');
     assert.ok(result.content.includes('Session 1'), 'Content should match');
   })) passed++; else failed++;
 
   if (test('getSessionById finds old format (no short ID)', () => {
-    const result = sessionManager.getSessionById('2026-02-10-session');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('2026-02-10-session'));
     assert.ok(result, 'Should find old-format session by filename');
   })) passed++; else failed++;
 
   if (test('getSessionById returns null for empty string', () => {
-    const result = sessionManager.getSessionById('');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById(''));
     assert.strictEqual(result, null, 'Empty string should not match any session');
   })) passed++; else failed++;
 
   if (test('getSessionById metadata and stats populated when includeContent=true', () => {
-    const result = sessionManager.getSessionById('abcd1234', true);
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('abcd1234', true));
     assert.ok(result, 'Should find session');
     assert.ok(result.metadata, 'Should have metadata');
     assert.ok(result.stats, 'Should have stats');
@@ -733,7 +734,7 @@ src/main.ts
   console.log('\ngetAllSessions (pagination edge cases):');
 
   if (test('getAllSessions clamps negative offset to 0', () => {
-    const result = sessionManager.getAllSessions({ offset: -5, limit: 2 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: -5, limit: 2 }));
     // Negative offset should be clamped to 0, returning the first 2 sessions
     assert.strictEqual(result.sessions.length, 2);
     assert.strictEqual(result.offset, 0);
@@ -741,40 +742,40 @@ src/main.ts
   })) passed++; else failed++;
 
   if (test('getAllSessions clamps NaN offset to 0', () => {
-    const result = sessionManager.getAllSessions({ offset: NaN, limit: 3 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: NaN, limit: 3 }));
     assert.strictEqual(result.sessions.length, 3);
     assert.strictEqual(result.offset, 0);
   })) passed++; else failed++;
 
   if (test('getAllSessions clamps NaN limit to default', () => {
-    const result = sessionManager.getAllSessions({ offset: 0, limit: NaN });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: 0, limit: NaN }));
     // NaN limit should be clamped to default (50), returning all 5 sessions
     assert.ok(result.sessions.length > 0);
     assert.strictEqual(result.total, 5);
   })) passed++; else failed++;
 
   if (test('getAllSessions clamps negative limit to 1', () => {
-    const result = sessionManager.getAllSessions({ offset: 0, limit: -10 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: 0, limit: -10 }));
     // Negative limit should be clamped to 1
     assert.strictEqual(result.sessions.length, 1);
     assert.strictEqual(result.limit, 1);
   })) passed++; else failed++;
 
   if (test('getAllSessions clamps zero limit to 1', () => {
-    const result = sessionManager.getAllSessions({ offset: 0, limit: 0 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: 0, limit: 0 }));
     assert.strictEqual(result.sessions.length, 1);
     assert.strictEqual(result.limit, 1);
   })) passed++; else failed++;
 
   if (test('getAllSessions handles string offset/limit gracefully', () => {
-    const result = sessionManager.getAllSessions({ offset: 'abc', limit: 'xyz' });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: 'abc', limit: 'xyz' }));
     // String non-numeric should be treated as 0/default
     assert.strictEqual(result.offset, 0);
     assert.ok(result.sessions.length > 0);
   })) passed++; else failed++;
 
   if (test('getAllSessions handles fractional offset (floors to integer)', () => {
-    const result = sessionManager.getAllSessions({ offset: 1.7, limit: 2 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: 1.7, limit: 2 }));
     // 1.7 should floor to 1, skip first session, return next 2
     assert.strictEqual(result.offset, 1);
     assert.strictEqual(result.sessions.length, 2);
@@ -785,7 +786,7 @@ src/main.ts
     // Math.floor(Infinity) is Infinity  however slice(Infinity) returns []
     // Actually: Number(Infinity) || 0 = Infinity, Math.floor(Infinity) = Infinity
     // Math.max(0, Infinity) = Infinity, so slice(Infinity) = []
-    const result = sessionManager.getAllSessions({ offset: Infinity, limit: 2 });
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({ offset: Infinity, limit: 2 }));
     assert.strictEqual(result.sessions.length, 0);
     assert.strictEqual(result.total, 5);
   })) passed++; else failed++;
@@ -865,21 +866,21 @@ src/main.ts
 
   if (test('combines date filter + search filter + pagination', () => {
     // We have 2026-02-01-ijkl9012 and 2026-02-01-mnop3456 with date 2026-02-01
-    const result = sessionManager.getAllSessions({
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({
       date: '2026-02-01',
       search: 'ijkl',
       limit: 10
-    });
+    }));
     assert.strictEqual(result.total, 1, 'Only one session matches both date and search');
     assert.strictEqual(result.sessions[0].shortId, 'ijkl9012');
   })) passed++; else failed++;
 
   if (test('date filter + offset beyond matches returns empty', () => {
-    const result = sessionManager.getAllSessions({
+    const result = inTmpSessionHome(() => sessionManager.getAllSessions({
       date: '2026-02-01',
       offset: 100,
       limit: 10
-    });
+    }));
     assert.strictEqual(result.sessions.length, 0);
     assert.strictEqual(result.total, 2, 'Two sessions match the date');
     assert.strictEqual(result.hasMore, false);
@@ -890,7 +891,7 @@ src/main.ts
   if (test('returns first match when multiple sessions share a prefix', () => {
     // Sessions with IDs abcd1234 and efgh5678 exist
     // 'e' should match efgh5678 (only match)
-    const result = sessionManager.getSessionById('efgh');
+    const result = inTmpSessionHome(() => sessionManager.getSessionById('efgh'));
     assert.ok(result, 'Should find session by prefix');
     assert.strictEqual(result.shortId, 'efgh5678');
   })) passed++; else failed++;

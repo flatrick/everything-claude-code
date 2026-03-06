@@ -65,6 +65,7 @@ listed in the **Dropped / Disputed** section at the end.
 - Further expanded `withEnv(...)` adoption in `tests/lib/session-aliases-rounds.test.js` by migrating the Round 90 backup-restore failure path to shared environment lifecycle handling.
 - Expanded `withEnv(...)` adoption in `tests/lib/package-manager.test.js` and `tests/lib/package-manager-rounds.test.js` for isolated HOME/USERPROFILE config-path scenarios to reduce repeated manual environment lifecycle code.
 - Refactored shared `getSessionsDirForHome(...)` in `tests/helpers/hook-test-utils.js` to use `withEnv(...)` for consistent env override save/restore behavior.
+- Expanded `withEnv(...)` adoption in `tests/lib/session-manager.test.js` for shared session fixture and `getAllSessions`/`getSessionById` coverage to eliminate remaining manual HOME/USERPROFILE mutation.
 - Restricted installer payload to runtime scripts only (`scripts/hooks` and `scripts/lib`) for Claude/Cursor installs and added dedicated installer tests (`tests/scripts/install-ecc.test.js`) to guard copy-scope and settings-merge behavior.
 - CI security checks are now blocking by configuration (`npm audit` in `.github/workflows/ci.yml`), and `.github/workflows/release.yml` now uses a dynamic heredoc delimiter for changelog output safety.
 - Added shared markdown normalization utilities for CI validators and strengthened structural checks: skills require heading + "When to Use/Activate"; rules require heading + non-empty body content. Validator tests and affected skill docs were updated to match.
