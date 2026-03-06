@@ -34,6 +34,22 @@
     "agents": {
       "type": "array",
       "items": { "type": "string" }
+    },
+    "commands": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "rules": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "hooks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "mcp_configs": {
+      "type": "array",
+      "items": { "type": "string" }
     }
   }
 }
