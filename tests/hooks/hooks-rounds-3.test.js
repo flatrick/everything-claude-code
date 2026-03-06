@@ -349,6 +349,35 @@ async function runTests() {
     }
   })) passed++; else failed++;
 
+  if (await asyncTest('rotates oversized compaction log to bounded tail', async () => {
+    const isoHome = path.join(os.tmpdir(), `ecc-compact-rotate-${Date.now()}`);
+    const sessionsDir = getSessionsDirForHome(isoHome);
+    fs.mkdirSync(sessionsDir, { recursive: true });
+    const logFile = path.join(sessionsDir, 'compaction-log.txt');
+
+    try {
+      // Build >100KB worth of deterministic entries to trigger rotation logic.
+      const largeEntry = '[2026-01-01 00:00:00] Context compaction triggered ' + 'x'.repeat(180) + '\n';
+      fs.writeFileSync(logFile, largeEntry.repeat(700), 'utf8');
+      const beforeBytes = Buffer.byteLength(fs.readFileSync(logFile, 'utf8'), 'utf8');
+      assert.ok(beforeBytes > 100 * 1024, 'Precondition: log should exceed rotation threshold');
+
+      const result = await runScript(path.join(scriptsDir, 'pre-compact.js'), '', {
+        HOME: isoHome, USERPROFILE: isoHome
+      });
+      assert.strictEqual(result.code, 0, 'pre-compact should exit 0');
+
+      const rotated = fs.readFileSync(logFile, 'utf8');
+      const afterBytes = Buffer.byteLength(rotated, 'utf8');
+      assert.ok(afterBytes <= 100 * 1024, `Rotated log should be <= 100KB, got ${afterBytes}`);
+      assert.ok(rotated.includes('Context compaction triggered'), 'Rotated log should retain recent entries');
+      const lines = rotated.split('\n').filter(Boolean);
+      assert.ok(lines.length <= 1000, `Rotated log should keep at most 1000 lines, got ${lines.length}`);
+    } finally {
+      fs.rmSync(isoHome, { recursive: true, force: true });
+    }
+  })) passed++; else failed++;
+
   console.log('\nRound 50: session-start.js (graceful degradation):');
 
   if (await asyncTest('exits 0 when sessions path is a file (not a directory)', async () => {
