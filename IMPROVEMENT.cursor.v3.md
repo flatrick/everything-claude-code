@@ -50,6 +50,7 @@ Source chain: `IMPROVEMENT.codex.md` + `IMPROVEMENT.claude.md` + `IMPROVEMENT.cu
 - Further split oversized hooks rounds coverage by adding `tests/hooks/hooks-rounds-3.test.js`, and updated `tests/run-all.js` to execute all hooks round suites.
 - Further split oversized session-aliases rounds coverage by adding `tests/lib/session-aliases-rounds-2.test.js`, and updated `tests/run-all.js` to execute both session-aliases round suites.
 - Further split oversized hooks rounds coverage by adding `tests/hooks/hooks-rounds-4.test.js`, and updated `tests/run-all.js` to execute all hooks round suites.
+- Further split oversized validator rounds coverage by adding `tests/ci/validators-rounds-3.test.js`, and updated `tests/run-all.js` to execute all validator round suites.
 
 ---
 
