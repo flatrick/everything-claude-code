@@ -19,6 +19,20 @@ listed in the **Dropped / Disputed** section at the end.
 
 ---
 
+## Status Snapshot (Already Completed)
+
+- Removed the missing CI parity step (`validate-windows-parity.js`) from `.github/workflows/ci.yml`.
+- Removed missing `llms.txt` from `package.json` packaging `files`.
+- Updated `/configure-ecc` source in `skills/configure-ecc/SKILL.md` to this fork.
+- Added dependency preflight check (`scripts/ci/check-dependencies.js`) and enforced it in `lint` and `test`.
+- Implemented package-manager hardening (path traversal guard, newline-safe args, non-string args rejection) and aligned tests.
+- Implemented v1 alias contract: `resolveSessionAlias(...)` resolves alias or returns `null` (no implicit passthrough).
+- Refactored `readStdinJson` to remove only local listeners; exported `parseJsonObject` and updated tests.
+- Converted key hook/CI scripts to callable modules and rewrote related tests to avoid unnecessary nested subprocesses.
+- Added subprocess capability guard with strict mode, and enabled strict mode in CI via `ECC_REQUIRE_SUBPROCESS_TESTS=1`.
+
+---
+
 ## Batch 1 — Security & Input Validation
 
 Fix first. These touch code that constructs shell commands or builds file paths from

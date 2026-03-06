@@ -18,6 +18,20 @@ Source chain: `IMPROVEMENT.codex.md` + `IMPROVEMENT.claude.md` + `IMPROVEMENT.cu
 
 ---
 
+## Status Snapshot (Already Completed)
+
+- Removed missing CI step `validate-windows-parity.js` from `.github/workflows/ci.yml`.
+- Removed missing `llms.txt` from `package.json` `files`.
+- Updated `skills/configure-ecc/SKILL.md` clone URL to this fork.
+- Added dependency preflight script (`scripts/ci/check-dependencies.js`) and wired it into `lint` and `test`.
+- Hardened package-manager command validation (`SAFE_NAME_REGEX`, newline-safe args, strict args typing) with updated tests.
+- Enforced v1 alias policy: `resolveSessionAlias(...)` now returns `null` when unresolved; typings/tests updated.
+- Fixed `readStdinJson` listener cleanup to remove only owned listeners; added `parseJsonObject`.
+- Refactored hook/validator scripts for direct-call testing to reduce subprocess-only test coupling.
+- Added subprocess capability gating + strict mode and enabled strict mode in CI (`ECC_REQUIRE_SUBPROCESS_TESTS=1`).
+
+---
+
 ## Group 1 — Security & Input Validation
 
 Input-validation bugs in code that constructs shell commands or file paths.

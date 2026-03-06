@@ -26,6 +26,18 @@ execution slices with acceptance criteria.
 - Any caller that wants alias-or-path behavior must implement explicit fallback at the call site.
 - In general, helpers that process user-provided identifiers should prefer explicit `null`/error over implicit trust.
 
+## Status Snapshot (Already Completed)
+
+- Removed missing CI step `validate-windows-parity.js` from `.github/workflows/ci.yml`.
+- Removed missing `llms.txt` from `package.json` `files`.
+- Updated `skills/configure-ecc/SKILL.md` to clone this fork.
+- Added dependency preflight gate: `scripts/ci/check-dependencies.js` + tests, wired into `lint` and `test` scripts.
+- Hardened `scripts/lib/package-manager.js` (`SAFE_NAME_REGEX`, newline-safe args, non-string args rejection) and updated tests.
+- Enforced v1 alias contract: `resolveSessionAlias(...)` returns `string | null` (no passthrough), plus type updates/tests.
+- Refactored `readStdinJson` to remove only owned listeners; added `parseJsonObject` and updated tests.
+- Converted key hook/CI scripts to importable/testable modules and updated tests to reduce subprocess dependence.
+- Added subprocess capability guard + strict mode (`ECC_REQUIRE_SUBPROCESS_TESTS=1`) and enabled strict mode in CI test step.
+
 ## P0 - Breakage and Install/CI Integrity
 
 1. CI references a missing script.
