@@ -154,7 +154,7 @@ An instinct should be promoted from project-scoped to global when:
 2. Each instance has confidence **>= 0.8**
 3. The domain is in the global-friendly list (security, general-best-practices, workflow)
 
-Promotion is handled by the `instinct-cli.py promote` command or the `/evolve` analysis.
+Promotion is handled by the `/promote` command or the `/evolve` analysis.
 
 ## Important Guidelines
 

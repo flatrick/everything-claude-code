@@ -298,13 +298,18 @@ When the same instinct appears in multiple projects with high confidence, it's a
 
 ```bash
 # Promote a specific instinct
-python3 instinct-cli.py promote prefer-explicit-errors
+node "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" promote prefer-explicit-errors
 
 # Auto-promote all qualifying instincts
-python3 instinct-cli.py promote
+node "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" promote
 
 # Preview without changes
-python3 instinct-cli.py promote --dry-run
+node "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" promote --dry-run
+```
+
+If `CLAUDE_PLUGIN_ROOT` is not set, use the fallback path for your tool:
+```bash
+node ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.js promote
 ```
 
 The `/evolve` command also suggests promotion candidates.

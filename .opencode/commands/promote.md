@@ -12,12 +12,12 @@ Promote instincts in continuous-learning-v2: $ARGUMENTS
 Run:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" promote $ARGUMENTS
+node "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" promote $ARGUMENTS
 ```
 
 If `CLAUDE_PLUGIN_ROOT` is unavailable, use:
 
 ```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py promote $ARGUMENTS
+node ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.js promote $ARGUMENTS
 ```
 

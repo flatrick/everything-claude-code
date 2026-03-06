@@ -12,12 +12,12 @@ Show continuous-learning-v2 project registry and stats: $ARGUMENTS
 Run:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" projects
+node "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" projects
 ```
 
 If `CLAUDE_PLUGIN_ROOT` is unavailable, use:
 
 ```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py projects
+node ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.js projects
 ```
 
