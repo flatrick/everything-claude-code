@@ -8,34 +8,10 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 
 // Import the modules
 const pm = require('../../scripts/lib/package-manager');
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(` ✓ ${name}`);
-    return true;
-  } catch (_err) {
-    console.log(` ✗ ${name}`);
-    console.log(` Error: ${_err.message}`);
-    return false;
-  }
-}
-
-// Create a temporary test directory
-function createTestDir() {
-  const testDir = path.join(os.tmpdir(), `pm-test-${Date.now()}`);
-  fs.mkdirSync(testDir, { recursive: true });
-  return testDir;
-}
-
-// Clean up test directory
-function cleanupTestDir(testDir) {
-  fs.rmSync(testDir, { recursive: true, force: true });
-}
 
 // Test suite
 function runTests() {

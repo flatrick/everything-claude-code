@@ -7,22 +7,10 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+const { test } = require('../helpers/test-runner');
 
 // Import the module
 const utils = require('../../scripts/lib/utils');
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
 
 // Test suite
 function runTests() {
@@ -32,7 +20,7 @@ function runTests() {
   let failed = 0;
   const canExecuteCommands = utils.runCommand(utils.isWindows ? 'where node' : 'which node').success;
 
-  // ── Round 28: parseJsonObject whitespace/BOM handling ──
+  // ââ Round 28: parseJsonObject whitespace/BOM handling ââ
   console.log('\nparseJsonObject edge cases:');
 
   if (test('parseJsonObject returns {} for whitespace-only input', () => {
@@ -50,7 +38,7 @@ function runTests() {
     assert.deepStrictEqual(parsed, { a: 1 });
   })) passed++; else failed++;
 
-  // ── Round 31: ensureDir error propagation ──
+  // ââ Round 31: ensureDir error propagation ââ
   console.log('\nensureDir Error Propagation (Round 31):');
 
   if (test('ensureDir wraps non-EEXIST errors with descriptive message', () => {
@@ -85,12 +73,12 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 31: runCommand stderr preference on failure ──
+  // ââ Round 31: runCommand stderr preference on failure ââ
   console.log('\nrunCommand failure output (Round 31):');
 
   if (test('runCommand returns stderr content on failure when stderr exists', () => {
     if (!canExecuteCommands) {
-      console.log('    (skipped — command execution unavailable in sandbox)');
+      console.log('    (skipped â command execution unavailable in sandbox)');
       return;
     }
     const result = utils.runCommand('node -e "process.stderr.write(\'custom error\'); process.exit(1)"');
@@ -105,7 +93,7 @@ function runTests() {
     assert.ok(result.output.length > 0, 'Should have some error output');
   })) passed++; else failed++;
 
-  // ── Round 31: getGitModifiedFiles with empty patterns ──
+  // ââ Round 31: getGitModifiedFiles with empty patterns ââ
   console.log('\ngetGitModifiedFiles empty patterns (Round 31):');
 
   if (test('getGitModifiedFiles with empty array returns all modified files', () => {
@@ -117,7 +105,7 @@ function runTests() {
       'Empty patterns array should behave same as no patterns');
   })) passed++; else failed++;
 
-  // ── Round 33: parseJsonObject non-object input guards ──
+  // ââ Round 33: parseJsonObject non-object input guards ââ
   console.log('\nparseJsonObject input guards (Round 33):');
 
   if (test('parseJsonObject returns {} for primitive JSON values', () => {
@@ -130,7 +118,7 @@ function runTests() {
   // replaceInFile returns false when write fails (e.g., read-only file)
   if (test('replaceInFile returns false on write failure (read-only file)', () => {
     if (process.platform === 'win32' || process.getuid?.() === 0) {
-      console.log('    (skipped — chmod ineffective on Windows/root)');
+      console.log('    (skipped â chmod ineffective on Windows/root)');
       return;
     }
     const testDir = path.join(utils.getTempDir(), `utils-test-readonly-${Date.now()}`);
@@ -150,7 +138,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 69: getGitModifiedFiles with ALL invalid patterns ──
+  // ââ Round 69: getGitModifiedFiles with ALL invalid patterns ââ
   console.log('\ngetGitModifiedFiles all-invalid patterns (Round 69):');
 
   if (test('getGitModifiedFiles with all-invalid patterns skips filtering (returns all files)', () => {
@@ -159,17 +147,17 @@ function runTests() {
     // This differs from the mixed-valid test where at least one pattern compiles.
     const allInvalid = utils.getGitModifiedFiles(['(unclosed', '[bad', '**invalid']);
     const unfiltered = utils.getGitModifiedFiles();
-    // Both should return the same list — all-invalid patterns = no filtering
+    // Both should return the same list â all-invalid patterns = no filtering
     assert.deepStrictEqual(allInvalid, unfiltered,
       'All-invalid patterns should return same result as no patterns (no filtering)');
   })) passed++; else failed++;
 
-  // ── Round 71: findFiles recursive scan skips unreadable subdirectory ──
+  // ââ Round 71: findFiles recursive scan skips unreadable subdirectory ââ
   console.log('\nRound 71: findFiles (unreadable subdirectory in recursive scan):');
 
   if (test('findFiles recursive scan skips unreadable subdirectory silently', () => {
     if (process.platform === 'win32' || process.getuid?.() === 0) {
-      console.log('    (skipped — chmod ineffective on Windows/root)');
+      console.log('    (skipped â chmod ineffective on Windows/root)');
       return;
     }
     const tmpDir = path.join(utils.getTempDir(), `ecc-findfiles-r71-${Date.now()}`);
@@ -182,7 +170,7 @@ function runTests() {
     fs.writeFileSync(path.join(readableSubdir, 'found.txt'), 'data');
     fs.writeFileSync(path.join(unreadableSubdir, 'hidden.txt'), 'data');
 
-    // Make the subdirectory unreadable — readdirSync will throw EACCES
+    // Make the subdirectory unreadable â readdirSync will throw EACCES
     fs.chmodSync(unreadableSubdir, 0o000);
 
     try {
@@ -198,14 +186,14 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 79: countInFile with valid string pattern ──
+  // ââ Round 79: countInFile with valid string pattern ââ
   console.log('\nRound 79: countInFile (valid string pattern):');
 
   if (test('countInFile counts occurrences using a plain string pattern', () => {
     const testFile = path.join(utils.getTempDir(), `utils-test-count-str-${Date.now()}.txt`);
     try {
       utils.writeFile(testFile, 'apple banana apple cherry apple');
-      // Pass a plain string (not RegExp) — exercises typeof pattern === 'string'
+      // Pass a plain string (not RegExp) â exercises typeof pattern === 'string'
       // branch at utils.js:441-442 which creates new RegExp(pattern, 'g')
       const count = utils.countInFile(testFile, 'apple');
       assert.strictEqual(count, 3, 'String pattern should count all occurrences');
@@ -214,14 +202,14 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 79: grepFile with valid string pattern ──
+  // ââ Round 79: grepFile with valid string pattern ââ
   console.log('\nRound 79: grepFile (valid string pattern):');
 
   if (test('grepFile finds matching lines using a plain string pattern', () => {
     const testFile = path.join(utils.getTempDir(), `utils-test-grep-str-${Date.now()}.txt`);
     try {
       utils.writeFile(testFile, 'line1 alpha\nline2 beta\nline3 alpha\nline4 gamma');
-      // Pass a plain string (not RegExp) — exercises the else branch
+      // Pass a plain string (not RegExp) â exercises the else branch
       // at utils.js:468-469 which creates new RegExp(pattern)
       const matches = utils.grepFile(testFile, 'alpha');
       assert.strictEqual(matches.length, 2, 'String pattern should find 2 matching lines');
@@ -233,8 +221,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 84: findFiles inner statSync catch (TOCTOU — broken symlink) ──
-  console.log('\nRound 84: findFiles (inner statSync catch — broken symlink):');
+  // ââ Round 84: findFiles inner statSync catch (TOCTOU â broken symlink) ââ
+  console.log('\nRound 84: findFiles (inner statSync catch â broken symlink):');
 
   if (test('findFiles skips broken symlinks that match the pattern', () => {
     // findFiles at utils.js:170-173: readdirSync returns entries including broken
@@ -267,12 +255,12 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 85: getSessionIdShort fallback parameter ──
+  // ââ Round 85: getSessionIdShort fallback parameter ââ
   console.log('\ngetSessionIdShort fallback (Round 85):');
 
   if (test('getSessionIdShort uses fallback when getProjectName returns null (CWD at root)', () => {
     if (process.platform === 'win32') {
-      console.log('    (skipped — root CWD differs on Windows)');
+      console.log('    (skipped â root CWD differs on Windows)');
       return;
     }
     const previousCwd = process.cwd();
@@ -290,7 +278,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 88: replaceInFile with empty replacement (deletion) ──
+  // ââ Round 88: replaceInFile with empty replacement (deletion) ââ
   console.log('\nRound 88: replaceInFile with empty replacement string (deletion):');
   if (test('replaceInFile with empty string replacement deletes matched text', () => {
     const tmpDir = path.join(utils.getTempDir(), `ecc-r88-replace-empty-${Date.now()}`);
@@ -308,7 +296,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 88: countInFile with valid file but zero matches ──
+  // ââ Round 88: countInFile with valid file but zero matches ââ
   console.log('\nRound 88: countInFile with existing file but non-matching pattern:');
   if (test('countInFile returns 0 for valid file with no pattern matches', () => {
     const tmpDir = path.join(utils.getTempDir(), `ecc-r88-count-zero-${Date.now()}`);
@@ -327,7 +315,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 92: countInFile with object pattern type ──
+  // ââ Round 92: countInFile with object pattern type ââ
   console.log('\nRound 92: countInFile (non-string non-RegExp pattern):');
 
   if (test('countInFile returns 0 for object pattern (neither string nor RegExp)', () => {
@@ -344,12 +332,12 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 93: countInFile with /pattern/i (g flag appended) ──
+  // ââ Round 93: countInFile with /pattern/i (g flag appended) ââ
   console.log('\nRound 93: countInFile (case-insensitive RegExp, g flag auto-appended):');
 
   if (test('countInFile with /pattern/i appends g flag and counts case-insensitively', () => {
-    // utils.js line 440: pattern.flags = 'i', 'i'.includes('g') → false,
-    // so new RegExp(source, 'i' + 'g') → /pattern/ig
+    // utils.js line 440: pattern.flags = 'i', 'i'.includes('g') â false,
+    // so new RegExp(source, 'i' + 'g') â /pattern/ig
     const testFile = path.join(utils.getTempDir(), `utils-test-ci-flag-${Date.now()}.txt`);
     try {
       utils.writeFile(testFile, 'Foo foo FOO fOo bar baz');
@@ -361,12 +349,12 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 93: countInFile with /pattern/gi (g flag already present) ──
+  // ââ Round 93: countInFile with /pattern/gi (g flag already present) ââ
   console.log('\nRound 93: countInFile (case-insensitive RegExp, g flag preserved):');
 
   if (test('countInFile with /pattern/gi preserves existing flags and counts correctly', () => {
-    // utils.js line 440: pattern.flags = 'gi', 'gi'.includes('g') → true,
-    // so new RegExp(source, 'gi') — flags preserved unchanged
+    // utils.js line 440: pattern.flags = 'gi', 'gi'.includes('g') â true,
+    // so new RegExp(source, 'gi') â flags preserved unchanged
     const testFile = path.join(utils.getTempDir(), `utils-test-gi-flag-${Date.now()}.txt`);
     try {
       utils.writeFile(testFile, 'Foo foo FOO fOo bar baz');
@@ -378,7 +366,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 95: countInFile with regex alternation (no g flag) ──
+  // ââ Round 95: countInFile with regex alternation (no g flag) ââ
   console.log('\nRound 95: countInFile (regex alternation without g flag):');
 
   if (test('countInFile with /apple|banana/ (alternation, no g) counts all matches', () => {
@@ -387,7 +375,7 @@ function runTests() {
     const testFile = path.join(tmpDir, 'alternation.txt');
     try {
       utils.writeFile(testFile, 'apple banana apple cherry banana apple');
-      // /apple|banana/ has alternation but no g flag — countInFile should auto-append g
+      // /apple|banana/ has alternation but no g flag â countInFile should auto-append g
       const count = utils.countInFile(testFile, /apple|banana/);
       assert.strictEqual(count, 5,
         'Should find 3 apples + 2 bananas = 5 total (g flag auto-appended to alternation regex)');
@@ -396,17 +384,17 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 97: getSessionIdShort with whitespace-only CLAUDE_SESSION_ID ──
+  // ââ Round 97: getSessionIdShort with whitespace-only CLAUDE_SESSION_ID ââ
   console.log('\nRound 97: getSessionIdShort (whitespace-only session ID):');
 
   if (test('getSessionIdShort returns whitespace when CLAUDE_SESSION_ID is all spaces', () => {
-    // utils.js line 116: if (sessionId && sessionId.length > 0) — '   ' is truthy
+    // utils.js line 116: if (sessionId && sessionId.length > 0) â '   ' is truthy
     // and has length > 0, so it passes the check instead of falling back.
     const original = process.env.CLAUDE_SESSION_ID;
     try {
       process.env.CLAUDE_SESSION_ID = '          ';  // 10 spaces
       const result = utils.getSessionIdShort('fallback');
-      // slice(-8) on 10 spaces returns 8 spaces — not the expected fallback
+      // slice(-8) on 10 spaces returns 8 spaces â not the expected fallback
       assert.strictEqual(result, '        ',
         'Whitespace-only ID should return 8 trailing spaces (no trim check)');
       assert.strictEqual(result.trim().length, 0,
@@ -420,7 +408,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 97: countInFile with same RegExp object called twice (lastIndex reuse) ──
+  // ââ Round 97: countInFile with same RegExp object called twice (lastIndex reuse) ââ
   console.log('\nRound 97: countInFile (RegExp lastIndex reuse validation):');
 
   if (test('countInFile returns consistent count when same RegExp object is reused', () => {
@@ -434,7 +422,7 @@ function runTests() {
       const sharedRegex = /foo/g;
       // First call
       const count1 = utils.countInFile(testFile, sharedRegex);
-      // Second call with SAME regex object — would fail without defensive new RegExp
+      // Second call with SAME regex object â would fail without defensive new RegExp
       const count2 = utils.countInFile(testFile, sharedRegex);
       assert.strictEqual(count1, 5, 'First call should find 5 matches');
       assert.strictEqual(count2, 5,
@@ -446,8 +434,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 98: findFiles with maxAge: -1 (negative boundary — excludes everything) ──
-  console.log('\nRound 98: findFiles (maxAge: -1 — negative boundary excludes all):');
+  // ââ Round 98: findFiles with maxAge: -1 (negative boundary â excludes everything) ââ
+  console.log('\nRound 98: findFiles (maxAge: -1 â negative boundary excludes all):');
 
   if (test('findFiles with maxAge: -1 excludes all files (ageInDays always >= 0)', () => {
     // utils.js line 176-178: `if (maxAge !== null) { ageInDays = ...; if (ageInDays <= maxAge) }`
@@ -469,7 +457,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 99: replaceInFile returns true even when pattern not found ──
+  // ââ Round 99: replaceInFile returns true even when pattern not found ââ
   console.log('\nRound 99: replaceInFile (no-match still returns true):');
 
   if (test('replaceInFile returns true and rewrites file even when search does not match', () => {
@@ -493,8 +481,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 99: grepFile with CR-only line endings (\r without \n) ──
-  console.log('\nRound 99: grepFile (CR-only line endings — classic Mac format):');
+  // ââ Round 99: grepFile with CR-only line endings (\r without \n) ââ
+  console.log('\nRound 99: grepFile (CR-only line endings â classic Mac format):');
 
   if (test('grepFile treats CR-only file as a single line (splits on \\n only)', () => {
     // utils.js line 474: `content.split('\\n')` splits only on \\n (LF).
@@ -518,8 +506,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 100: findFiles with both maxAge AND recursive (interaction test) ──
-  console.log('\nRound 100: findFiles (maxAge + recursive combined — untested interaction):');
+  // ââ Round 100: findFiles with both maxAge AND recursive (interaction test) ââ
+  console.log('\nRound 100: findFiles (maxAge + recursive combined â untested interaction):');
   if (test('findFiles with maxAge AND recursive filters age across subdirectories', () => {
     const tmpDir = fs.mkdtempSync(path.join(utils.getTempDir(), 'r100-maxage-recur-'));
     const subDir = path.join(tmpDir, 'nested');
@@ -531,17 +519,17 @@ function runTests() {
       fs.writeFileSync(rootFile, 'root file');
       fs.writeFileSync(nestedFile, 'nested file');
 
-      // maxAge: 1 with recursive: true — both files are fresh (ageInDays ≈ 0)
+      // maxAge: 1 with recursive: true â both files are fresh (ageInDays â 0)
       const results = utils.findFiles(tmpDir, '*.txt', { maxAge: 1, recursive: true });
       assert.strictEqual(results.length, 2,
         'Both root and nested files should match (fresh, maxAge: 1, recursive: true)');
 
-      // maxAge: -1 with recursive: true — no files should match (age always >= 0)
+      // maxAge: -1 with recursive: true â no files should match (age always >= 0)
       const noResults = utils.findFiles(tmpDir, '*.txt', { maxAge: -1, recursive: true });
       assert.strictEqual(noResults.length, 0,
         'maxAge: -1 should exclude all files even in subdirectories');
 
-      // maxAge: 1 with recursive: false — only root file
+      // maxAge: 1 with recursive: false â only root file
       const rootOnly = utils.findFiles(tmpDir, '*.txt', { maxAge: 1, recursive: false });
       assert.strictEqual(rootOnly.length, 1,
         'recursive: false should only find root-level file');
@@ -550,8 +538,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 101: output() with circular reference object throws (no try/catch around JSON.stringify) ──
-  console.log('\nRound 101: output() (circular reference — JSON.stringify crash):');
+  // ââ Round 101: output() with circular reference object throws (no try/catch around JSON.stringify) ââ
+  console.log('\nRound 101: output() (circular reference â JSON.stringify crash):');
   if (test('output() throws TypeError on circular reference object (JSON.stringify has no try/catch)', () => {
     const circular = { a: 1 };
     circular.self = circular; // Creates circular reference
@@ -563,8 +551,8 @@ function runTests() {
     );
   })) passed++; else failed++;
 
-  // ── Round 103: countInFile with boolean false pattern (non-string non-RegExp) ──
-  console.log('\nRound 103: countInFile (boolean false — explicit type guard returns 0):');
+  // ââ Round 103: countInFile with boolean false pattern (non-string non-RegExp) ââ
+  console.log('\nRound 103: countInFile (boolean false â explicit type guard returns 0):');
   if (test('countInFile returns 0 for boolean false pattern (else branch at line 443)', () => {
     // utils.js lines 438-444: countInFile checks `instanceof RegExp` then `typeof === "string"`.
     // Boolean `false` fails both checks and falls to the `else return 0` at line 443.
@@ -587,8 +575,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 103: grepFile with numeric 0 pattern (implicit RegExp coercion) ──
-  console.log('\nRound 103: grepFile (numeric 0 — implicit toString via RegExp constructor):');
+  // ââ Round 103: grepFile with numeric 0 pattern (implicit RegExp coercion) ââ
+  console.log('\nRound 103: grepFile (numeric 0 â implicit toString via RegExp constructor):');
   if (test('grepFile with numeric 0 implicitly coerces to /0/ via RegExp constructor', () => {
     // utils.js line 468: grepFile's non-RegExp path does `regex = new RegExp(pattern)`.
     // Unlike countInFile (which has explicit type guards), grepFile passes any value
@@ -601,7 +589,7 @@ function runTests() {
       fs.writeFileSync(testFile, 'line with 0 zero\nno digit here\n100 bottles');
       const matches = utils.grepFile(testFile, 0);
       assert.strictEqual(matches.length, 2,
-        'grepFile(file, 0) should find 2 lines containing "0" (RegExp(0) → /0/)');
+        'grepFile(file, 0) should find 2 lines containing "0" (RegExp(0) â /0/)');
       assert.strictEqual(matches[0].lineNumber, 1,
         'First match on line 1 ("line with 0 zero")');
       assert.strictEqual(matches[1].lineNumber, 3,
@@ -609,14 +597,14 @@ function runTests() {
       // Contrast: countInFile with numeric 0 returns 0 (type-rejected)
       const count = utils.countInFile(testFile, 0);
       assert.strictEqual(count, 0,
-        'countInFile(file, 0) returns 0 — API inconsistency with grepFile');
+        'countInFile(file, 0) returns 0 â API inconsistency with grepFile');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   })) passed++; else failed++;
 
-  // ── Round 105: grepFile with sticky (y) flag — not stripped, causes stateful .test() ──
-  console.log('\nRound 105: grepFile (sticky y flag — not stripped like g, stateful .test() bug):');
+  // ââ Round 105: grepFile with sticky (y) flag â not stripped, causes stateful .test() ââ
+  console.log('\nRound 105: grepFile (sticky y flag â not stripped like g, stateful .test() bug):');
 
   if (test('grepFile with /pattern/y sticky flag misses lines due to lastIndex state', () => {
     const tmpDir = fs.mkdtempSync(path.join(utils.getTempDir(), 'r105-grep-sticky-'));
@@ -635,22 +623,22 @@ function runTests() {
       const globalResults = utils.grepFile(testFile, /hello/g);
       assert.strictEqual(globalResults.length, 3,
         'g-flag regex should find all 3 lines (g is stripped, stateless)');
-      // Sticky flag causes fewer matches — demonstrating the bug
+      // Sticky flag causes fewer matches â demonstrating the bug
       assert.ok(stickyResults.length < 3,
-        `Sticky y flag causes stateful .test() — found ${stickyResults.length}/3 lines ` +
+        `Sticky y flag causes stateful .test() â found ${stickyResults.length}/3 lines ` +
         '(y flag not stripped like g, so lastIndex advances between lines)');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   })) passed++; else failed++;
 
-  // ── Round 107: grepFile with ^$ pattern — empty line matching after split ──
-  console.log('\nRound 107: grepFile (empty line matching — ^$ on split lines, trailing \\n creates extra empty element):');
+  // ââ Round 107: grepFile with ^$ pattern â empty line matching after split ââ
+  console.log('\nRound 107: grepFile (empty line matching â ^$ on split lines, trailing \\n creates extra empty element):');
   if (test('grepFile matches empty lines with ^$ pattern including trailing newline phantom line', () => {
     const tmpDir = fs.mkdtempSync(path.join(utils.getTempDir(), 'r107-grep-empty-'));
     const testFile = path.join(tmpDir, 'test.txt');
     try {
-      // 'line1\n\nline3\n\n'.split('\n') → ['line1','','line3','',''] (5 elements, 3 empty)
+      // 'line1\n\nline3\n\n'.split('\n') â ['line1','','line3','',''] (5 elements, 3 empty)
       fs.writeFileSync(testFile, 'line1\n\nline3\n\n');
       const results = utils.grepFile(testFile, /^$/);
       assert.strictEqual(results.length, 3,
@@ -663,35 +651,35 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 107: replaceInFile where replacement re-introduces search pattern (single-pass) ──
-  console.log('\nRound 107: replaceInFile (replacement contains search pattern — String.replace is single-pass):');
+  // ââ Round 107: replaceInFile where replacement re-introduces search pattern (single-pass) ââ
+  console.log('\nRound 107: replaceInFile (replacement contains search pattern â String.replace is single-pass):');
   if (test('replaceInFile does not re-scan replacement text (single-pass, no infinite loop)', () => {
     const tmpDir = fs.mkdtempSync(path.join(utils.getTempDir(), 'r107-replace-reintr-'));
     const testFile = path.join(tmpDir, 'test.txt');
     try {
       fs.writeFileSync(testFile, 'foo bar baz');
-      // Replace "foo" with "foo extra foo" — should only replace the first occurrence
+      // Replace "foo" with "foo extra foo" â should only replace the first occurrence
       const result = utils.replaceInFile(testFile, 'foo', 'foo extra foo');
       assert.strictEqual(result, true, 'replaceInFile should return true');
       const content = utils.readFile(testFile);
       assert.strictEqual(content, 'foo extra foo bar baz',
-        'Only the original "foo" is replaced — replacement text is not re-scanned');
+        'Only the original "foo" is replaced â replacement text is not re-scanned');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   })) passed++; else failed++;
 
-  // ── Round 106: countInFile with named capture groups — match(g) ignores group details ──
-  console.log('\nRound 106: countInFile (named capture groups — String.match(g) returns full matches only):');
+  // ââ Round 106: countInFile with named capture groups â match(g) ignores group details ââ
+  console.log('\nRound 106: countInFile (named capture groups â String.match(g) returns full matches only):');
   if (test('countInFile with named capture groups counts matches not groups', () => {
     const tmpDir = fs.mkdtempSync(path.join(utils.getTempDir(), 'r106-count-named-'));
     const testFile = path.join(tmpDir, 'test.txt');
     try {
       fs.writeFileSync(testFile, 'foo bar baz\nfoo qux\nbar foo end');
-      // Named capture group — should still count 3 matches for "foo"
+      // Named capture group â should still count 3 matches for "foo"
       const count = utils.countInFile(testFile, /(?<word>foo)/);
       assert.strictEqual(count, 3,
-        'Named capture group should not inflate count — match(g) returns full matches only');
+        'Named capture group should not inflate count â match(g) returns full matches only');
       // Compare with plain pattern
       const plainCount = utils.countInFile(testFile, /foo/);
       assert.strictEqual(plainCount, 3, 'Plain regex should also find 3 matches');
@@ -702,8 +690,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 106: grepFile with multiline (m) flag — preserved, unlike g which is stripped ──
-  console.log('\nRound 106: grepFile (multiline m flag — preserved in regex, unlike g which is stripped):');
+  // ââ Round 106: grepFile with multiline (m) flag â preserved, unlike g which is stripped ââ
+  console.log('\nRound 106: grepFile (multiline m flag â preserved in regex, unlike g which is stripped):');
   if (test('grepFile preserves multiline (m) flag and anchors work on split lines', () => {
     const tmpDir = fs.mkdtempSync(path.join(utils.getTempDir(), 'r106-grep-multiline-'));
     const testFile = path.join(tmpDir, 'test.txt');
@@ -717,9 +705,9 @@ function runTests() {
       // Without m flag: same behavior since grepFile splits lines individually
       const noMResults = utils.grepFile(testFile, /^hello$/);
       assert.strictEqual(noMResults.length, 1,
-        'Without m flag, same result — grepFile splits lines so anchors are per-line already');
+        'Without m flag, same result â grepFile splits lines so anchors are per-line already');
       assert.strictEqual(mResults.length, noMResults.length,
-        'm flag is preserved but irrelevant — line splitting makes anchors per-line already');
+        'm flag is preserved but irrelevant â line splitting makes anchors per-line already');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

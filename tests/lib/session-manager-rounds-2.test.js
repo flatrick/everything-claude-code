@@ -8,6 +8,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { test } = require('../helpers/test-runner');
 
 let sessionManager = require('../../scripts/lib/session-manager');
 const utils = require('../../scripts/lib/utils');
@@ -16,19 +17,6 @@ function clearSessionManagerCache() {
   delete require.cache[require.resolve('../../scripts/lib/detect-env')];
   delete require.cache[require.resolve('../../scripts/lib/utils')];
   delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-}
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
 }
 
 // Create a temp directory for session tests
@@ -53,7 +41,7 @@ function runTests() {
   let failed = 0;
 
   // -- Round 109: getAllSessions skips .tmp files that don't match session filename format --
-  console.log('\nRound 109: getAllSessions (non-session .tmp files � parseSessionFilename returns null ? skip):');
+  console.log('\nRound 109: getAllSessions (non-session .tmp files ï¿½ parseSessionFilename returns null ? skip):');
   if (test('getAllSessions ignores .tmp files with non-matching filenames', () => {
     const isoHome = path.join(os.tmpdir(), `ecc-r109-nonsession-${Date.now()}`);
     const origHome = process.env.HOME;
@@ -85,8 +73,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // -- Round 108: getSessionSize exact boundary at 1024 bytes � B?KB transition --
-  console.log('\nRound 108: getSessionSize (exact 1024-byte boundary � < means 1024 is KB, 1023 is B):');
+  // -- Round 108: getSessionSize exact boundary at 1024 bytes ï¿½ B?KB transition --
+  console.log('\nRound 108: getSessionSize (exact 1024-byte boundary ï¿½ < means 1024 is KB, 1023 is B):');
   if (test('getSessionSize returns KB at exactly 1024 bytes and B at 1023', () => {
     const dir = createTempSessionDir();
     try {
@@ -115,8 +103,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // -- Round 110: parseSessionFilename year 0000 � JS Date maps year 0 to 1900 --
-  console.log('\nRound 110: parseSessionFilename (year 0000 � Date constructor maps 0?1900):');
+  // -- Round 110: parseSessionFilename year 0000 ï¿½ JS Date maps year 0 to 1900 --
+  console.log('\nRound 110: parseSessionFilename (year 0000 ï¿½ Date constructor maps 0?1900):');
   if (test('parseSessionFilename with year 0000 produces datetime in 1900 due to JS Date legacy mapping', () => {
     // JavaScript's multi-arg Date constructor treats years 0-99 as 1900-1999
     // So new Date(0, 0, 1) ? January 1, 1900 (not year 0000)
@@ -132,7 +120,7 @@ function runTests() {
     assert.notStrictEqual(result99, null, 'Year 0099 should also parse');
     assert.strictEqual(result99.datetime.getFullYear(), 1999,
       'JS Date maps year 99 to 1999');
-    // Year 100 does NOT get the 1900 mapping � it stays as year 100
+    // Year 100 does NOT get the 1900 mapping ï¿½ it stays as year 100
     const result100 = sessionManager.parseSessionFilename('0100-03-10-validid1-session.tmp');
     assert.notStrictEqual(result100, null, 'Year 0100 should also parse');
     assert.strictEqual(result100.datetime.getFullYear(), 100,
@@ -140,9 +128,9 @@ function runTests() {
   })) passed++; else failed++;
 
   // -- Round 110: parseSessionFilename rejects uppercase IDs (regex is [a-z0-9]) --
-  console.log('\nRound 110: parseSessionFilename (uppercase ID � regex [a-z0-9]{8,} rejects [A-Z]):');
+  console.log('\nRound 110: parseSessionFilename (uppercase ID ï¿½ regex [a-z0-9]{8,} rejects [A-Z]):');
   if (test('parseSessionFilename rejects filenames with uppercase characters in short ID', () => {
-    // SESSION_FILENAME_REGEX uses [a-z0-9]{8,} � strictly lowercase
+    // SESSION_FILENAME_REGEX uses [a-z0-9]{8,} ï¿½ strictly lowercase
     const upperResult = sessionManager.parseSessionFilename('2026-01-15-ABCD1234-session.tmp');
     assert.strictEqual(upperResult, null,
       'All-uppercase ID should be rejected by [a-z0-9]{8,}');
@@ -156,12 +144,12 @@ function runTests() {
     assert.strictEqual(lowerResult.shortId, 'abcd1234');
   })) passed++; else failed++;
 
-  // -- Round 111: parseSessionMetadata context with nested triple backticks � lazy regex truncation --
-  console.log('\nRound 111: parseSessionMetadata (nested ``` in context � lazy \\S*? stops at first ```):");');
+  // -- Round 111: parseSessionMetadata context with nested triple backticks ï¿½ lazy regex truncation --
+  console.log('\nRound 111: parseSessionMetadata (nested ``` in context ï¿½ lazy \\S*? stops at first ```):");');
   if (test('parseSessionMetadata context capture truncated by nested triple backticks', () => {
     // The regex: /### Context to Load\s*\n```\n([\s\S]*?)```/
     // The lazy [\s\S]*? matches as few chars as possible, so it stops at the
-    // FIRST ``` it encounters � even if that's inside the code block content.
+    // FIRST ``` it encounters ï¿½ even if that's inside the code block content.
     const content = [
       '# Session',
       '',
@@ -195,7 +183,7 @@ function runTests() {
       'Clean context should have second line');
   })) passed++; else failed++;
 
-  // -- Round 112: getSessionStats with newline-containing absolute path � treated as content --
+  // -- Round 112: getSessionStats with newline-containing absolute path ï¿½ treated as content --
   console.log('\nRound 112: getSessionStats (newline-in-path heuristic):');
   if (test('getSessionStats treats absolute .tmp path containing newline as content, not a file path', () => {
     // The looksLikePath heuristic at line 163-166 checks:
@@ -222,11 +210,11 @@ function runTests() {
       'Non-existent file returns empty content with 0 lines');
   })) passed++; else failed++;
 
-  // -- Round 112: appendSessionContent with read-only file � returns false --
+  // -- Round 112: appendSessionContent with read-only file ï¿½ returns false --
   console.log('\nRound 112: appendSessionContent (read-only file):');
   if (test('appendSessionContent returns false when file is read-only (EACCES)', () => {
     if (process.platform === 'win32') {
-      // chmod doesn't work reliably on Windows � skip
+      // chmod doesn't work reliably on Windows ï¿½ skip
       assert.ok(true, 'Skipped on Windows');
       return;
     }
@@ -256,29 +244,29 @@ function runTests() {
   })) passed++; else failed++;
 
   // -- Round 113: parseSessionFilename century leap year validation (1900, 2100 not leap; 2000 is) --
-  console.log('\nRound 113: parseSessionFilename (century leap year � 100/400 rules):');
+  console.log('\nRound 113: parseSessionFilename (century leap year ï¿½ 100/400 rules):');
   if (test('parseSessionFilename rejects Feb 29 in century non-leap years (1900, 2100) but accepts 2000', () => {
     // Gregorian rule: divisible by 100 ? NOT leap, UNLESS also divisible by 400
     // 1900: divisible by 100 but NOT by 400 ? NOT leap ? Feb 29 invalid
     const result1900 = sessionManager.parseSessionFilename('1900-02-29-abcd1234-session.tmp');
     assert.strictEqual(result1900, null,
-      '1900 is NOT a leap year (div by 100 but not 400) � Feb 29 should be rejected');
+      '1900 is NOT a leap year (div by 100 but not 400) ï¿½ Feb 29 should be rejected');
 
-    // 2100: same rule � NOT leap
+    // 2100: same rule ï¿½ NOT leap
     const result2100 = sessionManager.parseSessionFilename('2100-02-29-test1234-session.tmp');
     assert.strictEqual(result2100, null,
-      '2100 is NOT a leap year � Feb 29 should be rejected');
+      '2100 is NOT a leap year ï¿½ Feb 29 should be rejected');
 
     // 2000: divisible by 400 ? IS leap ? Feb 29 valid
     const result2000 = sessionManager.parseSessionFilename('2000-02-29-leap2000-session.tmp');
     assert.notStrictEqual(result2000, null,
-      '2000 IS a leap year (div by 400) � Feb 29 should be accepted');
+      '2000 IS a leap year (div by 400) ï¿½ Feb 29 should be accepted');
     assert.strictEqual(result2000.date, '2000-02-29');
 
     // 2400: also divisible by 400 ? IS leap
     const result2400 = sessionManager.parseSessionFilename('2400-02-29-test2400-session.tmp');
     assert.notStrictEqual(result2400, null,
-      '2400 IS a leap year (div by 400) � Feb 29 should be accepted');
+      '2400 IS a leap year (div by 400) ï¿½ Feb 29 should be accepted');
 
     // Verify Feb 28 always works in non-leap century years
     const result1900Feb28 = sessionManager.parseSessionFilename('1900-02-28-abcd1234-session.tmp');
@@ -286,8 +274,8 @@ function runTests() {
       'Feb 28 should always be valid even in non-leap years');
   })) passed++; else failed++;
 
-  // -- Round 113: parseSessionMetadata title with markdown formatting � raw markdown preserved --
-  console.log('\nRound 113: parseSessionMetadata (title with markdown formatting � raw markdown preserved):');
+  // -- Round 113: parseSessionMetadata title with markdown formatting ï¿½ raw markdown preserved --
+  console.log('\nRound 113: parseSessionMetadata (title with markdown formatting ï¿½ raw markdown preserved):');
   if (test('parseSessionMetadata captures raw markdown formatting in title without stripping', () => {
     // The regex /^#\s+(.+)$/m captures everything after "# ", including markdown
     const boldContent = '# **Important Session**\n\nSome content';
@@ -320,9 +308,9 @@ function runTests() {
       'Trailing whitespace should be trimmed');
   })) passed++; else failed++;
 
-  // -- Round 115: parseSessionMetadata with CRLF line endings � section boundaries differ --
-  console.log('\nRound 115: parseSessionMetadata (CRLF line endings � \\r\\n vs \\n in section regexes):');
-  if (test('parseSessionMetadata handles CRLF content � title trimmed, sections may over-capture', () => {
+  // -- Round 115: parseSessionMetadata with CRLF line endings ï¿½ section boundaries differ --
+  console.log('\nRound 115: parseSessionMetadata (CRLF line endings ï¿½ \\r\\n vs \\n in section regexes):');
+  if (test('parseSessionMetadata handles CRLF content ï¿½ title trimmed, sections may over-capture', () => {
     // Title regex /^#\s+(.+)$/m: . matches \r, trim() removes it
     const crlfTitle = '# My Session\r\n\r\n**Date:** 2026-01-15';
     const titleMeta = sessionManager.parseSessionMetadata(crlfTitle);
@@ -332,7 +320,7 @@ function runTests() {
       'Date extraction unaffected by CRLF');
 
     // Completed section with CRLF: regex ### Completed\s*\n works because \s* matches \r
-    // But the boundary (?=###|\n\n|$) � \n\n won't match \r\n\r\n
+    // But the boundary (?=###|\n\n|$) ï¿½ \n\n won't match \r\n\r\n
     const crlfSections = [
       '# Session\r\n',
       '\r\n',
@@ -353,12 +341,12 @@ function runTests() {
     assert.ok(sectionMeta.completed.includes('Task B'), 'Should find Task B');
 
     // In Progress section: \n\n boundary fails on \r\n\r\n, so the lazy [\s\S]*?
-    // stops at ### instead � this still works because ### is present
+    // stops at ### instead ï¿½ this still works because ### is present
     assert.ok(sectionMeta.inProgress.length >= 1,
       'Should find at least 1 in-progress item');
     assert.ok(sectionMeta.inProgress.includes('Task C'), 'Should find Task C');
 
-    // Edge case: CRLF content with NO section headers after Completed �
+    // Edge case: CRLF content with NO section headers after Completed ï¿½
     // \n\n boundary fails, so [\s\S]*? falls through to $ (end of string)
     const crlfNoNextSection = [
       '# Session\r\n',
@@ -376,7 +364,7 @@ function runTests() {
       'Should find at least 1 completed item in CRLF-only content');
   })) passed++; else failed++;
 
-  // -- Round 117: getSessionSize boundary values � B/KB/MB formatting thresholds --
+  // -- Round 117: getSessionSize boundary values ï¿½ B/KB/MB formatting thresholds --
   console.log('\nRound 117: getSessionSize (B/KB/MB formatting at exact boundary thresholds):');
   if (test('getSessionSize formats correctly at B?KB boundary (1023?"1023 B", 1024?"1.0 KB") and KB?MB', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'r117-size-boundary-'));
@@ -393,19 +381,19 @@ function runTests() {
       assert.strictEqual(sessionManager.getSessionSize(oneByteFile), '1 B',
         'Single byte file should be "1 B"');
 
-      // 1023 bytes � last value in B range (size < 1024)
+      // 1023 bytes ï¿½ last value in B range (size < 1024)
       const file1023 = path.join(tmpDir, '2026-01-03-session.tmp');
       fs.writeFileSync(file1023, 'x'.repeat(1023));
       assert.strictEqual(sessionManager.getSessionSize(file1023), '1023 B',
         '1023 bytes is still in B range (< 1024)');
 
-      // 1024 bytes � first value in KB range (size >= 1024, < 1024*1024)
+      // 1024 bytes ï¿½ first value in KB range (size >= 1024, < 1024*1024)
       const file1024 = path.join(tmpDir, '2026-01-04-session.tmp');
       fs.writeFileSync(file1024, 'x'.repeat(1024));
       assert.strictEqual(sessionManager.getSessionSize(file1024), '1.0 KB',
         '1024 bytes = exactly 1.0 KB');
 
-      // 1025 bytes � KB with decimal
+      // 1025 bytes ï¿½ KB with decimal
       const file1025 = path.join(tmpDir, '2026-01-05-session.tmp');
       fs.writeFileSync(file1025, 'x'.repeat(1025));
       assert.strictEqual(sessionManager.getSessionSize(file1025), '1.0 KB',
@@ -419,40 +407,40 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // -- Round 117: parseSessionFilename with uppercase short ID � regex rejects [A-Z] --
-  console.log('\nRound 117: parseSessionFilename (uppercase short ID � regex [a-z0-9] rejects uppercase):');
+  // -- Round 117: parseSessionFilename with uppercase short ID ï¿½ regex rejects [A-Z] --
+  console.log('\nRound 117: parseSessionFilename (uppercase short ID ï¿½ regex [a-z0-9] rejects uppercase):');
   if (test('parseSessionFilename rejects uppercase short IDs because regex uses [a-z0-9] not [a-zA-Z0-9]', () => {
     // The regex: /^(\d{4}-\d{2}-\d{2})(?:-([a-z0-9]{8,}))?-session\.tmp$/
-    // Note: [a-z0-9] � lowercase only
+    // Note: [a-z0-9] ï¿½ lowercase only
 
-    // All uppercase � rejected
+    // All uppercase ï¿½ rejected
     const upper = sessionManager.parseSessionFilename('2026-01-15-ABCDEFGH-session.tmp');
     assert.strictEqual(upper, null,
       'All-uppercase ID should be rejected (regex uses [a-z0-9])');
 
-    // Mixed case � rejected
+    // Mixed case ï¿½ rejected
     const mixed = sessionManager.parseSessionFilename('2026-01-15-AbCdEfGh-session.tmp');
     assert.strictEqual(mixed, null,
       'Mixed-case ID should be rejected (uppercase chars not in [a-z0-9])');
 
-    // All lowercase � accepted
+    // All lowercase ï¿½ accepted
     const lower = sessionManager.parseSessionFilename('2026-01-15-abcdefgh-session.tmp');
     assert.notStrictEqual(lower, null, 'All-lowercase ID should be accepted');
     assert.strictEqual(lower.shortId, 'abcdefgh');
 
-    // Uppercase hex-like (common in UUIDs) � rejected
+    // Uppercase hex-like (common in UUIDs) ï¿½ rejected
     const hexUpper = sessionManager.parseSessionFilename('2026-01-15-A1B2C3D4-session.tmp');
     assert.strictEqual(hexUpper, null,
       'Uppercase hex ID should be rejected');
 
-    // Lowercase hex � accepted
+    // Lowercase hex ï¿½ accepted
     const hexLower = sessionManager.parseSessionFilename('2026-01-15-a1b2c3d4-session.tmp');
     assert.notStrictEqual(hexLower, null, 'Lowercase hex ID should be accepted');
     assert.strictEqual(hexLower.shortId, 'a1b2c3d4');
   })) passed++; else failed++;
 
   // -- Round 119: parseSessionMetadata "Context to Load" code block extraction --
-  console.log('\nRound 119: parseSessionMetadata ("Context to Load" � code block extraction edge cases):');
+  console.log('\nRound 119: parseSessionMetadata ("Context to Load" ï¿½ code block extraction edge cases):');
   if (test('parseSessionMetadata extracts Context to Load from code block, handles missing/nested blocks', () => {
     // Valid context extraction
     const validContent = [
@@ -467,7 +455,7 @@ function runTests() {
     assert.strictEqual(validMeta.context, 'file1.js\nfile2.ts',
       'Should extract content between ``` markers and trim');
 
-    // Missing closing backticks � regex doesn't match, context stays empty
+    // Missing closing backticks ï¿½ regex doesn't match, context stays empty
     const noClose = [
       '# Session\n\n',
       '### Context to Load\n',
@@ -479,7 +467,7 @@ function runTests() {
     assert.strictEqual(noCloseMeta.context, '',
       'Missing closing ``` should result in empty context (regex no match)');
 
-    // No code block after header � just plain text
+    // No code block after header ï¿½ just plain text
     const noBlock = [
       '# Session\n\n',
       '### Context to Load\n',
@@ -490,7 +478,7 @@ function runTests() {
     assert.strictEqual(noBlockMeta.context, '',
       'Plain text without ``` should not be captured as context');
 
-    // Nested code block � lazy [\s\S]*? stops at first ```
+    // Nested code block ï¿½ lazy [\s\S]*? stops at first ```
     const nested = [
       '# Session\n\n',
       '### Context to Load\n',
@@ -512,8 +500,8 @@ function runTests() {
   })) passed++; else failed++;
 
   // -- Round 120: parseSessionMetadata "Notes for Next Session" extraction edge cases --
-  console.log('\nRound 120: parseSessionMetadata ("Notes for Next Session" � extraction edge cases):');
-  if (test('parseSessionMetadata extracts notes section � last section, empty, followed by ###', () => {
+  console.log('\nRound 120: parseSessionMetadata ("Notes for Next Session" ï¿½ extraction edge cases):');
+  if (test('parseSessionMetadata extracts notes section ï¿½ last section, empty, followed by ###', () => {
     // Notes as the last section (no ### or \n\n after)
     const lastSection = '# Session\n\n### Notes for Next Session\nRemember to review PR #42\nAlso check CI status';
     const lastMeta = sessionManager.parseSessionMetadata(lastSection);
@@ -589,8 +577,8 @@ function runTests() {
       'Loose [\\d:]+ regex captures any digits-and-colons combination');
   })) passed++; else failed++;
 
-  // -- Round 122: getSessionById old format (no-id) � noIdMatch path --
-  console.log('\nRound 122: getSessionById (old format no-id � date-only filename match):');
+  // -- Round 122: getSessionById old format (no-id) ï¿½ noIdMatch path --
+  console.log('\nRound 122: getSessionById (old format no-id ï¿½ date-only filename match):');
   if (test('getSessionById matches old format YYYY-MM-DD-session.tmp via noIdMatch path', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'r122-old-format-'));
     const origHome = process.env.HOME;
@@ -611,7 +599,7 @@ function runTests() {
 
       const freshSM = require('../../scripts/lib/session-manager');
 
-      // Search by date � triggers noIdMatch path
+      // Search by date ï¿½ triggers noIdMatch path
       const result = freshSM.getSessionById('2026-01-15');
       assert.ok(result, 'Should find old-format session by date string');
       assert.strictEqual(result.shortId, 'no-id',
@@ -619,7 +607,7 @@ function runTests() {
       assert.strictEqual(result.date, '2026-01-15');
       assert.strictEqual(result.filename, '2026-01-15-session.tmp');
 
-      // Search by non-matching date � should not find
+      // Search by non-matching date ï¿½ should not find
       const noResult = freshSM.getSessionById('2026-01-16');
       assert.strictEqual(noResult, null,
         'Non-matching date should return null');
@@ -634,8 +622,8 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // -- Round 123: parseSessionMetadata with CRLF line endings � section boundaries break --
-  console.log('\nRound 123: parseSessionMetadata (CRLF section boundaries � \\n\\n fails to match \\r\\n\\r\\n):');
+  // -- Round 123: parseSessionMetadata with CRLF line endings ï¿½ section boundaries break --
+  console.log('\nRound 123: parseSessionMetadata (CRLF section boundaries ï¿½ \\n\\n fails to match \\r\\n\\r\\n):');
   if (test('parseSessionMetadata CRLF content: \\n\\n boundary fails, lazy match bleeds across sections', () => {
     // session-manager.js lines 119-134: regex uses (?=###|\n\n|$) to delimit sections.
     // On CRLF content, a blank line is \r\n\r\n, NOT \n\n. The \n\n alternation
@@ -643,9 +631,9 @@ function runTests() {
     // ### or $. This means completed items may bleed into following sections.
     //
     // However, \s* in /### Completed\s*\n/ DOES match \r\n (since \r is whitespace),
-    // so section headers still match � only blank-line boundaries fail.
+    // so section headers still match ï¿½ only blank-line boundaries fail.
 
-    // Test 1: CRLF with ### delimiter � works because ### is an alternation
+    // Test 1: CRLF with ### delimiter ï¿½ works because ### is an alternation
     const crlfWithHash = [
       '# Session Title\r\n',
       '\r\n',
@@ -655,7 +643,7 @@ function runTests() {
       '- [ ] Task B\r\n'
     ].join('');
     const meta1 = sessionManager.parseSessionMetadata(crlfWithHash);
-    // ### delimiter still works � lazy match stops at ### In Progress
+    // ### delimiter still works ï¿½ lazy match stops at ### In Progress
     assert.ok(meta1.completed.length >= 1,
       'Completed section should find at least 1 item with ### boundary on CRLF');
     // Check that Task A is found (may include \r in the trimmed text)
@@ -663,13 +651,13 @@ function runTests() {
     assert.ok(taskA.includes('Task A'),
       'Should extract Task A from completed section');
 
-    // Test 2: CRLF with \n\n (blank line) delimiter � this is where it breaks
+    // Test 2: CRLF with \n\n (blank line) delimiter ï¿½ this is where it breaks
     const crlfBlankLine = [
       '# Session\r\n',
       '\r\n',
       '### Completed\r\n',
       '- [x] First task\r\n',
-      '\r\n',         // Blank line = \r\n\r\n � won't match \n\n
+      '\r\n',         // Blank line = \r\n\r\n ï¿½ won't match \n\n
       'Some other text\r\n'
     ].join('');
     const meta2 = sessionManager.parseSessionMetadata(crlfBlankLine);
@@ -681,13 +669,13 @@ function runTests() {
     assert.strictEqual(meta2.completed.length, 1,
       'Even with CRLF bleed, checkbox regex only matches "- [x]" lines');
 
-    // Test 3: LF version of same content � proves \n\n works normally
+    // Test 3: LF version of same content ï¿½ proves \n\n works normally
     const lfBlankLine = '# Session\n\n### Completed\n- [x] First task\n\nSome other text\n';
     const meta3 = sessionManager.parseSessionMetadata(lfBlankLine);
     assert.strictEqual(meta3.completed.length, 1,
       'LF version: blank line correctly delimits section');
 
-    // Test 4: CRLF notes section � lazy match goes to $ when \n\n fails
+    // Test 4: CRLF notes section ï¿½ lazy match goes to $ when \n\n fails
     const crlfNotes = [
       '# Session\r\n',
       '\r\n',
@@ -709,9 +697,9 @@ function runTests() {
   })) passed++; else failed++;
 
   // -- Round 124: getAllSessions with invalid date format (strict equality, no normalization) --
-  console.log('\nRound 124: getAllSessions (invalid date format � strict !== comparison):');
+  console.log('\nRound 124: getAllSessions (invalid date format ï¿½ strict !== comparison):');
   if (test('getAllSessions date filter uses strict equality so wrong format returns empty', () => {
-    // session-manager.js line 228: `if (date && metadata.date !== date)` � strict inequality.
+    // session-manager.js line 228: `if (date && metadata.date !== date)` ï¿½ strict inequality.
     const origHome = process.env.HOME;
     const origUserProfile = process.env.USERPROFILE;
     const origDir = process.env.CLAUDE_DIR;
@@ -732,27 +720,27 @@ function runTests() {
       );
       const freshSM = require('../../scripts/lib/session-manager');
 
-      // Correct format � should find 1 session
+      // Correct format ï¿½ should find 1 session
       const correct = freshSM.getAllSessions({ date: '2026-01-15' });
       assert.strictEqual(correct.sessions.length, 1,
         'Correct YYYY-MM-DD format should match');
 
-      // Wrong separator � strict !== means no match
+      // Wrong separator ï¿½ strict !== means no match
       const wrongSep = freshSM.getAllSessions({ date: '2026/01/15' });
       assert.strictEqual(wrongSep.sessions.length, 0,
         'Slash-separated date does not match (strict string equality)');
 
-      // US format � no match
+      // US format ï¿½ no match
       const usFormat = freshSM.getAllSessions({ date: '01-15-2026' });
       assert.strictEqual(usFormat.sessions.length, 0,
         'MM-DD-YYYY format does not match YYYY-MM-DD');
 
-      // Partial date � no match
+      // Partial date ï¿½ no match
       const partial = freshSM.getAllSessions({ date: '2026-01' });
       assert.strictEqual(partial.sessions.length, 0,
         'Partial YYYY-MM does not match full YYYY-MM-DD');
 
-      // null date � skips filter, returns all
+      // null date ï¿½ skips filter, returns all
       const nullDate = freshSM.getAllSessions({ date: null });
       assert.strictEqual(nullDate.sessions.length, 1,
         'null date skips filter and returns all sessions');
@@ -768,18 +756,18 @@ function runTests() {
   })) passed++; else failed++;
 
   // -- Round 124: parseSessionMetadata title edge cases (no space, wrong level, multiple, empty) --
-  console.log('\nRound 124: parseSessionMetadata (title regex edge cases � /^#\\s+(.+)$/m):');
+  console.log('\nRound 124: parseSessionMetadata (title regex edge cases ï¿½ /^#\\s+(.+)$/m):');
   if (test('parseSessionMetadata title: no space after # fails, ## fails, multiple picks first, empty trims', () => {
     // session-manager.js line 95: /^#\s+(.+)$/m
     // \s+ requires at least one whitespace after #, (.+) captures rest of line
 
-    // No space after # � \s+ fails to match
+    // No space after # ï¿½ \s+ fails to match
     const noSpace = '#NoSpaceTitle\n\nSome content';
     const meta1 = sessionManager.parseSessionMetadata(noSpace);
     assert.strictEqual(meta1.title, null,
       '#NoSpaceTitle has no whitespace after # ? title is null');
 
-    // ## (H2) heading � ^ anchors to line start, but # matches first char only
+    // ## (H2) heading ï¿½ ^ anchors to line start, but # matches first char only
     // /^#\s+/ matches the first # then \s+ would need whitespace, but ## has another #
     // Actually: /^#\s+(.+)$/ ? "##" ? # then \s+ ? # is not whitespace ? no match
     const h2 = '## Subtitle\n\nContent';
@@ -787,13 +775,13 @@ function runTests() {
     assert.strictEqual(meta2.title, null,
       '## heading does not match /^#\\s+/ because second # is not whitespace');
 
-    // Multiple # headings � first match wins (regex .match returns first)
+    // Multiple # headings ï¿½ first match wins (regex .match returns first)
     const multiple = '# First Title\n\n# Second Title\n\nContent';
     const meta3 = sessionManager.parseSessionMetadata(multiple);
     assert.strictEqual(meta3.title, 'First Title',
       'Multiple H1 headings: .match() returns first occurrence');
 
-    // # followed by spaces then text � leading spaces in capture are trimmed
+    // # followed by spaces then text ï¿½ leading spaces in capture are trimmed
     const padded = '#   Padded Title   \n\nContent';
     const meta4 = sessionManager.parseSessionMetadata(padded);
     assert.strictEqual(meta4.title, 'Padded Title',
@@ -807,7 +795,7 @@ function runTests() {
     assert.strictEqual(meta5.title, 'Content',
       'Spaces-only after # ? \\s+ greedily matches spaces+newlines, (.+) captures next line text');
 
-    // Tab after # � \s includes tab
+    // Tab after # ï¿½ \s includes tab
     const tabTitle = '#\tTab Title\n\nContent';
     const meta6 = sessionManager.parseSessionMetadata(tabTitle);
     assert.strictEqual(meta6.title, 'Tab Title',

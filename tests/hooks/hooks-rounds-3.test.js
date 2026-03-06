@@ -7,6 +7,7 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { spawn } = require('child_process');
 const { ensureSubprocessCapability } = require('../helpers/subprocess-capability');
 const { test, asyncTest, createTestDir, cleanupTestDir } = require('../helpers/test-runner');

@@ -11,6 +11,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { test } = require('../helpers/test-runner');
 
 // We need to mock getClaudeDir to point to a temp dir.
 // The simplest approach: set HOME to a temp dir before requiring the module.
@@ -22,19 +23,6 @@ process.env.HOME = tmpHome;
 process.env.USERPROFILE = tmpHome; // Windows: os.homedir() uses USERPROFILE
 
 const aliases = require('../../scripts/lib/session-aliases');
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
 
 function resetAliases() {
   const aliasesPath = aliases.getAliasesPath();
@@ -53,10 +41,10 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  // ── Round 102: setAlias with title=0 (falsy number coercion) ──
-  console.log('\nRound 102: setAlias (title=0 — falsy coercion silently converts to null):');
+  // ââ Round 102: setAlias with title=0 (falsy number coercion) ââ
+  console.log('\nRound 102: setAlias (title=0 â falsy coercion silently converts to null):');
   if (test('setAlias with title=0 stores null (0 || null === null due to JavaScript falsy coercion)', () => {
-    // session-aliases.js line 221: `title: title || null` — the value 0 is falsy
+    // session-aliases.js line 221: `title: title || null` â the value 0 is falsy
     // in JavaScript, so `0 || null` evaluates to `null`.  This means numeric
     // titles like 0 are silently discarded.
     resetAliases();
@@ -70,7 +58,7 @@ function runTests() {
       'Persisted title should be null after round-trip through saveAliases/loadAliases');
   })) passed++; else failed++;
 
-  // ── Round 103: loadAliases with array aliases in JSON should reset to default ──
+  // ââ Round 103: loadAliases with array aliases in JSON should reset to default ââ
   console.log('\nRound 103: loadAliases (array aliases are rejected and reset):');
   if (test('loadAliases rejects array aliases and resets to default empty object map', () => {
     resetAliases();
@@ -85,8 +73,8 @@ function runTests() {
     assert.deepStrictEqual(data.aliases, {}, 'aliases map should be reset to empty object');
   })) passed++; else failed++;
 
-  // ── Round 104: resolveSessionAlias with path-traversal input (now returns null instead of passthrough) ──
-  console.log('\nRound 104: resolveSessionAlias (path-traversal input — now rejected with null):');
+  // ââ Round 104: resolveSessionAlias with path-traversal input (now returns null instead of passthrough) ââ
+  console.log('\nRound 104: resolveSessionAlias (path-traversal input â now rejected with null):');
   if (test('resolveSessionAlias returns null for path-traversal input when alias lookup fails', () => {
     // session-aliases.js lines 365-374 previously returned aliasOrId unchanged.
     // After hardening, path-traversal-looking inputs that are not aliases should
@@ -103,15 +91,15 @@ function runTests() {
       'Another path-traversal pattern should also return null');
   })) passed++; else failed++;
 
-  // ── Round 107: setAlias with whitespace-only title (not trimmed unlike sessionPath) ──
-  console.log('\nRound 107: setAlias (whitespace-only title — truthy string stored as-is, unlike sessionPath which is trim-checked):');
+  // ââ Round 107: setAlias with whitespace-only title (not trimmed unlike sessionPath) ââ
+  console.log('\nRound 107: setAlias (whitespace-only title â truthy string stored as-is, unlike sessionPath which is trim-checked):');
   if (test('setAlias stores whitespace-only title as-is (no trim validation, unlike sessionPath)', () => {
     resetAliases();
     // sessionPath with whitespace is rejected (line 195: sessionPath.trim().length === 0)
     const pathResult = aliases.setAlias('ws-path', '   ');
     assert.strictEqual(pathResult.success, false,
       'Whitespace-only sessionPath is rejected by trim check');
-    // But title with whitespace is stored as-is (line 221: title || null — whitespace is truthy)
+    // But title with whitespace is stored as-is (line 221: title || null â whitespace is truthy)
     const titleResult = aliases.setAlias('ws-title', '/valid/path', '   ');
     assert.strictEqual(titleResult.success, true,
       'Whitespace-only title is accepted (no trim check on title)');
@@ -123,8 +111,8 @@ function runTests() {
       'Whitespace title persists in JSON as-is');
   })) passed++; else failed++;
 
-  // ── Round 111: setAlias with exactly 128-character alias — off-by-one boundary ──
-  console.log('\nRound 111: setAlias (128-char alias — exact boundary of > 128 check):');
+  // ââ Round 111: setAlias with exactly 128-character alias â off-by-one boundary ââ
+  console.log('\nRound 111: setAlias (128-char alias â exact boundary of > 128 check):');
   if (test('setAlias accepts alias of exactly 128 characters (128 is NOT > 128)', () => {
     // session-aliases.js line 199: if (alias.length > 128)
     // 128 is NOT > 128, so exactly 128 chars is ACCEPTED.
@@ -146,7 +134,7 @@ function runTests() {
       'Error message should mention 128-char limit');
   })) passed++; else failed++;
 
-  // ── Round 112: resolveAlias rejects Unicode characters in alias name ──
+  // ââ Round 112: resolveAlias rejects Unicode characters in alias name ââ
   console.log('\nRound 112: resolveAlias (Unicode rejection):');
   if (test('resolveAlias returns null for alias names containing Unicode characters', () => {
     resetAliases();
@@ -155,33 +143,33 @@ function runTests() {
     const validResult = aliases.resolveAlias('valid-alias');
     assert.notStrictEqual(validResult, null, 'Valid ASCII alias should resolve');
 
-    // Unicode accented characters — rejected by /^[a-zA-Z0-9_-]+$/
-    const accentedResult = aliases.resolveAlias('café-session');
+    // Unicode accented characters â rejected by /^[a-zA-Z0-9_-]+$/
+    const accentedResult = aliases.resolveAlias('cafÃ©-session');
     assert.strictEqual(accentedResult, null,
-      'Accented character "é" should be rejected by [a-zA-Z0-9_-]');
+      'Accented character "Ã©" should be rejected by [a-zA-Z0-9_-]');
 
-    const umlautResult = aliases.resolveAlias('über-test');
+    const umlautResult = aliases.resolveAlias('Ã¼ber-test');
     assert.strictEqual(umlautResult, null,
-      'Umlaut "ü" should be rejected by [a-zA-Z0-9_-]');
+      'Umlaut "Ã¼" should be rejected by [a-zA-Z0-9_-]');
 
     // CJK characters
-    const cjkResult = aliases.resolveAlias('会議-notes');
+    const cjkResult = aliases.resolveAlias('ä¼è­°-notes');
     assert.strictEqual(cjkResult, null,
       'CJK characters should be rejected');
 
     // Emoji
-    const emojiResult = aliases.resolveAlias('rocket-🚀');
+    const emojiResult = aliases.resolveAlias('rocket-ð');
     assert.strictEqual(emojiResult, null,
       'Emoji should be rejected by the ASCII-only regex');
 
     // Cyrillic characters that look like Latin (homoglyphs)
-    const cyrillicResult = aliases.resolveAlias('tеst'); // 'е' is Cyrillic U+0435
+    const cyrillicResult = aliases.resolveAlias('tÐµst'); // 'Ðµ' is Cyrillic U+0435
     assert.strictEqual(cyrillicResult, null,
-      'Cyrillic homoglyph "е" (U+0435) should be rejected even though it looks like "e"');
+      'Cyrillic homoglyph "Ðµ" (U+0435) should be rejected even though it looks like "e"');
   })) passed++; else failed++;
 
-  // ── Round 114: listAliases with non-string search should not throw ──
-  console.log('\nRound 114: listAliases (non-string search — ignored without TypeError):');
+  // ââ Round 114: listAliases with non-string search should not throw ââ
+  console.log('\nRound 114: listAliases (non-string search â ignored without TypeError):');
   if (test('listAliases ignores non-string search values and does not throw', () => {
     resetAliases();
 
@@ -189,7 +177,7 @@ function runTests() {
     aliases.setAlias('alpha-session', '/path/to/alpha');
     aliases.setAlias('beta-session', '/path/to/beta');
 
-    // String search works fine — baseline
+    // String search works fine â baseline
     const stringResult = aliases.listAliases({ search: 'alpha' });
     assert.strictEqual(stringResult.length, 1, 'String search should find 1 match');
     assert.strictEqual(stringResult[0].name, 'alpha-session');
@@ -201,8 +189,8 @@ function runTests() {
     assert.strictEqual(booleanResult.length, 2, 'Boolean search should be ignored (no filtering)');
   })) passed++; else failed++;
 
-  // ── Round 115: updateAliasTitle with empty string — stored and returned as null ──
-  console.log('\nRound 115: updateAliasTitle (empty string title — stored null, returned null):');
+  // ââ Round 115: updateAliasTitle with empty string â stored and returned as null ââ
+  console.log('\nRound 115: updateAliasTitle (empty string title â stored null, returned null):');
   if (test('updateAliasTitle with empty string stores null and returns normalized null', () => {
     resetAliases();
 
@@ -232,8 +220,8 @@ function runTests() {
     assert.strictEqual(cleared.title, null, 'null clears title');
   })) passed++; else failed++;
 
-  // ── Round 116: loadAliases with extra unknown fields — silently preserved ──
-  console.log('\nRound 116: loadAliases (extra unknown JSON fields — preserved by loose validation):');
+  // ââ Round 116: loadAliases with extra unknown fields â silently preserved ââ
+  console.log('\nRound 116: loadAliases (extra unknown JSON fields â preserved by loose validation):');
   if (test('loadAliases preserves extra unknown fields because only aliases key is validated', () => {
     resetAliases();
 
@@ -259,7 +247,7 @@ function runTests() {
     };
     fs.writeFileSync(aliasesPath, JSON.stringify(customData, null, 2), 'utf8');
 
-    // loadAliases only validates data.aliases — extra fields pass through
+    // loadAliases only validates data.aliases â extra fields pass through
     const loaded = aliases.loadAliases();
     assert.ok(loaded.aliases['test-session'], 'Should load the valid alias');
     assert.strictEqual(loaded.aliases['test-session'].title, 'Test');
@@ -278,14 +266,14 @@ function runTests() {
       'Extra field should survive save/load round-trip');
   })) passed++; else failed++;
 
-  // ── Round 118: renameAlias to the same name — "already exists" because self-check ──
-  console.log('\nRound 118: renameAlias (same name — "already exists" because data.aliases[newAlias] is truthy):');
+  // ââ Round 118: renameAlias to the same name â "already exists" because self-check ââ
+  console.log('\nRound 118: renameAlias (same name â "already exists" because data.aliases[newAlias] is truthy):');
   if (test('renameAlias to the same name returns "already exists" error (no self-rename short-circuit)', () => {
     resetAliases();
     aliases.setAlias('same-name', '/path/to/session');
 
-    // Rename 'same-name' → 'same-name'
-    // Line 333: data.aliases[newAlias] → truthy (the alias exists under that name)
+    // Rename 'same-name' â 'same-name'
+    // Line 333: data.aliases[newAlias] â truthy (the alias exists under that name)
     // Returns error before checking if oldAlias === newAlias
     const result = aliases.renameAlias('same-name', 'same-name');
     assert.strictEqual(result.success, false, 'Should fail');
@@ -298,8 +286,8 @@ function runTests() {
     assert.strictEqual(resolved.sessionPath, '/path/to/session');
   })) passed++; else failed++;
 
-  // ── Round 118: setAlias reserved names — case-insensitive rejection ──
-  console.log('\nRound 118: setAlias (reserved names — case-insensitive rejection):');
+  // ââ Round 118: setAlias reserved names â case-insensitive rejection ââ
+  console.log('\nRound 118: setAlias (reserved names â case-insensitive rejection):');
   if (test('setAlias rejects all reserved names case-insensitively (list, help, remove, delete, create, set)', () => {
     resetAliases();
 
@@ -332,23 +320,23 @@ function runTests() {
       'Non-reserved name should succeed');
   })) passed++; else failed++;
 
-  // ── Round 119: renameAlias with reserved newAlias name — parallel reserved check ──
-  console.log('\nRound 119: renameAlias (reserved newAlias name — parallel check to setAlias):');
+  // ââ Round 119: renameAlias with reserved newAlias name â parallel reserved check ââ
+  console.log('\nRound 119: renameAlias (reserved newAlias name â parallel check to setAlias):');
   if (test('renameAlias rejects reserved names for newAlias (same reserved list as setAlias)', () => {
     resetAliases();
     aliases.setAlias('my-alias', '/path/to/session');
 
-    // Rename to reserved name 'list' — should fail
+    // Rename to reserved name 'list' â should fail
     const listResult = aliases.renameAlias('my-alias', 'list');
     assert.strictEqual(listResult.success, false, '"list" should be rejected');
     assert.ok(listResult.error.includes('reserved'),
       'Error should mention "reserved"');
 
-    // Rename to reserved name 'help' (uppercase) — should fail
+    // Rename to reserved name 'help' (uppercase) â should fail
     const helpResult = aliases.renameAlias('my-alias', 'Help');
     assert.strictEqual(helpResult.success, false, '"Help" should be rejected');
 
-    // Rename to reserved name 'delete' — should fail
+    // Rename to reserved name 'delete' â should fail
     const deleteResult = aliases.renameAlias('my-alias', 'DELETE');
     assert.strictEqual(deleteResult.success, false, '"DELETE" should be rejected');
 
@@ -362,18 +350,18 @@ function runTests() {
     assert.strictEqual(validResult.success, true, 'Non-reserved name should succeed');
   })) passed++; else failed++;
 
-  // ── Round 120: setAlias max length boundary — 128 accepted, 129 rejected ──
-  console.log('\nRound 120: setAlias (max alias length boundary — 128 ok, 129 rejected):');
+  // ââ Round 120: setAlias max length boundary â 128 accepted, 129 rejected ââ
+  console.log('\nRound 120: setAlias (max alias length boundary â 128 ok, 129 rejected):');
   if (test('setAlias accepts exactly 128-char alias name but rejects 129 chars (> 128 boundary)', () => {
     resetAliases();
 
-    // 128 characters — exactly at limit (alias.length > 128 is false)
+    // 128 characters â exactly at limit (alias.length > 128 is false)
     const name128 = 'a'.repeat(128);
     const result128 = aliases.setAlias(name128, '/path/to/session');
     assert.strictEqual(result128.success, true,
       '128-char alias should be accepted (128 > 128 is false)');
 
-    // 129 characters — just over limit
+    // 129 characters â just over limit
     const name129 = 'a'.repeat(129);
     const result129 = aliases.setAlias(name129, '/path/to/session');
     assert.strictEqual(result129.success, false,
@@ -381,7 +369,7 @@ function runTests() {
     assert.ok(result129.error.includes('128'),
       'Error should mention the 128 character limit');
 
-    // 1 character — minimum valid
+    // 1 character â minimum valid
     const name1 = 'x';
     const result1 = aliases.setAlias(name1, '/path/to/session');
     assert.strictEqual(result1.success, true,
@@ -393,33 +381,33 @@ function runTests() {
     assert.strictEqual(resolved.sessionPath, '/path/to/session');
   })) passed++; else failed++;
 
-  // ── Round 121: setAlias sessionPath validation — null, empty, whitespace, non-string ──
-  console.log('\nRound 121: setAlias (sessionPath validation — null, empty, whitespace, non-string):');
+  // ââ Round 121: setAlias sessionPath validation â null, empty, whitespace, non-string ââ
+  console.log('\nRound 121: setAlias (sessionPath validation â null, empty, whitespace, non-string):');
   if (test('setAlias rejects invalid sessionPath: null, empty, whitespace-only, and non-string types', () => {
     resetAliases();
 
-    // null sessionPath → falsy → rejected
+    // null sessionPath â falsy â rejected
     const nullResult = aliases.setAlias('test-alias', null);
     assert.strictEqual(nullResult.success, false, 'null path should fail');
     assert.ok(nullResult.error.includes('empty'), 'Error should mention empty');
 
-    // undefined sessionPath → falsy → rejected
+    // undefined sessionPath â falsy â rejected
     const undefResult = aliases.setAlias('test-alias', undefined);
     assert.strictEqual(undefResult.success, false, 'undefined path should fail');
 
-    // empty string → falsy → rejected
+    // empty string â falsy â rejected
     const emptyResult = aliases.setAlias('test-alias', '');
     assert.strictEqual(emptyResult.success, false, 'Empty string path should fail');
 
-    // whitespace-only → passes falsy check but trim().length === 0 → rejected
+    // whitespace-only â passes falsy check but trim().length === 0 â rejected
     const wsResult = aliases.setAlias('test-alias', '   ');
     assert.strictEqual(wsResult.success, false, 'Whitespace-only path should fail');
 
-    // number → typeof !== 'string' → rejected
+    // number â typeof !== 'string' â rejected
     const numResult = aliases.setAlias('test-alias', 42);
     assert.strictEqual(numResult.success, false, 'Number path should fail');
 
-    // boolean → typeof !== 'string' → rejected
+    // boolean â typeof !== 'string' â rejected
     const boolResult = aliases.setAlias('test-alias', true);
     assert.strictEqual(boolResult.success, false, 'Boolean path should fail');
 
@@ -428,30 +416,30 @@ function runTests() {
     assert.strictEqual(validResult.success, true, 'Valid string path should succeed');
   })) passed++; else failed++;
 
-  // ── Round 122: listAliases limit edge cases — limit=0, negative, NaN bypassed (JS falsy) ──
-  console.log('\nRound 122: listAliases (limit edge cases — 0/negative/NaN are falsy, return all):');
+  // ââ Round 122: listAliases limit edge cases â limit=0, negative, NaN bypassed (JS falsy) ââ
+  console.log('\nRound 122: listAliases (limit edge cases â 0/negative/NaN are falsy, return all):');
   if (test('listAliases limit=0 returns all aliases because 0 is falsy in JS (no slicing)', () => {
     resetAliases();
     aliases.setAlias('alias-a', '/path/a');
     aliases.setAlias('alias-b', '/path/b');
     aliases.setAlias('alias-c', '/path/c');
 
-    // limit=0: 0 is falsy → `if (0 && 0 > 0)` short-circuits → no slicing → ALL returned
+    // limit=0: 0 is falsy â `if (0 && 0 > 0)` short-circuits â no slicing â ALL returned
     const zeroResult = aliases.listAliases({ limit: 0 });
     assert.strictEqual(zeroResult.length, 3,
       'limit=0 should return ALL aliases (0 is falsy in JS)');
 
-    // limit=-1: -1 is truthy but -1 > 0 is false → no slicing → ALL returned
+    // limit=-1: -1 is truthy but -1 > 0 is false â no slicing â ALL returned
     const negResult = aliases.listAliases({ limit: -1 });
     assert.strictEqual(negResult.length, 3,
       'limit=-1 should return ALL aliases (-1 > 0 is false)');
 
-    // limit=NaN: NaN is falsy → no slicing → ALL returned
+    // limit=NaN: NaN is falsy â no slicing â ALL returned
     const nanResult = aliases.listAliases({ limit: NaN });
     assert.strictEqual(nanResult.length, 3,
       'limit=NaN should return ALL aliases (NaN is falsy)');
 
-    // limit=1: normal case — returns exactly 1
+    // limit=1: normal case â returns exactly 1
     const oneResult = aliases.listAliases({ limit: 1 });
     assert.strictEqual(oneResult.length, 1,
       'limit=1 should return exactly 1 alias');
@@ -467,8 +455,8 @@ function runTests() {
       'limit > total should return all aliases');
   })) passed++; else failed++;
 
-  // ── Round 125: loadAliases with __proto__ key in JSON — no prototype pollution ──
-  console.log('\nRound 125: loadAliases (__proto__ key in JSON — safe, no prototype pollution):');
+  // ââ Round 125: loadAliases with __proto__ key in JSON â no prototype pollution ââ
+  console.log('\nRound 125: loadAliases (__proto__ key in JSON â safe, no prototype pollution):');
   if (test('loadAliases with __proto__ alias key does not pollute Object prototype', () => {
     // JSON.parse('{"__proto__":...}') creates a normal property named "__proto__",
     // it does NOT modify Object.prototype. This is safe but worth documenting.
@@ -500,7 +488,7 @@ function runTests() {
 }`;
     fs.writeFileSync(aliasesPath, rawJson);
 
-    // Load aliases — should NOT pollute prototype
+    // Load aliases â should NOT pollute prototype
     const data = aliases.loadAliases();
 
     // Verify __proto__ did NOT pollute Object.prototype
@@ -520,7 +508,7 @@ function runTests() {
     assert.ok(data.aliases['normal'],
       'Normal alias coexists with __proto__ key');
 
-    // resolveAlias with '__proto__' — rejected by regex (underscores ok but __ prefix works)
+    // resolveAlias with '__proto__' â rejected by regex (underscores ok but __ prefix works)
     // Actually ^[a-zA-Z0-9_-]+$ would ACCEPT '__proto__' since _ is allowed
     const resolved = aliases.resolveAlias('__proto__');
     // If the regex accepts it, it should find the alias

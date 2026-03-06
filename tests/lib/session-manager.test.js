@@ -8,6 +8,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { test } = require('../helpers/test-runner');
 
 let sessionManager = require('../../scripts/lib/session-manager');
 const utils = require('../../scripts/lib/utils');
@@ -16,19 +17,6 @@ function clearSessionManagerCache() {
   delete require.cache[require.resolve('../../scripts/lib/detect-env')];
   delete require.cache[require.resolve('../../scripts/lib/utils')];
   delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-}
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
 }
 
 // Create a temp directory for session tests
@@ -339,7 +327,7 @@ src/main.ts
   console.log('\ngetAllSessions:');
 
   // Override HOME to a temp dir for isolated getAllSessions/getSessionById tests
-  // On Windows, os.homedir() uses USERPROFILE, not HOME — set both for cross-platform
+  // On Windows, os.homedir() uses USERPROFILE, not HOME Â— set both for cross-platform
   const tmpHome = path.join(os.tmpdir(), `ecc-session-mgr-test-${Date.now()}`);
   const origHome = process.env.HOME;
   const origUserProfile = process.env.USERPROFILE;
@@ -814,7 +802,7 @@ src/main.ts
 
   if (test('getAllSessions handles Infinity offset', () => {
     // Infinity should clamp to 0 since Number(Infinity) is Infinity but
-    // Math.floor(Infinity) is Infinity — however slice(Infinity) returns []
+    // Math.floor(Infinity) is Infinity Â— however slice(Infinity) returns []
     // Actually: Number(Infinity) || 0 = Infinity, Math.floor(Infinity) = Infinity
     // Math.max(0, Infinity) = Infinity, so slice(Infinity) = []
     const result = sessionManager.getAllSessions({ offset: Infinity, limit: 2 });
@@ -940,7 +928,7 @@ src/main.ts
     const content = '# Session\n\n### Completed\n- [x] \n- [x] Real task\n';
     const meta = sessionManager.parseSessionMetadata(content);
     // \s* in the regex bridges across newlines, collapsing the empty
-    // task + next task into a single match. This is an edge case —
+    // task + next task into a single match. This is an edge case Â—
     // real sessions don't have empty checklist items.
     assert.strictEqual(meta.completed.length, 1);
   })) passed++; else failed++;

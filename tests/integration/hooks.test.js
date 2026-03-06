@@ -12,32 +12,7 @@ const fs = require('fs');
 const os = require('os');
 const { spawn } = require('child_process');
 const { ensureSubprocessCapability } = require('../helpers/subprocess-capability');
-
-// Test helper
-function _test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
-
-// Async test helper
-async function asyncTest(name, fn) {
-  try {
-    await fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
+const { asyncTest, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 
 /**
  * Run a hook script with simulated Claude Code input
@@ -153,16 +128,6 @@ function runHookCommand(command, input = {}, env = {}, timeoutMs = 10000, plugin
       reject(err);
     });
   });
-}
-
-// Create a temporary test directory
-function createTestDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'hook-integration-test-'));
-}
-
-// Clean up test directory
-function cleanupTestDir(testDir) {
-  fs.rmSync(testDir, { recursive: true, force: true });
 }
 
 // Test suite

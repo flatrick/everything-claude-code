@@ -11,6 +11,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { test } = require('../helpers/test-runner');
 
 // We need to mock getClaudeDir to point to a temp dir.
 // The simplest approach: set HOME to a temp dir before requiring the module.
@@ -22,19 +23,6 @@ process.env.HOME = tmpHome;
 process.env.USERPROFILE = tmpHome; // Windows: os.homedir() uses USERPROFILE
 
 const aliases = require('../../scripts/lib/session-aliases');
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
 
 function resetAliases() {
   const aliasesPath = aliases.getAliasesPath();
@@ -423,7 +411,7 @@ function runTests() {
     }
 
     // Currently cleanupAliases does not catch callback exceptions
-    // This documents the behavior — it throws, which is acceptable
+    // This documents the behavior â it throws, which is acceptable
     assert.ok(threw, 'Should propagate callback exception to caller');
   })) passed++; else failed++;
 
@@ -445,7 +433,7 @@ function runTests() {
       title: 'Has Dates'
     };
     aliases.saveAliases(data);
-    // Should not crash — entries with missing timestamps sort to end
+    // Should not crash â entries with missing timestamps sort to end
     const list = aliases.listAliases();
     assert.strictEqual(list.length, 2);
     // The one with valid dates should come first (more recent than epoch)

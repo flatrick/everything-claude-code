@@ -7,22 +7,10 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+const { test } = require('../helpers/test-runner');
 
 // Import the module
 const utils = require('../../scripts/lib/utils');
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
 
 // Test suite
 function runTests() {
@@ -327,7 +315,7 @@ function runTests() {
     const testFile = path.join(utils.getTempDir(), `utils-test-${Date.now()}.txt`);
     try {
       utils.writeFile(testFile, 'foo bar foo baz foo');
-      // RegExp without global flag — countInFile should still count all
+      // RegExp without global flag â countInFile should still count all
       const count = utils.countInFile(testFile, /foo/);
       assert.strictEqual(count, 3);
     } finally {
@@ -385,7 +373,7 @@ function runTests() {
 
   if (test('commandExists finds node', () => {
     if (!canExecuteCommands) {
-      console.log('    (skipped — command execution unavailable in sandbox)');
+      console.log('    (skipped â command execution unavailable in sandbox)');
       return;
     }
     const exists = utils.commandExists('node');
@@ -414,7 +402,7 @@ function runTests() {
 
   if (test('runCommand executes simple command', () => {
     if (!canExecuteCommands) {
-      console.log('    (skipped — command execution unavailable in sandbox)');
+      console.log('    (skipped â command execution unavailable in sandbox)');
       return;
     }
     const result = utils.runCommand('node --version');
@@ -497,7 +485,7 @@ function runTests() {
 
   if (test('isGitRepo returns true in a git repo', () => {
     if (!canExecuteCommands) {
-      console.log('    (skipped — command execution unavailable in sandbox)');
+      console.log('    (skipped â command execution unavailable in sandbox)');
       return;
     }
     // We're running from within the ECC repo, so this should be true
@@ -519,7 +507,7 @@ function runTests() {
   })) passed++; else failed++;
 
   if (test('getGitModifiedFiles skips invalid patterns', () => {
-    // Mix of valid and invalid patterns — should not throw
+    // Mix of valid and invalid patterns â should not throw
     const files = utils.getGitModifiedFiles(['(unclosed', '\\.js$', '[invalid']);
     assert.ok(Array.isArray(files));
   })) passed++; else failed++;
@@ -637,7 +625,7 @@ function runTests() {
   if (test('writeFile handles unicode content', () => {
     const testFile = path.join(utils.getTempDir(), `utils-test-${Date.now()}.txt`);
     try {
-      const unicode = '日本語テスト 🚀 émojis';
+      const unicode = 'æ¥æ¬èªãã¹ã ð Ã©mojis';
       utils.writeFile(testFile, unicode);
       const content = utils.readFile(testFile);
       assert.strictEqual(content, unicode);
@@ -764,7 +752,7 @@ function runTests() {
   })) passed++; else failed++;
 
   if (test('commandExists allows dots and underscores', () => {
-    // These are valid chars per the regex check — the command might not exist
+    // These are valid chars per the regex check â the command might not exist
     // but it shouldn't be rejected by the validator
     const dotResult = utils.commandExists('definitely.not.a.real.tool.12345');
     assert.strictEqual(typeof dotResult, 'boolean', 'Should return boolean, not throw');
@@ -838,7 +826,7 @@ function runTests() {
   if (test('ensureDir is safe for concurrent calls (EEXIST race)', () => {
     const testDir = path.join(utils.getTempDir(), `ensure-race-${Date.now()}`, 'nested');
     try {
-      // Call concurrently — both should succeed without throwing
+      // Call concurrently â both should succeed without throwing
       const results = [utils.ensureDir(testDir), utils.ensureDir(testDir)];
       assert.strictEqual(results[0], testDir);
       assert.strictEqual(results[1], testDir);
@@ -863,7 +851,7 @@ function runTests() {
 
   if (test('runCommand returns trimmed output', () => {
     if (!canExecuteCommands) {
-      console.log('    (skipped — command execution unavailable in sandbox)');
+      console.log('    (skipped â command execution unavailable in sandbox)');
       return;
     }
     // Windows echo includes quotes in output, use node to ensure consistent behavior
@@ -901,14 +889,14 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // readStdinJson (function API, not actual stdin — more thorough edge cases)
+  // readStdinJson (function API, not actual stdin â more thorough edge cases)
   console.log('\nreadStdinJson Edge Cases:');
 
   if (test('readStdinJson type check: returns a Promise', () => {
     // readStdinJson returns a Promise regardless of stdin state
     const result = utils.readStdinJson({ timeoutMs: 100 });
     assert.ok(result instanceof Promise, 'Should return a Promise');
-    // Don't await — just verify it's a Promise type
+    // Don't await â just verify it's a Promise type
   })) passed++; else failed++;
 
   // Summary

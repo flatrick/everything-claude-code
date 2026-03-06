@@ -11,6 +11,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { test } = require('../helpers/test-runner');
 
 // We need to mock getClaudeDir to point to a temp dir.
 // The simplest approach: set HOME to a temp dir before requiring the module.
@@ -22,19 +23,6 @@ process.env.HOME = tmpHome;
 process.env.USERPROFILE = tmpHome; // Windows: os.homedir() uses USERPROFILE
 
 const aliases = require('../../scripts/lib/session-aliases');
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
 
 function resetAliases() {
   const aliasesPath = aliases.getAliasesPath();
@@ -54,7 +42,7 @@ function runTests() {
   let failed = 0;
 
   console.log('\n=== Testing session-aliases.js (Round Cases) ===\n');
-  // ── Round 26 tests ──
+  // ââ Round 26 tests ââ
 
   console.log('\nsetAlias (reserved names case sensitivity):');
 
@@ -100,7 +88,7 @@ function runTests() {
     assert.strictEqual(resolved.title, null, 'undefined title should become null');
   })) passed++; else failed++;
 
-  // ── Round 31: saveAliases failure path ──
+  // ââ Round 31: saveAliases failure path ââ
   console.log('\nsaveAliases (failure paths, Round 31):');
 
   if (test('saveAliases returns false for invalid data (non-serializable)', () => {
@@ -133,7 +121,7 @@ function runTests() {
     assert.strictEqual(Object.keys(data.aliases).length, 0, 'Should have no aliases');
   })) passed++; else failed++;
 
-  // ── Round 33: renameAlias rollback on save failure ──
+  // ââ Round 33: renameAlias rollback on save failure ââ
   console.log('\nrenameAlias rollback (Round 33):');
 
   if (test('renameAlias with circular data triggers rollback path', () => {
@@ -146,7 +134,7 @@ function runTests() {
     const data = aliases.loadAliases();
     assert.ok(data.aliases['rename-src'], 'Source alias should exist');
 
-    // Do the rename with valid data — should succeed
+    // Do the rename with valid data â should succeed
     const result = aliases.renameAlias('rename-src', 'rename-dst');
     assert.strictEqual(result.success, true, 'Normal rename should succeed');
     assert.ok(aliases.resolveAlias('rename-dst'), 'New alias should exist');
@@ -172,7 +160,7 @@ function runTests() {
     resetAliases();
     aliases.setAlias('keep-this', '/path/original', 'Original Title');
 
-    // Attempt rename to a reserved name — should fail pre-save
+    // Attempt rename to a reserved name â should fail pre-save
     const result = aliases.renameAlias('keep-this', 'delete');
     assert.strictEqual(result.success, false);
     assert.ok(result.error.includes('reserved'), 'Should reject reserved name');
@@ -184,7 +172,7 @@ function runTests() {
     assert.strictEqual(resolved.title, 'Original Title');
   })) passed++; else failed++;
 
-  // ── Round 33: saveAliases backup restoration ──
+  // ââ Round 33: saveAliases backup restoration ââ
   console.log('\nsaveAliases backup/restore (Round 33):');
 
   if (test('saveAliases creates backup before write and removes on success', () => {
@@ -206,7 +194,7 @@ function runTests() {
     const aliasesPath = aliases.getAliasesPath();
     assert.ok(fs.existsSync(aliasesPath), 'Aliases file should exist');
 
-    // Attempt to save circular data — will fail
+    // Attempt to save circular data â will fail
     const circular = { aliases: {}, metadata: {} };
     circular.self = circular;
     const result = aliases.saveAliases(circular);
@@ -218,7 +206,7 @@ function runTests() {
       'Original aliases data should be preserved after failed save');
   })) passed++; else failed++;
 
-  // ── Round 39: atomic overwrite on Unix (no unlink before rename) ──
+  // ââ Round 39: atomic overwrite on Unix (no unlink before rename) ââ
   console.log('\nRound 39: atomic overwrite:');
 
   if (test('saveAliases overwrites existing file atomically', () => {
@@ -243,7 +231,7 @@ function runTests() {
     aliases.deleteAlias('atomic-test-2');
   })) passed++; else failed++;
 
-  // Cleanup — restore both HOME and USERPROFILE (Windows)
+  // Cleanup â restore both HOME and USERPROFILE (Windows)
   process.env.HOME = origHome;
   if (origUserProfile !== undefined) {
     process.env.USERPROFILE = origUserProfile;
@@ -256,7 +244,7 @@ function runTests() {
     // best-effort
   }
 
-  // ── Round 48: rapid sequential saves data integrity ──
+  // ââ Round 48: rapid sequential saves data integrity ââ
   console.log('\nRound 48: rapid sequential saves:');
 
   if (test('rapid sequential setAlias calls maintain data integrity', () => {
@@ -273,7 +261,7 @@ function runTests() {
     assert.strictEqual(data.metadata.totalCount, 5, 'Metadata count should match actual aliases');
   })) passed++; else failed++;
 
-  // ── Round 56: Windows platform unlink-before-rename code path ──
+  // ââ Round 56: Windows platform unlink-before-rename code path ââ
   console.log('\nRound 56: Windows platform atomic write path:');
 
   if (test('Windows platform mock: unlinks existing file before rename', () => {
@@ -289,7 +277,7 @@ function runTests() {
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
 
     try {
-      // This save triggers the Windows code path: unlink existing → rename temp
+      // This save triggers the Windows code path: unlink existing â rename temp
       const r2 = aliases.setAlias('win-updated', '2026-02-01-def456-session.tmp');
       assert.strictEqual(r2.success, true, 'setAlias should succeed under win32 mock');
 
@@ -313,7 +301,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 64: loadAliases backfills missing version and metadata ──
+  // ââ Round 64: loadAliases backfills missing version and metadata ââ
   console.log('\nRound 64: loadAliases version/metadata backfill:');
 
   if (test('loadAliases backfills missing version and metadata fields', () => {
@@ -344,13 +332,13 @@ function runTests() {
     resetAliases();
   })) passed++; else failed++;
 
-  // ── Round 67: loadAliases empty file, resolveSessionAlias null, metadata-only backfill ──
+  // ââ Round 67: loadAliases empty file, resolveSessionAlias null, metadata-only backfill ââ
   console.log('\nRound 67: loadAliases (empty 0-byte file):');
 
   if (test('loadAliases returns default structure for empty (0-byte) file', () => {
     resetAliases();
     const aliasesPath = aliases.getAliasesPath();
-    // Write a 0-byte file — readFile returns '', which is falsy → !content branch
+    // Write a 0-byte file â readFile returns '', which is falsy â !content branch
     fs.writeFileSync(aliasesPath, '');
     const data = aliases.loadAliases();
     assert.ok(data.aliases, 'Should have aliases key');
@@ -400,12 +388,12 @@ function runTests() {
     resetAliases();
   })) passed++; else failed++;
 
-  // ── Round 70: updateAliasTitle save failure path ──
+  // ââ Round 70: updateAliasTitle save failure path ââ
   console.log('\nupdateAliasTitle save failure (Round 70):');
 
   if (test('updateAliasTitle returns failure when saveAliases fails (read-only dir)', () => {
     if (process.platform === 'win32' || process.getuid?.() === 0) {
-      console.log('    (skipped — chmod ineffective on Windows/root)');
+      console.log('    (skipped â chmod ineffective on Windows/root)');
       return;
     }
     // Use a fresh isolated HOME to avoid .tmp/.bak leftovers from other tests.
@@ -447,12 +435,12 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 72: deleteAlias save failure path ──
+  // ââ Round 72: deleteAlias save failure path ââ
   console.log('\nRound 72: deleteAlias (save failure):');
 
   if (test('deleteAlias returns failure when saveAliases fails (read-only dir)', () => {
     if (process.platform === 'win32' || process.getuid?.() === 0) {
-      console.log('    (skipped — chmod ineffective on Windows/root)');
+      console.log('    (skipped â chmod ineffective on Windows/root)');
       return;
     }
     const isoHome = path.join(os.tmpdir(), `ecc-alias-r72-${Date.now()}`);
@@ -472,7 +460,7 @@ function runTests() {
       const ap = freshAliases.getAliasesPath();
       assert.ok(fs.existsSync(ap), 'Alias file should exist after setAlias');
 
-      // Make .claude directory read-only — save will fail (can't create temp file)
+      // Make .claude directory read-only â save will fail (can't create temp file)
       fs.chmodSync(isoClaudeDir, 0o555);
 
       const result = freshAliases.deleteAlias('to-delete');
@@ -489,12 +477,12 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 73: cleanupAliases save failure path ──
+  // ââ Round 73: cleanupAliases save failure path ââ
   console.log('\nRound 73: cleanupAliases (save failure):');
 
   if (test('cleanupAliases returns failure when saveAliases fails after removing aliases', () => {
     if (process.platform === 'win32' || process.getuid?.() === 0) {
-      console.log('    (skipped — chmod ineffective on Windows/root)');
+      console.log('    (skipped â chmod ineffective on Windows/root)');
       return;
     }
     const isoHome = path.join(os.tmpdir(), `ecc-alias-r73-cleanup-${Date.now()}`);
@@ -509,7 +497,7 @@ function runTests() {
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       const freshAliases = require('../../scripts/lib/session-aliases');
 
-      // Create aliases — one to keep, one to remove
+      // Create aliases â one to keep, one to remove
       freshAliases.setAlias('keep-me', '/sessions/real', 'Kept');
       freshAliases.setAlias('remove-me', '/sessions/gone', 'Gone');
 
@@ -534,12 +522,12 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 73: setAlias save failure path ──
+  // ââ Round 73: setAlias save failure path ââ
   console.log('\nRound 73: setAlias (save failure):');
 
   if (test('setAlias returns failure when saveAliases fails', () => {
     if (process.platform === 'win32' || process.getuid?.() === 0) {
-      console.log('    (skipped — chmod ineffective on Windows/root)');
+      console.log('    (skipped â chmod ineffective on Windows/root)');
       return;
     }
     const isoHome = path.join(os.tmpdir(), `ecc-alias-r73-set-${Date.now()}`);
@@ -571,7 +559,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 84: listAliases sort NaN date fallback (getTime() || 0) ──
+  // ââ Round 84: listAliases sort NaN date fallback (getTime() || 0) ââ
   console.log('\nRound 84: listAliases (NaN date fallback in sort comparator):');
 
   if (test('listAliases sorts entries with invalid/missing dates to the end via || 0 fallback', () => {
@@ -582,7 +570,7 @@ function runTests() {
     resetAliases();
     const data = aliases.loadAliases();
 
-    // Entry with valid dates — should sort first (newest)
+    // Entry with valid dates â should sort first (newest)
     data.aliases['valid-alias'] = {
       sessionPath: '/sessions/valid',
       createdAt: '2026-02-10T12:00:00.000Z',
@@ -590,7 +578,7 @@ function runTests() {
       title: 'Valid'
     };
 
-    // Entry with invalid date strings — getTime() → NaN → || 0 → epoch (oldest)
+    // Entry with invalid date strings â getTime() â NaN â || 0 â epoch (oldest)
     data.aliases['nan-alias'] = {
       sessionPath: '/sessions/nan',
       createdAt: 'not-a-date',
@@ -598,7 +586,7 @@ function runTests() {
       title: 'NaN dates'
     };
 
-    // Entry with missing date fields — undefined || undefined || 0 → new Date(0) → epoch
+    // Entry with missing date fields â undefined || undefined || 0 â new Date(0) â epoch
     data.aliases['missing-alias'] = {
       sessionPath: '/sessions/missing',
       title: 'Missing dates'
@@ -619,7 +607,7 @@ function runTests() {
       'Entries with invalid/missing dates should sort to the end');
   })) passed++; else failed++;
 
-  // ── Round 86: loadAliases with truthy non-object aliases field ──
+  // ââ Round 86: loadAliases with truthy non-object aliases field ââ
   console.log('\nRound 86: loadAliases (truthy non-object aliases field):');
 
   if (test('loadAliases resets to defaults when aliases field is a string (typeof !== object)', () => {
@@ -640,7 +628,7 @@ function runTests() {
     resetAliases();
   })) passed++; else failed++;
 
-  // ── Round 90: saveAliases backup restore double failure (inner catch restoreErr) ──
+  // ââ Round 90: saveAliases backup restore double failure (inner catch restoreErr) ââ
   console.log('\nRound 90: saveAliases (backup restore double failure):');
 
   if (test('saveAliases triggers inner restoreErr catch when both save and restore fail', () => {
@@ -648,7 +636,7 @@ function runTests() {
     // it tries to restore from backup. If the restore ALSO fails, the inner
     // catch at line 135 logs restoreErr. No existing test creates this double-fault.
     if (process.platform === 'win32') {
-      console.log('    (skipped — chmod not reliable on Windows)');
+      console.log('    (skipped â chmod not reliable on Windows)');
       return;
     }
     const isoHome = path.join(os.tmpdir(), `ecc-r90-restore-fail-${Date.now()}`);
@@ -660,8 +648,8 @@ function runTests() {
     fs.writeFileSync(backupPath, JSON.stringify({ aliases: {}, version: '1.0' }));
 
     // Make .claude directory read-only (0o555):
-    // 1. writeFileSync(tempPath) → EACCES (can't create file in read-only dir) — outer catch
-    // 2. copyFileSync(backupPath, aliasesPath) → EACCES (can't create target) — inner catch (line 135)
+    // 1. writeFileSync(tempPath) â EACCES (can't create file in read-only dir) â outer catch
+    // 2. copyFileSync(backupPath, aliasesPath) â EACCES (can't create target) â inner catch (line 135)
     fs.chmodSync(claudeDir, 0o555);
 
     const origH = process.env.HOME;
@@ -689,7 +677,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  // ── Round 95: renameAlias with same old and new name (self-rename) ──
+  // ââ Round 95: renameAlias with same old and new name (self-rename) ââ
   console.log('\nRound 95: renameAlias (self-rename same name):');
 
   if (test('renameAlias returns "already exists" error when renaming alias to itself', () => {
@@ -711,12 +699,12 @@ function runTests() {
       'Alias data should be preserved');
   })) passed++; else failed++;
 
-  // ── Round 100: cleanupAliases callback returning falsy non-boolean 0 ──
-  console.log('\nRound 100: cleanupAliases (callback returns 0 — falsy non-boolean coercion):');
+  // ââ Round 100: cleanupAliases callback returning falsy non-boolean 0 ââ
+  console.log('\nRound 100: cleanupAliases (callback returns 0 â falsy non-boolean coercion):');
   if (test('cleanupAliases removes alias when callback returns 0 (falsy coercion: !0 === true)', () => {
     resetAliases();
     aliases.setAlias('zero-test', '/sessions/some-session', '2026-01-15');
-    // callback returns 0 (a falsy value) — !0 === true → alias is removed
+    // callback returns 0 (a falsy value) â !0 === true â alias is removed
     const result = aliases.cleanupAliases(() => 0);
     assert.strictEqual(result.removed, 1,
       'Alias should be removed because !0 === true (JavaScript falsy coercion)');

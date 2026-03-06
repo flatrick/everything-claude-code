@@ -7,7 +7,7 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
+const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 
 const validatorsDir = path.join(__dirname, '..', '..', 'scripts', 'ci');
 
@@ -45,27 +45,6 @@ function runValidatorFunction(validatorName, options = {}) {
     stdout: logs.join('\n') + (warns.length ? `\n${warns.join('\n')}` : ''),
     stderr: errors.join('\n')
   };
-}
-
-// Test helpers
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
-
-function createTestDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'ci-validator-test-'));
-}
-
-function cleanupTestDir(testDir) {
-  fs.rmSync(testDir, { recursive: true, force: true });
 }
 
 /**
