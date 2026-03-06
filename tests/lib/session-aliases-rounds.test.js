@@ -13,6 +13,7 @@ const fs = require('fs');
 const os = require('os');
 const { test } = require('../helpers/test-runner');
 const { setupSessionAliasesTestEnv } = require('../helpers/session-aliases-test-env');
+const { withEnv } = require('../helpers/env-test-utils');
 
 const { aliases, resetAliases } = setupSessionAliasesTestEnv();
 
@@ -370,33 +371,29 @@ function runTests() {
     const isoHome = path.join(os.tmpdir(), `ecc-alias-r70-${Date.now()}`);
     const isoClaudeDir = path.join(isoHome, '.claude');
     fs.mkdirSync(isoClaudeDir, { recursive: true });
-    const savedHome = process.env.HOME;
-    const savedProfile = process.env.USERPROFILE;
     try {
-      process.env.HOME = isoHome;
-      process.env.USERPROFILE = isoHome;
-      // Re-require to pick up new HOME
-      delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshAliases = require('../../scripts/lib/session-aliases');
+      withEnv({ HOME: isoHome, USERPROFILE: isoHome }, () => {
+        // Re-require to pick up new HOME
+        delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshAliases = require('../../scripts/lib/session-aliases');
 
-      // Set up a valid alias
-      freshAliases.setAlias('title-save-fail', '/path/session', 'Original Title');
-      // Verify no leftover .tmp/.bak
-      const ap = freshAliases.getAliasesPath();
-      assert.ok(fs.existsSync(ap), 'Alias file should exist after setAlias');
+        // Set up a valid alias
+        freshAliases.setAlias('title-save-fail', '/path/session', 'Original Title');
+        // Verify no leftover .tmp/.bak
+        const ap = freshAliases.getAliasesPath();
+        assert.ok(fs.existsSync(ap), 'Alias file should exist after setAlias');
 
-      // Make .claude dir read-only so saveAliases fails when creating .bak
-      fs.chmodSync(isoClaudeDir, 0o555);
+        // Make .claude dir read-only so saveAliases fails when creating .bak
+        fs.chmodSync(isoClaudeDir, 0o555);
 
-      const result = freshAliases.updateAliasTitle('title-save-fail', 'New Title');
-      assert.strictEqual(result.success, false, 'Should fail when save is blocked');
-      assert.ok(result.error.includes('Failed to update alias title'),
-        `Should return save failure error, got: ${result.error}`);
+        const result = freshAliases.updateAliasTitle('title-save-fail', 'New Title');
+        assert.strictEqual(result.success, false, 'Should fail when save is blocked');
+        assert.ok(result.error.includes('Failed to update alias title'),
+          `Should return save failure error, got: ${result.error}`);
+      });
     } finally {
       try { fs.chmodSync(isoClaudeDir, 0o755); } catch { /* best-effort */ }
-      process.env.HOME = savedHome;
-      process.env.USERPROFILE = savedProfile;
       delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       fs.rmSync(isoHome, { recursive: true, force: true });
@@ -414,31 +411,27 @@ function runTests() {
     const isoHome = path.join(os.tmpdir(), `ecc-alias-r72-${Date.now()}`);
     const isoClaudeDir = path.join(isoHome, '.claude');
     fs.mkdirSync(isoClaudeDir, { recursive: true });
-    const savedHome = process.env.HOME;
-    const savedProfile = process.env.USERPROFILE;
     try {
-      process.env.HOME = isoHome;
-      process.env.USERPROFILE = isoHome;
-      delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshAliases = require('../../scripts/lib/session-aliases');
+      withEnv({ HOME: isoHome, USERPROFILE: isoHome }, () => {
+        delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshAliases = require('../../scripts/lib/session-aliases');
 
-      // Create an alias first (writes the file)
-      freshAliases.setAlias('to-delete', '/path/session', 'Test');
-      const ap = freshAliases.getAliasesPath();
-      assert.ok(fs.existsSync(ap), 'Alias file should exist after setAlias');
+        // Create an alias first (writes the file)
+        freshAliases.setAlias('to-delete', '/path/session', 'Test');
+        const ap = freshAliases.getAliasesPath();
+        assert.ok(fs.existsSync(ap), 'Alias file should exist after setAlias');
 
-      // Make .claude directory read-only â save will fail (can't create temp file)
-      fs.chmodSync(isoClaudeDir, 0o555);
+        // Make .claude directory read-only â save will fail (can't create temp file)
+        fs.chmodSync(isoClaudeDir, 0o555);
 
-      const result = freshAliases.deleteAlias('to-delete');
-      assert.strictEqual(result.success, false, 'Should fail when save is blocked');
-      assert.ok(result.error.includes('Failed to delete alias'),
-        `Should return delete failure error, got: ${result.error}`);
+        const result = freshAliases.deleteAlias('to-delete');
+        assert.strictEqual(result.success, false, 'Should fail when save is blocked');
+        assert.ok(result.error.includes('Failed to delete alias'),
+          `Should return delete failure error, got: ${result.error}`);
+      });
     } finally {
       try { fs.chmodSync(isoClaudeDir, 0o755); } catch { /* best-effort */ }
-      process.env.HOME = savedHome;
-      process.env.USERPROFILE = savedProfile;
       delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       fs.rmSync(isoHome, { recursive: true, force: true });
@@ -456,34 +449,30 @@ function runTests() {
     const isoHome = path.join(os.tmpdir(), `ecc-alias-r73-cleanup-${Date.now()}`);
     const isoClaudeDir = path.join(isoHome, '.claude');
     fs.mkdirSync(isoClaudeDir, { recursive: true });
-    const savedHome = process.env.HOME;
-    const savedProfile = process.env.USERPROFILE;
     try {
-      process.env.HOME = isoHome;
-      process.env.USERPROFILE = isoHome;
-      delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshAliases = require('../../scripts/lib/session-aliases');
+      withEnv({ HOME: isoHome, USERPROFILE: isoHome }, () => {
+        delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshAliases = require('../../scripts/lib/session-aliases');
 
-      // Create aliases â one to keep, one to remove
-      freshAliases.setAlias('keep-me', '/sessions/real', 'Kept');
-      freshAliases.setAlias('remove-me', '/sessions/gone', 'Gone');
+        // Create aliases â one to keep, one to remove
+        freshAliases.setAlias('keep-me', '/sessions/real', 'Kept');
+        freshAliases.setAlias('remove-me', '/sessions/gone', 'Gone');
 
-      // Make .claude dir read-only so save will fail
-      fs.chmodSync(isoClaudeDir, 0o555);
+        // Make .claude dir read-only so save will fail
+        fs.chmodSync(isoClaudeDir, 0o555);
 
-      // Cleanup: "gone" session doesn't exist, so remove-me should be removed
-      const result = freshAliases.cleanupAliases((p) => p === '/sessions/real');
-      assert.strictEqual(result.success, false, 'Should fail when save is blocked');
-      assert.ok(result.error.includes('Failed to save after cleanup'),
-        `Should return cleanup save failure error, got: ${result.error}`);
-      assert.strictEqual(result.removed, 1, 'Should report 1 removed alias');
-      assert.ok(result.removedAliases.some(a => a.name === 'remove-me'),
-        'Should report remove-me in removedAliases');
+        // Cleanup: "gone" session doesn't exist, so remove-me should be removed
+        const result = freshAliases.cleanupAliases((p) => p === '/sessions/real');
+        assert.strictEqual(result.success, false, 'Should fail when save is blocked');
+        assert.ok(result.error.includes('Failed to save after cleanup'),
+          `Should return cleanup save failure error, got: ${result.error}`);
+        assert.strictEqual(result.removed, 1, 'Should report 1 removed alias');
+        assert.ok(result.removedAliases.some(a => a.name === 'remove-me'),
+          'Should report remove-me in removedAliases');
+      });
     } finally {
       try { fs.chmodSync(isoClaudeDir, 0o755); } catch { /* best-effort */ }
-      process.env.HOME = savedHome;
-      process.env.USERPROFILE = savedProfile;
       delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       fs.rmSync(isoHome, { recursive: true, force: true });
@@ -501,26 +490,22 @@ function runTests() {
     const isoHome = path.join(os.tmpdir(), `ecc-alias-r73-set-${Date.now()}`);
     const isoClaudeDir = path.join(isoHome, '.claude');
     fs.mkdirSync(isoClaudeDir, { recursive: true });
-    const savedHome = process.env.HOME;
-    const savedProfile = process.env.USERPROFILE;
     try {
-      process.env.HOME = isoHome;
-      process.env.USERPROFILE = isoHome;
-      delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshAliases = require('../../scripts/lib/session-aliases');
+      withEnv({ HOME: isoHome, USERPROFILE: isoHome }, () => {
+        delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshAliases = require('../../scripts/lib/session-aliases');
 
-      // Make .claude dir read-only BEFORE any setAlias call
-      fs.chmodSync(isoClaudeDir, 0o555);
+        // Make .claude dir read-only BEFORE any setAlias call
+        fs.chmodSync(isoClaudeDir, 0o555);
 
-      const result = freshAliases.setAlias('my-alias', '/sessions/test', 'Test');
-      assert.strictEqual(result.success, false, 'Should fail when save is blocked');
-      assert.ok(result.error.includes('Failed to save alias'),
-        `Should return save failure error, got: ${result.error}`);
+        const result = freshAliases.setAlias('my-alias', '/sessions/test', 'Test');
+        assert.strictEqual(result.success, false, 'Should fail when save is blocked');
+        assert.ok(result.error.includes('Failed to save alias'),
+          `Should return save failure error, got: ${result.error}`);
+      });
     } finally {
       try { fs.chmodSync(isoClaudeDir, 0o755); } catch { /* best-effort */ }
-      process.env.HOME = savedHome;
-      process.env.USERPROFILE = savedProfile;
       delete require.cache[require.resolve('../../scripts/lib/session-aliases')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       fs.rmSync(isoHome, { recursive: true, force: true });
