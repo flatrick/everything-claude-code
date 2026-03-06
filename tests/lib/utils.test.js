@@ -58,18 +58,18 @@ function runTests() {
     assert.ok(fs.existsSync(home), 'Home dir should exist');
   })) passed++; else failed++;
 
-  if (test('getClaudeDir delegates to config dir under home', () => {
-    const claudeDir = utils.getClaudeDir();
+  if (test('getConfigDir returns config dir under home', () => {
+    const configDir = utils.getConfigDir();
     const homeDir = utils.getHomeDir();
-    assert.strictEqual(typeof claudeDir, 'string');
-    assert.ok(claudeDir.length > 0, 'Config dir should not be empty');
-    assert.ok(claudeDir.startsWith(homeDir), 'Config dir should be under home');
+    assert.strictEqual(typeof configDir, 'string');
+    assert.ok(configDir.length > 0, 'Config dir should not be empty');
+    assert.ok(configDir.startsWith(homeDir), 'Config dir should be under home');
   })) passed++; else failed++;
 
-  if (test('getSessionsDir returns path under Claude dir', () => {
+  if (test('getSessionsDir returns path under config dir', () => {
     const sessionsDir = utils.getSessionsDir();
-    const claudeDir = utils.getClaudeDir();
-    assert.ok(sessionsDir.startsWith(claudeDir), 'Sessions should be under Claude dir');
+    const configDir = utils.getConfigDir();
+    assert.ok(sessionsDir.startsWith(configDir), 'Sessions should be under config dir');
     assert.ok(sessionsDir.includes('sessions'), 'Should contain sessions');
   })) passed++; else failed++;
 

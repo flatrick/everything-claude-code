@@ -89,9 +89,7 @@ function getTempDir() {
  */
 function ensureDir(dirPath) {
   try {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
+    fs.mkdirSync(dirPath, { recursive: true });
   } catch (err) {
     // EEXIST is fine (race condition with another process creating it)
     if (err.code !== 'EEXIST') {
