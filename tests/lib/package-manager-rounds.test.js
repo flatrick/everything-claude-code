@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
+const { withEnv } = require('../helpers/env-test-utils');
 
 // Import the modules
 const pm = require('../../scripts/lib/package-manager');
@@ -375,31 +376,26 @@ function runTests() {
     const projDir = path.join(tmpDir, 'proj');
     fs.mkdirSync(projDir, { recursive: true });
 
-    const origHome = process.env.HOME;
-    const origUserProfile = process.env.USERPROFILE;
     const origPM = process.env.CLAUDE_PACKAGE_MANAGER;
 
     try {
-      process.env.HOME = tmpDir;
-      process.env.USERPROFILE = tmpDir;
       delete process.env.CLAUDE_PACKAGE_MANAGER;
+      withEnv({ HOME: tmpDir, USERPROFILE: tmpDir }, () => {
+        delete require.cache[require.resolve('../../scripts/lib/detect-env')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const utils = require('../../scripts/lib/utils');
+        const configDir = utils.getConfigDir();
+        fs.mkdirSync(configDir, { recursive: true });
+        fs.writeFileSync(path.join(configDir, 'package-manager.json'), '{ invalid json !!!', 'utf8');
 
-      delete require.cache[require.resolve('../../scripts/lib/detect-env')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const utils = require('../../scripts/lib/utils');
-      const configDir = utils.getConfigDir();
-      fs.mkdirSync(configDir, { recursive: true });
-      fs.writeFileSync(path.join(configDir, 'package-manager.json'), '{ invalid json !!!', 'utf8');
+        delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+        const freshPM = require('../../scripts/lib/package-manager');
 
-      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
-      const freshPM = require('../../scripts/lib/package-manager');
-
-      const result = freshPM.getPackageManager({ projectDir: projDir });
-      assert.strictEqual(result.name, 'npm', 'Should fall through to npm default');
-      assert.strictEqual(result.source, 'default', 'Source should be default');
+        const result = freshPM.getPackageManager({ projectDir: projDir });
+        assert.strictEqual(result.name, 'npm', 'Should fall through to npm default');
+        assert.strictEqual(result.source, 'default', 'Source should be default');
+      });
     } finally {
-      process.env.HOME = origHome;
-      process.env.USERPROFILE = origUserProfile;
       if (origPM !== undefined) process.env.CLAUDE_PACKAGE_MANAGER = origPM;
 
       delete require.cache[require.resolve('../../scripts/lib/detect-env')];
@@ -418,40 +414,35 @@ function runTests() {
     const projDir = path.join(tmpDir, 'proj');
     fs.mkdirSync(projDir, { recursive: true });
 
-    const origHome = process.env.HOME;
-    const origUserProfile = process.env.USERPROFILE;
     const origPM = process.env.CLAUDE_PACKAGE_MANAGER;
 
     try {
-      process.env.HOME = tmpDir;
-      process.env.USERPROFILE = tmpDir;
       delete process.env.CLAUDE_PACKAGE_MANAGER;
+      withEnv({ HOME: tmpDir, USERPROFILE: tmpDir }, () => {
+        // Re-require to pick up new HOME / configDir
+        delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshUtils = require('../../scripts/lib/utils');
+        const configDir = freshUtils.getConfigDir();
 
-      // Re-require to pick up new HOME / configDir
-      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshUtils = require('../../scripts/lib/utils');
-      const configDir = freshUtils.getConfigDir();
+        // Create valid global config with pnpm preference at detected configDir
+        fs.mkdirSync(configDir, { recursive: true });
+        fs.writeFileSync(
+          path.join(configDir, 'package-manager.json'),
+          JSON.stringify({ packageManager: 'pnpm', setAt: '2026-01-01T00:00:00Z' }),
+          'utf8'
+        );
 
-      // Create valid global config with pnpm preference at detected configDir
-      fs.mkdirSync(configDir, { recursive: true });
-      fs.writeFileSync(
-        path.join(configDir, 'package-manager.json'),
-        JSON.stringify({ packageManager: 'pnpm', setAt: '2026-01-01T00:00:00Z' }),
-        'utf8'
-      );
+        const freshPM = require('../../scripts/lib/package-manager');
 
-      const freshPM = require('../../scripts/lib/package-manager');
-
-      // Empty project dir: no lock file, no package.json, no project config
-      const result = freshPM.getPackageManager({ projectDir: projDir });
-      assert.strictEqual(result.name, 'pnpm', 'Should detect pnpm from global config');
-      assert.strictEqual(result.source, 'global-config', 'Source should be global-config');
-      assert.ok(result.config, 'Should include config object');
-      assert.strictEqual(result.config.lockFile, 'pnpm-lock.yaml', 'Config should match pnpm');
+        // Empty project dir: no lock file, no package.json, no project config
+        const result = freshPM.getPackageManager({ projectDir: projDir });
+        assert.strictEqual(result.name, 'pnpm', 'Should detect pnpm from global config');
+        assert.strictEqual(result.source, 'global-config', 'Source should be global-config');
+        assert.ok(result.config, 'Should include config object');
+        assert.strictEqual(result.config.lockFile, 'pnpm-lock.yaml', 'Config should match pnpm');
+      });
     } finally {
-      process.env.HOME = origHome;
-      process.env.USERPROFILE = origUserProfile;
       if (origPM !== undefined) process.env.CLAUDE_PACKAGE_MANAGER = origPM;
 
       delete require.cache[require.resolve('../../scripts/lib/package-manager')];
@@ -472,27 +463,23 @@ function runTests() {
     const isoHome = path.join(os.tmpdir(), `ecc-pm-r71-${Date.now()}`);
     const claudeDir = path.join(isoHome, '.claude');
     fs.mkdirSync(claudeDir, { recursive: true });
-    const savedHome = process.env.HOME;
-    const savedProfile = process.env.USERPROFILE;
     try {
-      process.env.HOME = isoHome;
-      process.env.USERPROFILE = isoHome;
-      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshPm = require('../../scripts/lib/package-manager');
-      // Make .claude directory read-only — can't create new files (package-manager.json)
-      fs.chmodSync(claudeDir, 0o555);
-      assert.throws(() => {
-        freshPm.setPreferredPackageManager('npm');
-      }, /Failed to save package manager preference/);
+      withEnv({ HOME: isoHome, USERPROFILE: isoHome }, () => {
+        delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshPm = require('../../scripts/lib/package-manager');
+        // Make .claude directory read-only — can't create new files (package-manager.json)
+        fs.chmodSync(claudeDir, 0o555);
+        assert.throws(() => {
+          freshPm.setPreferredPackageManager('npm');
+        }, /Failed to save package manager preference/);
+      });
     } finally {
       try {
         fs.chmodSync(claudeDir, 0o755);
       } catch (_err) {
         /* best-effort */
       }
-      process.env.HOME = savedHome;
-      process.env.USERPROFILE = savedProfile;
       delete require.cache[require.resolve('../../scripts/lib/package-manager')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       fs.rmSync(isoHome, { recursive: true, force: true });

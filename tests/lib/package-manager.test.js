@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
+const { withEnv } = require('../helpers/env-test-utils');
 
 // Import the modules
 const pm = require('../../scripts/lib/package-manager');
@@ -690,23 +691,19 @@ function runTests() {
     const projDir = path.join(tmpHome, 'proj');
     fs.mkdirSync(projDir, { recursive: true });
     const originalEnv = process.env.CLAUDE_PACKAGE_MANAGER;
-    const origHome = process.env.HOME;
-    const origUserProfile = process.env.USERPROFILE;
     try {
       delete process.env.CLAUDE_PACKAGE_MANAGER;
-      process.env.HOME = tmpHome;
-      process.env.USERPROFILE = tmpHome;
-      delete require.cache[require.resolve('../../scripts/lib/detect-env')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
-      const freshPM = require('../../scripts/lib/package-manager');
-      const result = freshPM.getPackageManager({ projectDir: projDir });
-      assert.strictEqual(result.name, 'npm', 'Should default to npm');
-      assert.strictEqual(result.source, 'default');
+      withEnv({ HOME: tmpHome, USERPROFILE: tmpHome }, () => {
+        delete require.cache[require.resolve('../../scripts/lib/detect-env')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+        const freshPM = require('../../scripts/lib/package-manager');
+        const result = freshPM.getPackageManager({ projectDir: projDir });
+        assert.strictEqual(result.name, 'npm', 'Should default to npm');
+        assert.strictEqual(result.source, 'default');
+      });
     } finally {
       if (originalEnv !== undefined) process.env.CLAUDE_PACKAGE_MANAGER = originalEnv;
-      process.env.HOME = origHome;
-      process.env.USERPROFILE = origUserProfile;
       delete require.cache[require.resolve('../../scripts/lib/detect-env')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       delete require.cache[require.resolve('../../scripts/lib/package-manager')];
@@ -720,28 +717,24 @@ function runTests() {
 
   if (test('successfully saves preferred package manager in isolated temp config dir', () => {
     const tmpHome = createTestDir();
-    const savedHome = process.env.HOME;
-    const savedProfile = process.env.USERPROFILE;
     try {
-      process.env.HOME = tmpHome;
-      process.env.USERPROFILE = tmpHome;
-      delete require.cache[require.resolve('../../scripts/lib/detect-env')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      delete require.cache[require.resolve('../../scripts/lib/package-manager')];
-      const isolatedPm = require('../../scripts/lib/package-manager');
-      const isolatedUtils = require('../../scripts/lib/utils');
-      const configDir = isolatedUtils.getConfigDir();
-      const configPath = path.join(configDir, 'package-manager.json');
+      withEnv({ HOME: tmpHome, USERPROFILE: tmpHome }, () => {
+        delete require.cache[require.resolve('../../scripts/lib/detect-env')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        delete require.cache[require.resolve('../../scripts/lib/package-manager')];
+        const isolatedPm = require('../../scripts/lib/package-manager');
+        const isolatedUtils = require('../../scripts/lib/utils');
+        const configDir = isolatedUtils.getConfigDir();
+        const configPath = path.join(configDir, 'package-manager.json');
 
-      const config = isolatedPm.setPreferredPackageManager('bun');
-      assert.strictEqual(config.packageManager, 'bun');
-      assert.ok(config.setAt, 'Should have setAt timestamp');
+        const config = isolatedPm.setPreferredPackageManager('bun');
+        assert.strictEqual(config.packageManager, 'bun');
+        assert.ok(config.setAt, 'Should have setAt timestamp');
 
-      const saved = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      assert.strictEqual(saved.packageManager, 'bun');
+        const saved = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        assert.strictEqual(saved.packageManager, 'bun');
+      });
     } finally {
-      process.env.HOME = savedHome;
-      process.env.USERPROFILE = savedProfile;
       delete require.cache[require.resolve('../../scripts/lib/detect-env')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       delete require.cache[require.resolve('../../scripts/lib/package-manager')];
