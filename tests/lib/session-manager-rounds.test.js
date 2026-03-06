@@ -10,6 +10,7 @@ const fs = require('fs');
 const os = require('os');
 const { test } = require('../helpers/test-runner');
 const { clearSessionManagerCache, createTempSessionDir, cleanup } = require('../helpers/session-manager-test-utils');
+const { withEnv } = require('../helpers/env-test-utils');
 
 let sessionManager = require('../../scripts/lib/session-manager');
 const utils = require('../../scripts/lib/utils');
@@ -269,23 +270,18 @@ function runTests() {
   // getAllSessions returns empty result when sessions directory does not exist
   if (test('getAllSessions returns empty when sessions dir missing', () => {
     const tmpDir = createTempSessionDir();
-    const origHome = process.env.HOME;
-    const origUserProfile = process.env.USERPROFILE;
     try {
-      // Point HOME to a dir with no .claude/sessions/
-      process.env.HOME = tmpDir;
-      process.env.USERPROFILE = tmpDir;
-      // Re-require to pick up new HOME
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshSM = require('../../scripts/lib/session-manager');
-      const result = freshSM.getAllSessions();
-      assert.deepStrictEqual(result.sessions, [], 'Should return empty sessions array');
-      assert.strictEqual(result.total, 0, 'Total should be 0');
-      assert.strictEqual(result.hasMore, false, 'hasMore should be false');
+      withEnv({ HOME: tmpDir, USERPROFILE: tmpDir }, () => {
+        // Re-require to pick up new HOME
+        delete require.cache[require.resolve('../../scripts/lib/session-manager')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshSM = require('../../scripts/lib/session-manager');
+        const result = freshSM.getAllSessions();
+        assert.deepStrictEqual(result.sessions, [], 'Should return empty sessions array');
+        assert.strictEqual(result.total, 0, 'Total should be 0');
+        assert.strictEqual(result.hasMore, false, 'hasMore should be false');
+      });
     } finally {
-      process.env.HOME = origHome;
-      process.env.USERPROFILE = origUserProfile;
       delete require.cache[require.resolve('../../scripts/lib/session-manager')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       cleanup(tmpDir);
@@ -297,21 +293,16 @@ function runTests() {
 
   if (test('getSessionById returns null when sessions directory does not exist', () => {
     const tmpDir = createTempSessionDir();
-    const origHome = process.env.HOME;
-    const origUserProfile = process.env.USERPROFILE;
     try {
-      // Point HOME to a dir with no .claude/sessions/
-      process.env.HOME = tmpDir;
-      process.env.USERPROFILE = tmpDir;
-      // Re-require to pick up new HOME
-      delete require.cache[require.resolve('../../scripts/lib/session-manager')];
-      delete require.cache[require.resolve('../../scripts/lib/utils')];
-      const freshSM = require('../../scripts/lib/session-manager');
-      const result = freshSM.getSessionById('anything');
-      assert.strictEqual(result, null, 'Should return null when sessions dir does not exist');
+      withEnv({ HOME: tmpDir, USERPROFILE: tmpDir }, () => {
+        // Re-require to pick up new HOME
+        delete require.cache[require.resolve('../../scripts/lib/session-manager')];
+        delete require.cache[require.resolve('../../scripts/lib/utils')];
+        const freshSM = require('../../scripts/lib/session-manager');
+        const result = freshSM.getSessionById('anything');
+        assert.strictEqual(result, null, 'Should return null when sessions dir does not exist');
+      });
     } finally {
-      process.env.HOME = origHome;
-      process.env.USERPROFILE = origUserProfile;
       delete require.cache[require.resolve('../../scripts/lib/session-manager')];
       delete require.cache[require.resolve('../../scripts/lib/utils')];
       cleanup(tmpDir);
@@ -345,33 +336,29 @@ function runTests() {
 
   if (test('getAllSessions hasContent is true for non-empty and false for empty files', () => {
     const isoHome = path.join(os.tmpdir(), `ecc-hascontent-${Date.now()}`);
-    const savedHome = process.env.HOME;
-    const savedProfile = process.env.USERPROFILE;
     try {
-      process.env.HOME = isoHome;
-      process.env.USERPROFILE = isoHome;
-      clearSessionManagerCache();
-      const freshUtils = require('../../scripts/lib/utils');
-      const isoSessions = freshUtils.getSessionsDir();
-      fs.mkdirSync(isoSessions, { recursive: true });
-      fs.writeFileSync(path.join(isoSessions, '2026-04-01-nonempty-session.tmp'), '# Has content');
-      fs.writeFileSync(path.join(isoSessions, '2026-04-02-emptyfile-session.tmp'), '');
+      withEnv({ HOME: isoHome, USERPROFILE: isoHome }, () => {
+        clearSessionManagerCache();
+        const freshUtils = require('../../scripts/lib/utils');
+        const isoSessions = freshUtils.getSessionsDir();
+        fs.mkdirSync(isoSessions, { recursive: true });
+        fs.writeFileSync(path.join(isoSessions, '2026-04-01-nonempty-session.tmp'), '# Has content');
+        fs.writeFileSync(path.join(isoSessions, '2026-04-02-emptyfile-session.tmp'), '');
 
-      const freshSM = require('../../scripts/lib/session-manager');
+        const freshSM = require('../../scripts/lib/session-manager');
 
-      const result = freshSM.getAllSessions({ limit: 100 });
-      assert.strictEqual(result.total, 2, 'Should find both sessions');
+        const result = freshSM.getAllSessions({ limit: 100 });
+        assert.strictEqual(result.total, 2, 'Should find both sessions');
 
-      const nonEmpty = result.sessions.find(s => s.shortId === 'nonempty');
-      const empty = result.sessions.find(s => s.shortId === 'emptyfile');
+        const nonEmpty = result.sessions.find(s => s.shortId === 'nonempty');
+        const empty = result.sessions.find(s => s.shortId === 'emptyfile');
 
-      assert.ok(nonEmpty, 'Should find the non-empty session');
-      assert.ok(empty, 'Should find the empty session');
-      assert.strictEqual(nonEmpty.hasContent, true, 'Non-empty file should have hasContent: true');
-      assert.strictEqual(empty.hasContent, false, 'Empty file should have hasContent: false');
+        assert.ok(nonEmpty, 'Should find the non-empty session');
+        assert.ok(empty, 'Should find the empty session');
+        assert.strictEqual(nonEmpty.hasContent, true, 'Non-empty file should have hasContent: true');
+        assert.strictEqual(empty.hasContent, false, 'Empty file should have hasContent: false');
+      });
     } finally {
-      process.env.HOME = savedHome;
-      process.env.USERPROFILE = savedProfile;
       clearSessionManagerCache();
       sessionManager = require('../../scripts/lib/session-manager');
       fs.rmSync(isoHome, { recursive: true, force: true });
