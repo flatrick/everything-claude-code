@@ -39,6 +39,7 @@ execution slices with acceptance criteria.
 - Added subprocess capability guard + strict mode (`ECC_REQUIRE_SUBPROCESS_TESTS=1`) and enabled strict mode in CI test step.
 - Replaced inline `node -e` command hooks in `hooks/hooks.json` with script-backed Node commands via `scripts/hooks/command-hooks.js`, and updated integration hook command execution tests to support both inline and script forms.
 - Consolidated `suggest-compact` behavior to shared `scripts/hooks/suggest-compact.js`; `skills/strategic-compact/suggest-compact.js` is now a thin wrapper entrypoint using shared logic.
+- Installer now copies runtime scripts only (`scripts/hooks` + `scripts/lib`) for Claude/Cursor installs, and dedicated installer regression tests were added in `tests/scripts/install-ecc.test.js` (wired into `tests/run-all.js`).
 
 ## P0 - Breakage and Install/CI Integrity
 

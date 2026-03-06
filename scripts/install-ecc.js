@@ -65,6 +65,17 @@ function copyRecursiveSync(srcDir, destDir, filter = () => true) {
   }
 }
 
+function copyRuntimeScripts(destScriptsDir) {
+  const runtimeDirs = ['hooks', 'lib'];
+  for (const dirName of runtimeDirs) {
+    const srcDir = path.join(REPO_ROOT, 'scripts', dirName);
+    const destDir = path.join(destScriptsDir, dirName);
+    if (fs.existsSync(srcDir)) {
+      copyRecursiveSync(srcDir, destDir);
+    }
+  }
+}
+
 function usage(target) {
   console.error('Usage: node scripts/install-ecc.js [--target claude|cursor|codex] [--global] [language ...]');
   console.error('');
@@ -183,15 +194,10 @@ function installClaude(languages) {
     console.log('Installing hooks -> ' + settingsPath + ' (merged into settings.json)');
   }
 
-  // Scripts (required by hooks)
-  const scriptsSrc = path.join(REPO_ROOT, 'scripts');
-  if (fs.existsSync(scriptsSrc)) {
-    const scriptsDest = path.join(claudeBase, 'scripts');
-    console.log('Installing scripts -> ' + scriptsDest + '/');
-    if (path.resolve(scriptsSrc) !== path.resolve(scriptsDest)) {
-      copyRecursiveSync(scriptsSrc, scriptsDest);
-    }
-  }
+  // Runtime scripts required by hooks
+  const scriptsDest = path.join(claudeBase, 'scripts');
+  console.log('Installing runtime scripts -> ' + scriptsDest + '/');
+  copyRuntimeScripts(scriptsDest);
 
   if (process.platform === 'win32') {
     console.log('');
@@ -297,13 +303,10 @@ function installCursor(languages, globalScope) {
     copyRecursiveSync(hooksSrc, hooksDest);
   }
 
-  // Shared scripts
-  const scriptsSrc = path.join(REPO_ROOT, 'scripts');
-  if (fs.existsSync(scriptsSrc)) {
-    const scriptsDest = path.join(destDir, 'scripts');
-    console.log('Installing shared scripts -> ' + scriptsDest + '/');
-    copyRecursiveSync(scriptsSrc, scriptsDest);
-  }
+  // Runtime scripts required by delegated hooks
+  const scriptsDest = path.join(destDir, 'scripts');
+  console.log('Installing runtime scripts -> ' + scriptsDest + '/');
+  copyRuntimeScripts(scriptsDest);
 
   // MCP
   const mcpSrc = path.join(CURSOR_SRC, 'mcp.json');

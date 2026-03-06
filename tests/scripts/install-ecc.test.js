@@ -1,0 +1,152 @@
+/**
+ * Tests for scripts/install-ecc.js
+ *
+ * Run with: node tests/scripts/install-ecc.test.js
+ */
+
+const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { spawnSync } = require('child_process');
+const { ensureSubprocessCapability } = require('../helpers/subprocess-capability');
+
+function test(name, fn) {
+  try {
+    fn();
+    console.log(`  ✓ ${name}`);
+    return true;
+  } catch (err) {
+    console.log(`  ✗ ${name}`);
+    console.log(`    Error: ${err.message}`);
+    return false;
+  }
+}
+
+function mkTmp(prefix) {
+  return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+}
+
+function cleanup(dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+function runInstaller(args, options = {}) {
+  const repoRoot = path.join(__dirname, '..', '..');
+  const installerPath = path.join(repoRoot, 'scripts', 'install-ecc.js');
+  return spawnSync('node', [installerPath, ...args], {
+    encoding: 'utf8',
+    cwd: options.cwd || repoRoot,
+    env: { ...process.env, ...(options.env || {}) },
+    stdio: ['pipe', 'pipe', 'pipe'],
+    timeout: 20000
+  });
+}
+
+function assertSuccess(result, context) {
+  assert.strictEqual(
+    result.status,
+    0,
+    `${context} should exit 0, got ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+  );
+}
+
+function runTests() {
+  console.log('\n=== Testing install-ecc.js ===\n');
+
+  let passed = 0;
+  let failed = 0;
+
+  if (test('claude install copies runtime scripts only (hooks + lib)', () => {
+    const tmpHome = mkTmp('ecc-install-claude-');
+    const claudeBase = path.join(tmpHome, '.claude');
+
+    try {
+      const result = runInstaller(['typescript'], {
+        env: {
+          HOME: tmpHome,
+          USERPROFILE: tmpHome,
+          CLAUDE_BASE_DIR: claudeBase
+        }
+      });
+      assertSuccess(result, 'claude install');
+
+      assert.ok(fs.existsSync(path.join(claudeBase, 'scripts', 'hooks', 'session-start.js')));
+      assert.ok(fs.existsSync(path.join(claudeBase, 'scripts', 'lib', 'utils.js')));
+      assert.ok(!fs.existsSync(path.join(claudeBase, 'scripts', 'ci')), 'scripts/ci must not be installed');
+      assert.ok(!fs.existsSync(path.join(claudeBase, 'scripts', 'install-ecc.js')), 'top-level installer must not be installed');
+    } finally {
+      cleanup(tmpHome);
+    }
+  })) passed++; else failed++;
+
+  if (test('cursor install copies runtime scripts only (hooks + lib)', () => {
+    const tmpHome = mkTmp('ecc-install-cursor-home-');
+    const tmpProject = mkTmp('ecc-install-cursor-proj-');
+
+    try {
+      const result = runInstaller(['--target', 'cursor', 'typescript'], {
+        cwd: tmpProject,
+        env: {
+          HOME: tmpHome,
+          USERPROFILE: tmpHome
+        }
+      });
+      assertSuccess(result, 'cursor install');
+
+      const cursorRoot = path.join(tmpProject, '.cursor');
+      assert.ok(fs.existsSync(path.join(cursorRoot, 'scripts', 'hooks', 'session-start.js')));
+      assert.ok(fs.existsSync(path.join(cursorRoot, 'scripts', 'lib', 'utils.js')));
+      assert.ok(!fs.existsSync(path.join(cursorRoot, 'scripts', 'ci')), 'scripts/ci must not be installed');
+      assert.ok(!fs.existsSync(path.join(cursorRoot, 'scripts', 'install-ecc.js')), 'top-level installer must not be installed');
+    } finally {
+      cleanup(tmpHome);
+      cleanup(tmpProject);
+    }
+  })) passed++; else failed++;
+
+  if (test('claude install merges hooks into existing settings.json and preserves other keys', () => {
+    const tmpHome = mkTmp('ecc-install-settings-');
+    const claudeBase = path.join(tmpHome, '.claude');
+
+    try {
+      fs.mkdirSync(claudeBase, { recursive: true });
+      fs.writeFileSync(
+        path.join(claudeBase, 'settings.json'),
+        JSON.stringify({ theme: 'dark', customFlag: true, hooks: { legacy: [] } }, null, 2),
+        'utf8'
+      );
+
+      const result = runInstaller(['typescript'], {
+        env: {
+          HOME: tmpHome,
+          USERPROFILE: tmpHome,
+          CLAUDE_BASE_DIR: claudeBase
+        }
+      });
+      assertSuccess(result, 'claude install with existing settings');
+
+      const settingsPath = path.join(claudeBase, 'settings.json');
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      const settingsRaw = fs.readFileSync(settingsPath, 'utf8');
+
+      assert.strictEqual(settings.theme, 'dark', 'existing non-hook keys should be preserved');
+      assert.strictEqual(settings.customFlag, true, 'existing boolean key should be preserved');
+      assert.ok(settings.hooks && settings.hooks.PreToolUse, 'hooks should be replaced with installer hooks block');
+      assert.ok(!settingsRaw.includes('${CLAUDE_PLUGIN_ROOT}'), 'hooks should be materialized to absolute paths');
+      assert.ok(fs.existsSync(path.join(claudeBase, 'settings.json.bkp')), 'installer should create backup file');
+    } finally {
+      cleanup(tmpHome);
+    }
+  })) passed++; else failed++;
+
+  console.log('\n=== Test Results ===');
+  console.log(`Passed: ${passed}`);
+  console.log(`Failed: ${failed}`);
+  console.log(`Total:  ${passed + failed}\n`);
+
+  process.exit(failed > 0 ? 1 : 0);
+}
+
+ensureSubprocessCapability('tests/scripts/install-ecc.test.js');
+runTests();

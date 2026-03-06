@@ -32,6 +32,7 @@ listed in the **Dropped / Disputed** section at the end.
 - Added subprocess capability guard with strict mode, and enabled strict mode in CI via `ECC_REQUIRE_SUBPROCESS_TESTS=1`.
 - Replaced inline `node -e` command hooks in `hooks/hooks.json` with script-backed Node commands via `scripts/hooks/command-hooks.js`, and updated integration tests to run both inline and script-form hook commands.
 - Consolidated `suggest-compact` behavior into shared `scripts/hooks/suggest-compact.js`; `skills/strategic-compact/suggest-compact.js` now serves as a wrapper entrypoint.
+- Restricted installer payload to runtime scripts only (`scripts/hooks` and `scripts/lib`) for Claude/Cursor installs and added dedicated installer tests (`tests/scripts/install-ecc.test.js`) to guard copy-scope and settings-merge behavior.
 
 ---
 
