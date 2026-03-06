@@ -62,6 +62,8 @@ Source chain: `IMPROVEMENT.codex.md` + `IMPROVEMENT.claude.md` + `IMPROVEMENT.cu
 - Further expanded `withEnv(...)` adoption in `tests/lib/session-manager-rounds.test.js` by migrating the initial seeded-session fixture phase (rounds 43/54/66) to shared environment lifecycle handling.
 - Expanded `withEnv(...)` adoption in `tests/lib/session-aliases-rounds.test.js` for read-only/save-failure round cases to reduce repeated HOME/USERPROFILE save/restore scaffolding.
 - Further expanded `withEnv(...)` adoption in `tests/lib/session-aliases-rounds.test.js` by migrating the Round 90 backup-restore failure path to shared environment lifecycle handling.
+- Expanded `withEnv(...)` adoption in `tests/lib/package-manager.test.js` and `tests/lib/package-manager-rounds.test.js` for isolated HOME/USERPROFILE config-path scenarios to reduce repeated manual environment lifecycle code.
+- Refactored shared `getSessionsDirForHome(...)` in `tests/helpers/hook-test-utils.js` to use `withEnv(...)` for consistent env override save/restore behavior.
 - Restricted installer script payload to runtime-only directories (`scripts/hooks`, `scripts/lib`) for Claude/Cursor targets and added installer regression coverage in `tests/scripts/install-ecc.test.js` (included in `tests/run-all.js`).
 - Made CI security scanning blocking (`npm audit` no longer uses advisory `continue-on-error`) and hardened release changelog output to use a unique heredoc delimiter in `.github/workflows/release.yml`.
 - Introduced shared markdown read normalization (`scripts/ci/markdown-utils.js`) and deepened validator rules: skills now require heading + "When to Use/Activate", and rules now require heading + body content; tests and legacy skills were aligned.
