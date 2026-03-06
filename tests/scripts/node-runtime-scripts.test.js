@@ -1,7 +1,7 @@
 /**
  * Tests for skill runtime scripts (Node.js .js — cross-platform, no .ps1/.sh).
  *
- * Run with: node tests/scripts/powershell-scripts.test.js
+ * Run with: node tests/scripts/node-runtime-scripts.test.js
  */
 
 const assert = require('assert');
@@ -135,5 +135,5 @@ function runTests() {
   process.exit(failed > 0 ? 1 : 0);
 }
 
-ensureSubprocessCapability('tests/scripts/powershell-scripts.test.js');
+ensureSubprocessCapability('tests/scripts/node-runtime-scripts.test.js');
 runTests();

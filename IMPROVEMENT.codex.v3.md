@@ -42,6 +42,7 @@ execution slices with acceptance criteria.
 - Consolidated duplicated hook stdin buffering into shared utilities by adding `readStdinText(...)` in `scripts/lib/utils.js` and migrating hook scripts to shared stdin/JSON parsing helpers.
 - Added missing `Glob` tool to `agents/tdd-guide.md` to align write-capable agent tooling with repository conventions.
 - Expanded `schemas/plugin.schema.json` to model all active component families used by this fork (`commands`, `rules`, `hooks`, `mcp_configs` in addition to `skills`/`agents`).
+- Renamed `tests/scripts/powershell-scripts.test.js` to `tests/scripts/node-runtime-scripts.test.js` and updated test runner wiring to match Node-only runtime coverage scope.
 - Installer now copies runtime scripts only (`scripts/hooks` + `scripts/lib`) for Claude/Cursor installs, and dedicated installer regression tests were added in `tests/scripts/install-ecc.test.js` (wired into `tests/run-all.js`).
 - CI security scan is now intentionally blocking (`continue-on-error: false` for `npm audit --audit-level=high`), and release changelog output uses a dynamic heredoc delimiter to avoid truncation collisions.
 - Added shared markdown normalization helper (`scripts/ci/markdown-utils.js`) and upgraded validator depth: `validate-skills.js` now enforces heading + "When to Use/Activate", and `validate-rules.js` now enforces heading + body content; validator tests and affected skills were updated accordingly.

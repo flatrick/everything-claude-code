@@ -34,6 +34,7 @@ Source chain: `IMPROVEMENT.codex.md` + `IMPROVEMENT.claude.md` + `IMPROVEMENT.cu
 - Consolidated duplicated hook stdin buffering into shared utilities by adding `readStdinText(...)` in `scripts/lib/utils.js` and migrating hook scripts to shared stdin/JSON parsing helpers.
 - Added missing `Glob` tool to `agents/tdd-guide.md` to align write-capable agent tooling with repository conventions.
 - Expanded `schemas/plugin.schema.json` to model all active component families used by this fork (`commands`, `rules`, `hooks`, `mcp_configs` in addition to `skills`/`agents`).
+- Renamed `tests/scripts/powershell-scripts.test.js` to `tests/scripts/node-runtime-scripts.test.js` and updated test runner wiring to match Node-only runtime coverage scope.
 - Restricted installer script payload to runtime-only directories (`scripts/hooks`, `scripts/lib`) for Claude/Cursor targets and added installer regression coverage in `tests/scripts/install-ecc.test.js` (included in `tests/run-all.js`).
 - Made CI security scanning blocking (`npm audit` no longer uses advisory `continue-on-error`) and hardened release changelog output to use a unique heredoc delimiter in `.github/workflows/release.yml`.
 - Introduced shared markdown read normalization (`scripts/ci/markdown-utils.js`) and deepened validator rules: skills now require heading + "When to Use/Activate", and rules now require heading + body content; tests and legacy skills were aligned.
