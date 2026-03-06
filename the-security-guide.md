@@ -569,7 +569,7 @@ The patterns in this guide aren't complex. They're habits. Build them into your 
 
 **ECC Ecosystem:**
 - [AgentShield on npm](https://www.npmjs.com/package/ecc-agentshield) — Zero-install agent security scanning
-- [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) — 50K+ stars, production-ready agent configurations
+- [Everything Claude Code (this fork)](https://github.com/flatrick/everything-claude-code) — production-ready agent configurations
 - [The Shorthand Guide](./the-shortform-guide.md) — Setup and configuration fundamentals
 - [The Longform Guide](./the-longform-guide.md) — Advanced patterns and optimization
 - [The OpenClaw Guide](./the-openclaw-guide.md) — Security lessons from the agent frontier

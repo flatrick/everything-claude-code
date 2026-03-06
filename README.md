@@ -19,7 +19,7 @@ Reset or reinstall: [docs/MIGRATION.md](docs/MIGRATION.md).
 
 ## Guides (by original author)
 
-Guides refer to the upstream project; this fork may differ. See the [original repo](https://github.com/affaan-m/everything-claude-code).
+Guides refer to the upstream project; this fork may differ. For this fork, prefer local docs first: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md), and `docs/`.
 
 | Topic | What you'll learn |
 |-------|--------------------|
@@ -111,7 +111,7 @@ Full layout and details: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
 
 **Codex:** Config in `.codex/`. Quick start: `node scripts/install-ecc.js --target codex`. Installs config.toml and AGENTS.md to `~/.codex/`.
 
-**OpenCode:** Config in `.opencode/`. See [.opencode/README.md](.opencode/README.md) or the [original repo](https://github.com/affaan-m/everything-claude-code) for plugin install and feature parity.
+**OpenCode:** Config in `.opencode/`. See [.opencode/README.md](.opencode/README.md) for plugin install and feature parity in this fork.
 
 ---
 
@@ -153,7 +153,7 @@ Yes. Use `--target cursor` or `--target codex`. Each tool gets its own install d
 **Duplicate hooks / plugin.json?**  
 Do not add a `"hooks"` field to `.claude-plugin/plugin.json`. Claude Code loads `hooks/hooks.json` by convention. See [upstream repo](https://github.com/affaan-m/everything-claude-code) for history (#29, #52, #103).
 
-More: [original docs](https://github.com/affaan-m/everything-claude-code).
+More: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md), and `docs/`.
 
 ---
 

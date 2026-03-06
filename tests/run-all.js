@@ -35,6 +35,7 @@ const testFiles = [
   'hooks/hooks-rounds-3.test.js',
   'hooks/hooks-rounds-4.test.js',
   'hooks/hooks-rounds-2.test.js',
+  'hooks/command-hooks.test.js',
   'hooks/evaluate-session.test.js',
   'hooks/suggest-compact.test.js',
   'integration/hooks.test.js',
