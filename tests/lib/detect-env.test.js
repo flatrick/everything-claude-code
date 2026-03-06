@@ -8,19 +8,7 @@ const assert = require('assert');
 const path = require('path');
 
 const { createDetectEnv } = require('../../scripts/lib/detect-env');
-
-// Test helper
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
+const { test } = require('../helpers/test-runner');
 
 function runTests() {
   console.log('\n=== Testing detect-env.js ===\n');
