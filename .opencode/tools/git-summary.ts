@@ -1,5 +1,5 @@
 /**
- * ECC Custom Tool: Git Summary
+ * MDT Custom Tool: Git Summary
  *
  * Provides a comprehensive git status including branch info, status,
  * recent log, and diff against base branch.

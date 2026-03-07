@@ -1,18 +1,18 @@
-# OpenCode ECC Plugin
+# OpenCode MDT Plugin
 
 > ⚠️ This README is specific to OpenCode usage.  
-> If you installed ECC via npm (e.g. `npm install opencode-ecc`), refer to the root README instead.
+> If you installed MDT via npm (e.g. `npm install opencode-MDT`), refer to the root README instead.
 
-Everything Claude Code (ECC) plugin for OpenCode - agents, commands, hooks, and skills.
+ModelDev Toolkit plugin for OpenCode (forked from Everything Claude Code) - agents, commands, hooks, and skills.
 
 ## Installation
 
 ## Installation Overview
 
-There are two ways to use Everything Claude Code (ECC):
+There are two ways to use ModelDev Toolkit:
 
 1. **npm package (recommended for most users)**  
-   Install via npm/bun/yarn and use the `ecc-install` CLI to set up rules and agents.
+   Install via npm/bun/yarn and use the `mdt-install` CLI to set up rules and agents.
 
 2. **Direct clone / plugin mode**  
    Clone the repository and run OpenCode directly inside it.
@@ -22,20 +22,20 @@ Choose the method that matches your workflow below.
 ### Option 1: npm Package
 
 ```bash
-npm install ecc-universal
+npm install modeldev-toolkit
 ```
 
 Add to your `opencode.json`:
 
 ```json
 {
-  "plugin": ["ecc-universal"]
+  "plugin": ["modeldev-toolkit"]
 }
 ```
-After installation, the `ecc-install` CLI becomes available:
+After installation, the `mdt-install` CLI becomes available:
 
 ```bash
-npx ecc-install typescript
+npx mdt-install typescript
 ```
 
 ### Option 2: Direct Use
@@ -127,7 +127,7 @@ OpenCode has 20+ additional events not available in Claude Code.
 
 ## Skills
 
-The default OpenCode config loads 11 curated ECC skills via the `instructions` array:
+The default OpenCode config loads 11 curated MDT skills via the `instructions` array:
 
 - coding-standards
 - backend-patterns

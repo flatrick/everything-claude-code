@@ -1,5 +1,5 @@
 /**
- * Everything Claude Code (ECC) Plugin Hooks for OpenCode
+ * ModelDev Toolkit Plugin Hooks for OpenCode
  *
  * This plugin translates Claude Code hooks to OpenCode's plugin system.
  * OpenCode's plugin system is MORE sophisticated than Claude Code with 20+ events
@@ -15,7 +15,7 @@
 
 import type { PluginInput } from "@opencode-ai/plugin"
 
-export const ECCHooksPlugin = async ({
+export const MDTHooksPlugin = async ({
   client,
   $,
   directory,
@@ -26,7 +26,7 @@ export const ECCHooksPlugin = async ({
 
   // Helper to call the SDK's log API with correct signature
   const log = (level: "debug" | "info" | "warn" | "error", message: string) =>
-    client.app.log({ body: { service: "ecc", level, message } })
+    client.app.log({ body: { service: "MDT", level, message } })
 
   return {
     /**
@@ -44,7 +44,7 @@ export const ECCHooksPlugin = async ({
       if (event.path.match(/\.(ts|tsx|js|jsx)$/)) {
         try {
           await $`prettier --write ${event.path} 2>/dev/null`
-          log("info", `[ECC] Formatted: ${event.path}`)
+          log("info", `[MDT] Formatted: ${event.path}`)
         } catch {
           // Prettier not installed or failed - silently continue
         }
@@ -58,7 +58,7 @@ export const ECCHooksPlugin = async ({
             const lines = result.trim().split("\n").length
             log(
               "warn",
-              `[ECC] console.log found in ${event.path} (${lines} occurrence${lines > 1 ? "s" : ""})`
+              `[MDT] console.log found in ${event.path} (${lines} occurrence${lines > 1 ? "s" : ""})`
             )
           }
         } catch {
@@ -85,10 +85,10 @@ export const ECCHooksPlugin = async ({
       ) {
         try {
           await $`npx tsc --noEmit 2>&1`
-          log("info", "[ECC] TypeScript check passed")
+          log("info", "[MDT] TypeScript check passed")
         } catch (error: unknown) {
           const err = error as { stdout?: string }
-          log("warn", "[ECC] TypeScript errors detected:")
+          log("warn", "[MDT] TypeScript errors detected:")
           if (err.stdout) {
             // Log first few errors
             const errors = err.stdout.split("\n").slice(0, 5)
@@ -99,7 +99,7 @@ export const ECCHooksPlugin = async ({
 
       // PR creation logging
       if (input.tool === "bash" && input.args?.toString().includes("gh pr create")) {
-        log("info", "[ECC] PR created - check GitHub Actions status")
+        log("info", "[MDT] PR created - check GitHub Actions status")
       }
     },
 
@@ -120,7 +120,7 @@ export const ECCHooksPlugin = async ({
       ) {
         log(
           "info",
-          "[ECC] Remember to review changes before pushing: git diff origin/main...HEAD"
+          "[MDT] Remember to review changes before pushing: git diff origin/main...HEAD"
         )
       }
 
@@ -140,7 +140,7 @@ export const ECCHooksPlugin = async ({
         ) {
           log(
             "warn",
-            `[ECC] Creating ${filePath} - consider if this documentation is necessary`
+            `[MDT] Creating ${filePath} - consider if this documentation is necessary`
           )
         }
       }
@@ -155,7 +155,7 @@ export const ECCHooksPlugin = async ({
         ) {
           log(
             "info",
-            "[ECC] Long-running command detected - consider using background execution"
+            "[MDT] Long-running command detected - consider using background execution"
           )
         }
       }
@@ -169,13 +169,13 @@ export const ECCHooksPlugin = async ({
      * Action: Loads context and displays welcome message
      */
     "session.created": async () => {
-      log("info", "[ECC] Session started - Everything Claude Code hooks active")
+      log("info", "[MDT] Session started - Everything Claude Code hooks active")
 
       // Check for project-specific context files
       try {
         const hasClaudeMd = await $`test -f ${worktree}/CLAUDE.md && echo "yes"`.text()
         if (hasClaudeMd.trim() === "yes") {
-          log("info", "[ECC] Found CLAUDE.md - loading project context")
+          log("info", "[MDT] Found CLAUDE.md - loading project context")
         }
       } catch {
         // No CLAUDE.md found
@@ -192,7 +192,7 @@ export const ECCHooksPlugin = async ({
     "session.idle": async () => {
       if (editedFiles.size === 0) return
 
-      log("info", "[ECC] Session idle - running console.log audit")
+      log("info", "[MDT] Session idle - running console.log audit")
 
       let totalConsoleLogCount = 0
       const filesWithConsoleLogs: string[] = []
@@ -215,19 +215,19 @@ export const ECCHooksPlugin = async ({
       if (totalConsoleLogCount > 0) {
         log(
           "warn",
-          `[ECC] Audit: ${totalConsoleLogCount} console.log statement(s) in ${filesWithConsoleLogs.length} file(s)`
+          `[MDT] Audit: ${totalConsoleLogCount} console.log statement(s) in ${filesWithConsoleLogs.length} file(s)`
         )
         filesWithConsoleLogs.forEach((f) =>
           log("warn", `  - ${f}`)
         )
-        log("warn", "[ECC] Remove console.log statements before committing")
+        log("warn", "[MDT] Remove console.log statements before committing")
       } else {
-        log("info", "[ECC] Audit passed: No console.log statements found")
+        log("info", "[MDT] Audit passed: No console.log statements found")
       }
 
       // Desktop notification (macOS)
       try {
-        await $`osascript -e 'display notification "Task completed!" with title "OpenCode ECC"' 2>/dev/null`
+        await $`osascript -e 'display notification "Task completed!" with title "OpenCode MDT"' 2>/dev/null`
       } catch {
         // Notification not supported or failed
       }
@@ -244,7 +244,7 @@ export const ECCHooksPlugin = async ({
      * Action: Final cleanup and state saving
      */
     "session.deleted": async () => {
-      log("info", "[ECC] Session ended - cleaning up")
+      log("info", "[MDT] Session ended - cleaning up")
       editedFiles.clear()
     },
 
@@ -272,7 +272,7 @@ export const ECCHooksPlugin = async ({
       const completed = event.todos.filter((t) => t.done).length
       const total = event.todos.length
       if (total > 0) {
-        log("info", `[ECC] Progress: ${completed}/${total} tasks completed`)
+        log("info", `[MDT] Progress: ${completed}/${total} tasks completed`)
       }
     },
 
@@ -281,12 +281,12 @@ export const ECCHooksPlugin = async ({
      * OpenCode-specific: Inject environment variables into shell commands
      *
      * Triggers: Before shell command execution
-     * Action: Sets PROJECT_ROOT, PACKAGE_MANAGER, DETECTED_LANGUAGES, ECC_VERSION
+     * Action: Sets PROJECT_ROOT, PACKAGE_MANAGER, DETECTED_LANGUAGES, MDT_VERSION
      */
     "shell.env": async () => {
       const env: Record<string, string> = {
-        ECC_VERSION: "1.6.0",
-        ECC_PLUGIN: "true",
+        MDT_VERSION: "1.6.0",
+        MDT_PLUGIN: "true",
         PROJECT_ROOT: worktree || directory,
       }
 
@@ -335,13 +335,13 @@ export const ECCHooksPlugin = async ({
      * OpenCode-specific: Control context compaction behavior
      *
      * Triggers: Before context compaction
-     * Action: Push ECC context block and custom compaction prompt
+     * Action: Push MDT context block and custom compaction prompt
      */
     "experimental.session.compacting": async () => {
       const contextBlock = [
-        "# ECC Context (preserve across compaction)",
+        "# MDT Context (preserve across compaction)",
         "",
-        "## Active Plugin: Everything Claude Code v1.6.0",
+        "## Active Plugin: ModelDev Toolkit v1.6.0",
         "- Hooks: file.edited, tool.execute.before/after, session.created/idle/deleted, shell.env, compacting, permission.ask",
         "- Tools: run-tests, check-coverage, security-audit, format-code, lint-check, git-summary",
         "- Agents: 11 specialized (planner, architect, tdd-guide, code-reviewer, security-reviewer, build-error-resolver, e2e-runner, refactor-cleaner, doc-updater, database-reviewer, python-reviewer)",
@@ -376,7 +376,7 @@ export const ECCHooksPlugin = async ({
      * Action: Auto-approve reads, formatters, and test commands; log all for audit
      */
     "permission.ask": async (event: { tool: string; args: unknown }) => {
-      log("info", `[ECC] Permission requested for: ${event.tool}`)
+      log("info", `[MDT] Permission requested for: ${event.tool}`)
 
       const cmd = String((event.args as Record<string, unknown>)?.command || event.args || "")
 
@@ -401,4 +401,4 @@ export const ECCHooksPlugin = async ({
   }
 }
 
-export default ECCHooksPlugin
+export default MDTHooksPlugin
