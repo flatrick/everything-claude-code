@@ -13,6 +13,9 @@ readStdin().then(raw => {
   if (hookEnabled('stop:evaluate-session', ['minimal', 'standard', 'strict'])) {
     runExistingHook('evaluate-session.js', claudeInput);
   }
+  if (hookEnabled('stop:cost-tracker', ['minimal', 'standard', 'strict'])) {
+    runExistingHook('cost-tracker.js', claudeInput);
+  }
 
   process.stdout.write(raw);
 }).catch(() => process.exit(0));
