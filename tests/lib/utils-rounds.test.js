@@ -8,6 +8,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const { test } = require('../helpers/test-runner');
+const { withEnv } = require('../helpers/env-test-utils');
 
 // Import the module
 const utils = require('../../scripts/lib/utils');
@@ -264,17 +265,15 @@ function runTests() {
       return;
     }
     const previousCwd = process.cwd();
-    const previousSessionId = process.env.CLAUDE_SESSION_ID;
     try {
       process.chdir('/');
-      process.env.CLAUDE_SESSION_ID = '';
-      const result = utils.getSessionIdShort('my-custom-fallback');
-      assert.strictEqual(result, 'my-custom-fallback',
-        `At CWD=/ with no session ID, should use the fallback parameter. Got: "${result}"`);
+      withEnv({ CLAUDE_SESSION_ID: '' }, () => {
+        const result = utils.getSessionIdShort('my-custom-fallback');
+        assert.strictEqual(result, 'my-custom-fallback',
+          `At CWD=/ with no session ID, should use the fallback parameter. Got: "${result}"`);
+      });
     } finally {
       process.chdir(previousCwd);
-      if (previousSessionId === undefined) delete process.env.CLAUDE_SESSION_ID;
-      else process.env.CLAUDE_SESSION_ID = previousSessionId;
     }
   })) passed++; else failed++;
 
@@ -390,22 +389,14 @@ function runTests() {
   if (test('getSessionIdShort returns whitespace when CLAUDE_SESSION_ID is all spaces', () => {
     // utils.js line 116: if (sessionId && sessionId.length > 0) â '   ' is truthy
     // and has length > 0, so it passes the check instead of falling back.
-    const original = process.env.CLAUDE_SESSION_ID;
-    try {
-      process.env.CLAUDE_SESSION_ID = '          ';  // 10 spaces
+    withEnv({ CLAUDE_SESSION_ID: '          ' }, () => {
       const result = utils.getSessionIdShort('fallback');
       // slice(-8) on 10 spaces returns 8 spaces â not the expected fallback
       assert.strictEqual(result, '        ',
         'Whitespace-only ID should return 8 trailing spaces (no trim check)');
       assert.strictEqual(result.trim().length, 0,
         'Result should be entirely whitespace (demonstrating the missing trim)');
-    } finally {
-      if (original !== undefined) {
-        process.env.CLAUDE_SESSION_ID = original;
-      } else {
-        delete process.env.CLAUDE_SESSION_ID;
-      }
-    }
+    });
   })) passed++; else failed++;
 
   // ââ Round 97: countInFile with same RegExp object called twice (lastIndex reuse) ââ
@@ -723,4 +714,3 @@ function runTests() {
 }
 
 runTests();
-
