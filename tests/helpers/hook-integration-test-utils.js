@@ -47,6 +47,31 @@ function runHookWithInput(scriptPath, input = {}, env = {}, timeoutMs = 10000, p
   });
 }
 
+/**
+ * Parse remainder of command into args, respecting double-quoted strings.
+ */
+function parseArgsWithQuotes(rest) {
+  if (!rest || !rest.trim()) return [];
+  const args = [];
+  let s = rest.trim();
+  while (s.length) {
+    const quoted = s.match(/^"([^"]*)"\s*/);
+    if (quoted) {
+      args.push(quoted[1]);
+      s = s.slice(quoted[0].length).trimStart();
+      continue;
+    }
+    const unquoted = s.match(/^(\S+)\s*/);
+    if (unquoted) {
+      args.push(unquoted[1]);
+      s = s.slice(unquoted[0].length).trimStart();
+      continue;
+    }
+    break;
+  }
+  return args;
+}
+
 function parseHookCommand(command, pluginRoot) {
   const inlineMatch = command.match(/^node -e "(.+)"$/s);
   if (inlineMatch) {
@@ -56,7 +81,7 @@ function parseHookCommand(command, pluginRoot) {
   const scriptMatch = command.match(/^node "([^"]+)"(?: (.+))?$/s);
   if (scriptMatch) {
     const scriptPath = scriptMatch[1].replace('${CLAUDE_PLUGIN_ROOT}', pluginRoot);
-    const extraArgs = scriptMatch[2] ? scriptMatch[2].trim().split(/\s+/).filter(Boolean) : [];
+    const extraArgs = scriptMatch[2] ? parseArgsWithQuotes(scriptMatch[2]) : [];
     return { cmd: 'node', args: [scriptPath, ...extraArgs] };
   }
 

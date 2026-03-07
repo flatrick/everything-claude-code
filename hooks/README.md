@@ -43,14 +43,31 @@ User request → Claude picks a tool → PreToolUse hook runs → Tool executes 
 | **Session start** | `SessionStart` | Loads previous context and detects package manager |
 | **Pre-compact** | `PreCompact` | Saves state before context compaction |
 | **Console.log audit** | `Stop` | Checks all modified files for `console.log` after each response |
-| **Session end** | `SessionEnd` | Persists session state for next session |
-| **Pattern extraction** | `SessionEnd` | Evaluates session for extractable patterns (continuous learning) |
+| **Session end** | `Stop` | Persists session state after each response (Stop carries transcript_path) |
+| **Pattern extraction** | `Stop` | Evaluates session for extractable patterns (continuous learning) |
+| **Session end marker** | `SessionEnd` | Lifecycle marker (non-blocking) |
+
+## Runtime Hook Controls
+
+You can enable or disable hooks at runtime without editing `hooks.json`:
+
+- **`ECC_HOOK_PROFILE`** — `minimal`, `standard` (default), or `strict`. Some hooks run only in certain profiles (e.g. tmux reminder only in `strict`).
+- **`ECC_DISABLED_HOOKS`** — Comma-separated hook IDs to disable (e.g. `pre:bash:tmux-reminder,post:edit:typecheck`).
+
+Example:
+
+```bash
+export ECC_HOOK_PROFILE=standard
+export ECC_DISABLED_HOOKS="pre:bash:tmux-reminder,post:edit:typecheck"
+```
+
+Hook IDs match the first argument passed to `run-with-flags.js` in `hooks.json` (e.g. `pre:bash:dev-server-block`, `stop:session-end`).
 
 ## Customizing Hooks
 
 ### Disabling a Hook
 
-Remove or comment out the hook entry in `hooks.json`. If installed as a plugin, override in your `~/.claude/settings.json`:
+Use **`ECC_DISABLED_HOOKS`** (see above) to disable without editing files. Or remove or comment out the hook entry in `hooks.json`. If installed as a plugin, override in your `~/.claude/settings.json`:
 
 ```json
 {

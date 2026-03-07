@@ -54,13 +54,14 @@ function transformToClaude(cursorInput, overrides = {}) {
   return {
     tool_input: {
       command: cursorInput.command || cursorInput.args?.command || '',
-      file_path: cursorInput.path || cursorInput.file || '',
+      file_path: cursorInput.path || cursorInput.file || cursorInput.args?.filePath || '',
       ...overrides.tool_input,
     },
     tool_output: {
       output: cursorInput.output || cursorInput.result || '',
       ...overrides.tool_output,
     },
+    transcript_path: cursorInput.transcript_path || cursorInput.transcriptPath || cursorInput.session?.transcript_path || '',
     _cursor: {
       conversation_id: cursorInput.conversation_id,
       hook_event_name: cursorInput.hook_event_name,
@@ -68,6 +69,24 @@ function transformToClaude(cursorInput, overrides = {}) {
       model: cursorInput.model,
     },
   };
+}
+
+function hookEnabled(hookId, allowedProfiles = ['standard', 'strict']) {
+  const rawProfile = String(process.env.ECC_HOOK_PROFILE || 'standard').toLowerCase();
+  const profile = ['minimal', 'standard', 'strict'].includes(rawProfile) ? rawProfile : 'standard';
+
+  const disabled = new Set(
+    String(process.env.ECC_DISABLED_HOOKS || '')
+      .split(',')
+      .map(v => v.trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  if (disabled.has(String(hookId || '').toLowerCase())) {
+    return false;
+  }
+
+  return allowedProfiles.includes(profile);
 }
 
 function runExistingHook(scriptName, stdinData) {
@@ -97,4 +116,4 @@ function runExistingHook(scriptName, stdinData) {
   }
 }
 
-module.exports = { readStdin, getCursorRoot, getPluginRoot, resolveDelegatedHook, transformToClaude, runExistingHook };
+module.exports = { readStdin, getCursorRoot, getPluginRoot, resolveDelegatedHook, transformToClaude, runExistingHook, hookEnabled };
