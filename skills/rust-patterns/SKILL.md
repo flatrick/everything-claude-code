@@ -1,6 +1,5 @@
 ---
 name: rust-patterns
-origin: ECC
 ---
 
 # Rust Development Patterns

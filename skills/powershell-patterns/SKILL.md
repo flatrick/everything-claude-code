@@ -1,7 +1,6 @@
 ---
 name: powershell-patterns
 description: PowerShell best practices, idiomatic patterns, module design, error handling, security hardening, and cross-platform scripting for modern PowerShell 5.1 and PowerShell 7+.
-origin: ECC
 ---
 
 # PowerShell Development Patterns

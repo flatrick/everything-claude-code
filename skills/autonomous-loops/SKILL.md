@@ -1,7 +1,7 @@
 ---
 name: autonomous-loops
 description: "Patterns and architectures for autonomous Claude Code loops — from simple sequential pipelines to RFC-driven multi-agent DAG systems."
-origin: ECC
+
 ---
 
 # Autonomous Loops Skill
