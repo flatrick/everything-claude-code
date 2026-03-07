@@ -1,0 +1,129 @@
+# Optional Improvements from affaan-m to Consider
+
+You already ported the three high-value items: **runtime hook controls** (ECC_HOOK_PROFILE / ECC_DISABLED_HOOKS), **session persistence on Stop**, and the **doc-file-warning allowlist**. Below are remaining upstream additions.
+
+---
+
+## Implementation scope (confirmed)
+
+**In scope now:**
+
+1. **OpenCode profile support** — Add ECC_HOOK_PROFILE / ECC_DISABLED_HOOKS and hookEnabled gating to `.opencode/plugins/ecc-hooks.ts`.
+2. **check-hook-enabled.js** — Add the small CLI script that prints yes/no for a hook ID and profiles.
+3. **Cost-tracker hook** — Port cost-tracker.js, wire on Stop in hooks.json and Cursor stop.js; use your repo's config dir for metrics path.
+4. **Harness/loop commands and agents** — Port from affaan-m: commands `/harness-audit`, `/loop-start`, `/loop-status`, `/quality-gate`, `/model-route` and agents `harness-optimizer`, `loop-operator`. Markdown only; no new scripts unless a command explicitly requires one.
+
+**Deferred (until the above are in place):**
+
+- **Quality-gate hook** — PostToolUse script that runs Biome/Prettier/ruff/gofmt per file. Revisit after OpenCode, check-hook-enabled, cost-tracker, and harness/loop are done.
+
+**Deferred (later stage):**
+
+- **Community and docs** — CHANGELOG, CODE_OF_CONDUCT, SPONSORING, etc.
+
+---
+
+## 1. OpenCode plugin: profile and disabled-hooks support
+
+**What:** In affaan-m, `.opencode/plugins/ecc-hooks.ts` reads `ECC_HOOK_PROFILE` and `ECC_DISABLED_HOOKS`, defines `hookEnabled(hookId, requiredProfile)`, and gates each behavior (format, console.log warn, tsc, etc.) with it.
+
+**This repo:** `.opencode/plugins/ecc-hooks.ts` has no profile or disabled-hooks logic; every hook behavior always runs.
+
+**Why adopt:** OpenCode users get the same runtime gating as Claude Code/Cursor (e.g. disable format or tsc via env without editing the plugin).
+
+**Effort:** Low. Port the `normalizeProfile`, `disabledHooks`, `profileOrder`, `profileAllowed`, and `hookEnabled` logic from affaan-m, then wrap each `file.edited` / `tool.execute.after` behavior in `if (hookEnabled(...))`.
+
+---
+
+## 2. Cost-tracker hook (Stop phase)
+
+**What:** affaan-m's `scripts/hooks/cost-tracker.js` runs on Stop, parses stdin for `usage` / `token_usage`, estimates cost from model + tokens, and appends a JSONL row to `~/.claude/metrics/costs.jsonl`.
+
+**This repo:** No cost-tracker; no metrics hook.
+
+**Why adopt:** Lightweight per-session cost tracking without external tooling. Only useful if the harness sends token usage on Stop (Claude Code may; Cursor/OpenCode may not).
+
+**Effort:** Low–medium. Port the script and wire it in `hooks/hooks.json` (Stop) and `.cursor/hooks/stop.js`. This repo's utils use different names (e.g. no `getClaudeDir()`); use existing config/sessions dir or a dedicated `metrics` path under config dir.
+
+---
+
+## 3. Quality-gate hook (PostToolUse, Edit) — DEFERRED
+
+Revisit after OpenCode profile support, check-hook-enabled, cost-tracker, and harness/loop are in place.
+
+**What (for reference):** affaan-m's `scripts/hooks/quality-gate.js` runs after file edits: for the edited `file_path` it runs Biome (or Prettier), and for Go/Python runs gofmt/ruff. Optional env: `ECC_QUALITY_GATE_FIX`, `ECC_QUALITY_GATE_STRICT`.
+
+**Effort:** Low. Port the script, add a PostToolUse entry via run-with-flags (e.g. `post:quality-gate`), and optionally wire in Cursor/OpenCode if you mirror PostToolUse there.
+
+---
+
+## 4. check-hook-enabled.js
+
+**What:** affaan-m's `scripts/hooks/check-hook-enabled.js` is a tiny CLI: `node check-hook-enabled.js <hookId> [profilesCsv]`; it prints `yes` or `no` according to `isHookEnabled(hookId, { profiles })`.
+
+**This repo:** No such script.
+
+**Why adopt:** Useful for shell scripts or other tooling that need to branch on "is this hook enabled?" without reimplementing hook-flags.
+
+**Effort:** Trivial. Copy the script; it only depends on `../lib/hook-flags.js`, which you already have.
+
+---
+
+## 5. Harness/loop commands and agents — IN SCOPE
+
+**What:** Commands `/harness-audit`, `/loop-start`, `/loop-status`, `/quality-gate`, `/model-route` and agents `harness-optimizer`, `loop-operator`. Prompt/contract only; no new runtime. Benefits: audit scorecard and next steps, loop runbooks/status, model routing, delegation via harness-optimizer and loop-operator.
+
+**Effort:** Medium. Port the markdown command and agent files from affaan-m. No new scripts unless a command explicitly references one.
+
+---
+
+## Deferred: Community and docs
+
+CHANGELOG.md, CODE_OF_CONDUCT.md, SPONSORING.md, SPONSORS.md, and release/attribution docs are **skipped for now**. Revisit once the product behavior is where you want it; they have no impact on how the fork works.
+
+---
+
+## Summary
+
+| Item                             | Status                     |
+| -------------------------------- | -------------------------- |
+| OpenCode profile support         | **In scope**               |
+| check-hook-enabled.js            | **In scope**               |
+| Cost-tracker hook                | **In scope**               |
+| Harness/loop commands and agents | **In scope**               |
+| Quality-gate hook                | Deferred (after the above) |
+| Community and docs               | Deferred (later stage)     |
+
+Implementation order: (1) check-hook-enabled.js, (2) cost-tracker hook, (3) OpenCode profile support, (4) harness/loop commands and agents. Quality-gate hook can be added once these are in place.
+
+---
+
+## Check-list
+
+Use the indented rows under each task for status updates, gotchas found during work, or notes to use when working on that task later.
+
+- [ ] **check-hook-enabled.js**
+  - *(Add status or important notes here when working on this task.)*
+  - Script depends only on `scripts/lib/hook-flags.js`. CLI: `node scripts/hooks/check-hook-enabled.js <hookId> [profilesCsv]` → prints `yes` or `no`.
+
+- [ ] **Cost-tracker hook**
+  - *(Add status or important notes here when working on this task.)*
+  - Use this repo's config dir (or derived path) for metrics; no `getClaudeDir()`. Wire in `hooks/hooks.json` (Stop) and `.cursor/hooks/stop.js` with run-with-flags and hook ID e.g. `stop:cost-tracker`.
+  - Only useful if the harness sends token usage on Stop.
+
+- [ ] **OpenCode profile support**
+  - *(Add status or important notes here when working on this task.)*
+  - Port from affaan-m: `normalizeProfile`, `disabledHooks`, `profileOrder`, `profileAllowed`, `hookEnabled`. Gate each `file.edited` and `tool.execute.after` behavior with `if (hookEnabled(...))`.
+
+- [ ] **Harness/loop commands and agents**
+  - *(Add status or important notes here when working on this task.)*
+  - Port from affaan-m: `commands/harness-audit.md`, `loop-start.md`, `loop-status.md`, `quality-gate.md`, `model-route.md` and `agents/harness-optimizer.md`, `loop-operator.md`. Add to `.opencode/commands/` if you mirror OpenCode commands.
+  - Markdown only; no new scripts unless a command explicitly requires one.
+
+- [ ] **Quality-gate hook** (deferred)
+  - Revisit after the four items above are done.
+  - *(Add status or important notes here when you start this task.)*
+
+- [ ] **Community and docs** (deferred)
+  - Revisit in a later stage.
+  - *(Add status or important notes here when you start this task.)*
