@@ -21,12 +21,48 @@ export const MDTHooksPlugin = async ({
   directory,
   worktree,
 }: PluginInput) => {
+  type HookProfile = "minimal" | "standard" | "strict"
+
   // Track files edited in current session for console.log audit
   const editedFiles = new Set<string>()
 
   // Helper to call the SDK's log API with correct signature
   const log = (level: "debug" | "info" | "warn" | "error", message: string) =>
     client.app.log({ body: { service: "MDT", level, message } })
+
+  const normalizeProfile = (value: string | undefined): HookProfile => {
+    if (value === "minimal" || value === "strict") return value
+    return "standard"
+  }
+
+  const currentProfile = normalizeProfile(process.env.MDT_HOOK_PROFILE)
+  const disabledHooks = new Set(
+    (process.env.MDT_DISABLED_HOOKS || "")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+  )
+
+  const profileOrder: Record<HookProfile, number> = {
+    minimal: 0,
+    standard: 1,
+    strict: 2,
+  }
+
+  const profileAllowed = (required: HookProfile | HookProfile[]): boolean => {
+    if (Array.isArray(required)) {
+      return required.some((entry) => profileOrder[currentProfile] >= profileOrder[entry])
+    }
+    return profileOrder[currentProfile] >= profileOrder[required]
+  }
+
+  const hookEnabled = (
+    hookId: string,
+    requiredProfile: HookProfile | HookProfile[] = "standard"
+  ): boolean => {
+    if (disabledHooks.has(hookId.toLowerCase())) return false
+    return profileAllowed(requiredProfile)
+  }
 
   return {
     /**
@@ -41,7 +77,7 @@ export const MDTHooksPlugin = async ({
       editedFiles.add(event.path)
 
       // Auto-format JS/TS files
-      if (event.path.match(/\.(ts|tsx|js|jsx)$/)) {
+      if (hookEnabled("post:edit:format", ["standard", "strict"]) && event.path.match(/\.(ts|tsx|js|jsx)$/)) {
         try {
           await $`prettier --write ${event.path} 2>/dev/null`
           log("info", `[MDT] Formatted: ${event.path}`)
@@ -51,7 +87,7 @@ export const MDTHooksPlugin = async ({
       }
 
       // Console.log warning check
-      if (event.path.match(/\.(ts|tsx|js|jsx)$/)) {
+      if (hookEnabled("post:edit:console-warn", ["standard", "strict"]) && event.path.match(/\.(ts|tsx|js|jsx)$/)) {
         try {
           const result = await $`grep -n "console\\.log" ${event.path} 2>/dev/null`.text()
           if (result.trim()) {
@@ -80,6 +116,7 @@ export const MDTHooksPlugin = async ({
     ) => {
       // Check if a TypeScript file was edited
       if (
+        hookEnabled("post:edit:typecheck", ["standard", "strict"]) &&
         input.tool === "edit" &&
         input.args?.filePath?.match(/\.tsx?$/)
       ) {
@@ -98,7 +135,11 @@ export const MDTHooksPlugin = async ({
       }
 
       // PR creation logging
-      if (input.tool === "bash" && input.args?.toString().includes("gh pr create")) {
+      if (
+        hookEnabled("post:bash:pr-created", ["standard", "strict"]) &&
+        input.tool === "bash" &&
+        input.args?.toString().includes("gh pr create")
+      ) {
         log("info", "[MDT] PR created - check GitHub Actions status")
       }
     },
@@ -115,6 +156,7 @@ export const MDTHooksPlugin = async ({
     ) => {
       // Git push review reminder
       if (
+        hookEnabled("pre:bash:git-push-reminder", "strict") &&
         input.tool === "bash" &&
         input.args?.toString().includes("git push")
       ) {
@@ -126,6 +168,7 @@ export const MDTHooksPlugin = async ({
 
       // Block creation of unnecessary documentation files
       if (
+        hookEnabled("pre:write:doc-file-warning", ["standard", "strict"]) &&
         input.tool === "write" &&
         input.args?.filePath &&
         typeof input.args.filePath === "string"
@@ -146,7 +189,7 @@ export const MDTHooksPlugin = async ({
       }
 
       // Long-running command reminder
-      if (input.tool === "bash") {
+      if (hookEnabled("pre:bash:tmux-reminder", "strict") && input.tool === "bash") {
         const cmd = String(input.args?.command || input.args || "")
         if (
           cmd.match(/^(npm|pnpm|yarn|bun)\s+(install|build|test|run)/) ||
@@ -169,7 +212,9 @@ export const MDTHooksPlugin = async ({
      * Action: Loads context and displays welcome message
      */
     "session.created": async () => {
-      log("info", "[MDT] Session started - Everything Claude Code hooks active")
+      if (!hookEnabled("session:start", ["minimal", "standard", "strict"])) return
+
+      log("info", `[MDT] Session started - profile=${currentProfile}`)
 
       // Check for project-specific context files
       try {
@@ -190,6 +235,7 @@ export const MDTHooksPlugin = async ({
      * Action: Runs console.log audit on all edited files
      */
     "session.idle": async () => {
+      if (!hookEnabled("stop:check-console-log", ["standard", "strict"])) return
       if (editedFiles.size === 0) return
 
       log("info", "[MDT] Session idle - running console.log audit")
