@@ -10,6 +10,7 @@ const fs = require('fs');
 const os = require('os');
 const { evaluateCompactSuggestion } = require('../../scripts/hooks/suggest-compact');
 const { test } = require('../helpers/test-runner');
+const { NEUTRAL_TOOL_ENV } = require('../helpers/test-env-profiles');
 
 function getCounterFilePath(sessionId) {
   return path.join(os.tmpdir(), `claude-tool-count-${sessionId}`);
@@ -237,7 +238,8 @@ function runTests() {
     const defaultCounterFile = getCounterFilePath('default');
     cleanupCounter(defaultCounterFile);
     try {
-      const result = runCompact({ CLAUDE_SESSION_ID: '' });
+      // Clear profile tool vars so session ID is derived only from CLAUDE_SESSION_ID=''
+      const result = runCompact({ ...NEUTRAL_TOOL_ENV, CLAUDE_SESSION_ID: '' });
       assert.strictEqual(result.code, 0);
       assert.ok(fs.existsSync(defaultCounterFile));
       const count = parseInt(fs.readFileSync(defaultCounterFile, 'utf8').trim(), 10);

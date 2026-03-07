@@ -65,6 +65,8 @@ function buildTestEnv(profile = 'neutral', overrides = {}) {
 
 module.exports = {
   BASE_TEST_ENV,
+  NEUTRAL_TOOL_ENV,
   TEST_ENV_PROFILES,
+  TOOL_DETECTION_KEYS,
   buildTestEnv
 };
