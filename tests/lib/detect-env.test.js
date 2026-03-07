@@ -60,6 +60,51 @@ function runTests() {
     passed++;
   else failed++;
 
+  if (
+    test('uses CLAUDE_SESSION_ID over CLAUDE_CODE when both are present', () => {
+      const env = { CLAUDE_SESSION_ID: 'abc-123', CLAUDE_CODE: '1' };
+      const d = createDetectEnv({ env });
+      assert.strictEqual(d.tool, 'claude');
+      assert.strictEqual(d.getTool(), 'claude');
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('uses CLAUDE_CODE=1 as Claude signal when session id is absent', () => {
+      const env = { CLAUDE_CODE: '1' };
+      const d = createDetectEnv({ env });
+      assert.strictEqual(d.tool, 'claude');
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('treats non-truthy detection values as neutral (unknown)', () => {
+      const env = {
+        CURSOR_AGENT: '0',
+        CLAUDE_CODE: '0',
+        CLAUDE_SESSION_ID: ''
+      };
+      const d = createDetectEnv({ env });
+      assert.strictEqual(d.tool, 'unknown');
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('treats unrelated environment variables as neutral (unknown)', () => {
+      const env = { NODE_ENV: 'test', CI: '1' };
+      const d = createDetectEnv({ env });
+      assert.strictEqual(d.tool, 'unknown');
+    })
+  )
+    passed++;
+  else failed++;
+
   // Config directory resolution
   console.log('\nConfig Directory Resolution:');
 
@@ -340,4 +385,3 @@ function runTests() {
 if (require.main === module) {
   runTests();
 }
-
