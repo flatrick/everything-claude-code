@@ -1,4 +1,4 @@
-# Everything Claude Code (ECC) — Codex CLI Reference Configuration
+# ModelDev Toolkit — Codex CLI Reference Configuration
 #
 # Copy this file to ~/.codex/config.toml to apply globally.
 # Or keep it in your project root for project-level config.
@@ -17,11 +17,11 @@ approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 
 # Notifications (macOS) — notify is an array of shell command strings
-notify = ["terminal-notifier -title 'Codex ECC' -message 'Task completed!' -sound default"]
+notify = ["terminal-notifier -title 'Codex MDT' -message 'Task completed!' -sound default"]
 
 # Persistent instructions applied to every session
 instructions = """
-Follow ECC principles:
+Follow MDT principles:
 1. Test-Driven Development (TDD) - write tests first, 80%+ coverage required
 2. Immutability - always create new objects, never mutate
 3. Security-First - validate all inputs, no hardcoded secrets

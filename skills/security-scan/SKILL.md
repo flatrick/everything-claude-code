@@ -31,13 +31,13 @@ AgentShield must be installed. Check and install if needed:
 
 ```bash
 # Check if installed
-npx ecc-agentshield --version
+npx MDT-agentshield --version
 
 # Install globally (recommended)
-npm install -g ecc-agentshield
+npm install -g MDT-agentshield
 
 # Or run directly via npx (no install needed)
-npx ecc-agentshield scan .
+npx MDT-agentshield scan .
 ```
 
 ## Usage
@@ -48,29 +48,29 @@ Run against the current project's `.claude/` directory:
 
 ```bash
 # Scan current project
-npx ecc-agentshield scan
+npx MDT-agentshield scan
 
 # Scan a specific path
-npx ecc-agentshield scan --path /path/to/.claude
+npx MDT-agentshield scan --path /path/to/.claude
 
 # Scan with minimum severity filter
-npx ecc-agentshield scan --min-severity medium
+npx MDT-agentshield scan --min-severity medium
 ```
 
 ### Output Formats
 
 ```bash
 # Terminal output (default) — colored report with grade
-npx ecc-agentshield scan
+npx MDT-agentshield scan
 
 # JSON — for CI/CD integration
-npx ecc-agentshield scan --format json
+npx MDT-agentshield scan --format json
 
 # Markdown — for documentation
-npx ecc-agentshield scan --format markdown
+npx MDT-agentshield scan --format markdown
 
 # HTML — self-contained dark-theme report
-npx ecc-agentshield scan --format html > security-report.html
+npx MDT-agentshield scan --format html > security-report.html
 ```
 
 ### Auto-Fix
@@ -78,7 +78,7 @@ npx ecc-agentshield scan --format html > security-report.html
 Apply safe fixes automatically (only fixes marked as auto-fixable):
 
 ```bash
-npx ecc-agentshield scan --fix
+npx MDT-agentshield scan --fix
 ```
 
 This will:
@@ -93,7 +93,7 @@ Run the adversarial three-agent pipeline for deeper analysis:
 ```bash
 # Requires ANTHROPIC_API_KEY
 export ANTHROPIC_API_KEY=your-key
-npx ecc-agentshield scan --opus --stream
+npx MDT-agentshield scan --opus --stream
 ```
 
 This runs:
@@ -106,7 +106,7 @@ This runs:
 Scaffold a new secure `.claude/` configuration from scratch:
 
 ```bash
-npx ecc-agentshield init
+npx MDT-agentshield init
 ```
 
 Creates:
@@ -161,4 +161,4 @@ Add to your CI pipeline:
 ## Links
 
 - **GitHub**: [github.com/affaan-m/agentshield](https://github.com/affaan-m/agentshield)
-- **npm**: [npmjs.com/package/ecc-agentshield](https://www.npmjs.com/package/ecc-agentshield)
+- **npm**: [npmjs.com/package/MDT-agentshield](https://www.npmjs.com/package/MDT-agentshield)

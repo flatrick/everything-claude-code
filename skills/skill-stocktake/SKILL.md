@@ -172,6 +172,6 @@ The `save-results.js` script sets this automatically. Never use a date-only appr
 
 ## Notes
 
-- Evaluation is blind: the same checklist applies to all skills regardless of origin (ECC, self-authored, auto-extracted)
+- Evaluation is blind: the same checklist applies to all skills regardless of origin (MDT, self-authored, auto-extracted)
 - Archive / delete operations always require explicit user confirmation
 - No verdict branching by skill origin
