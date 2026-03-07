@@ -1,14 +1,21 @@
 # ModelDev Toolkit
 
 Generic model toolkit for software development workflows and scaffolding.
+Not just configs. A complete system: skills, agents, hooks, rules, and MCP configurations. 
+Works with **Claude Code**, **Cursor**, **Codex**, and other AI agent harnesses.
 
-**This project is a rebranded fork of [ModelDev Toolkit](https://github.com/affaan-m/modeldev-toolkit).** It has been modified to use a Node-only runtime and installer; the original repo (plugin, guides, community) remains the upstream source.
+## READ ME FIRST!
 
-Not just configs. A complete system: skills, agents, hooks, rules, and MCP configurations. Works with **Claude Code**, **Cursor**, **Codex**, and other AI agent harnesses.
+This started as merely a clone of [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) but my goal is to adjust this my own liking.
 
----
+My first change was to turn this into a **NodeJS-only runtime and installer**; sticking to one language that is truly cross-platform was my first goal.
+The original is, at the time of writing this (2026-03-07), using NodeJS, Bash-scripts and Python.
 
-## This fork
+The second goal is to steer away from being all about Claude Code as the primary LLM-tool, and instead aim for a generic toolkit that will hopefully work well for all/most alternatives.
+
+**2026-03-07 I'm still under heavy development with this, so things are likely to break often until I can begin working on stabilizing everything.**
+
+### This fork
 
 - **Node-only:** No Bash or PowerShell scripts. All install and hook logic is JavaScript run with Node.js.
 - **Single installer:** `node scripts/install-mdt.js` installs to Claude Code, Cursor, or Codex (see Installation).
@@ -67,6 +74,7 @@ Guides refer to the upstream project; this fork may differ. For this fork, prefe
 
 3. **Use** commands and agents in your tool (e.g. `/plan`, `/tdd`, `/code-review`). Full layout: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
 
+**NOTE 2026-03-07 I don't think I'll bother with this for a while, but I'll leave this section to not forget about it END NOTE**
 For the official Claude Code plugin (marketplace install), use the [original repo](https://github.com/affaan-m/modeldev-toolkit).
 
 ---
@@ -133,7 +141,12 @@ Full layout and details: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
 
 ## Key concepts
 
-**Agents** are subagents (planner, code-reviewer, tdd-guide, …). **Skills** are workflow definitions. **Hooks** are Node scripts that run on tool events. **Rules** are common + language-specific guidelines. See [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md).
+- **Agents** are subagents (planner, code-reviewer, tdd-guide, …). 
+- **Skills** are workflow definitions. 
+- **Hooks** are Node scripts that run on tool events. 
+- **Rules** are common + language-specific guidelines. 
+
+See [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md).
 
 ---
 
@@ -153,20 +166,33 @@ Full layout and details: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
 | Python review | `/python-review` | python-reviewer |
 | DB queries | *(auto-delegated)* | database-reviewer |
 
-**Workflows:** Plan → `/plan`; then `/tdd` for implementation; `/code-review` before merge. For production: `/security-scan`, `/e2e`, `/test-coverage`.
+**Workflows:** 
+- Plan → `/plan`; then `/tdd` for implementation; `/code-review` before merge. 
+- For production: `/security-scan`, `/e2e`, `/test-coverage`.
 
 ---
 
 ## FAQ
 
-**How do I install?**  
-Use `node scripts/install-mdt.js` with your language(s). Default target is Claude (`~/.claude/`). Use `--target cursor` or `--target codex` for the others. See [Installation](#installation).
+### How do I install?
 
-**Does this work with Cursor / Codex?**  
-Yes. Use `--target cursor` or `--target codex`. Each tool gets its own install directory; see [Cursor / Codex / OpenCode](#cursor--codex--opencode).
+Use `node scripts/install-mdt.js` with your language(s).
+Default target is Claude (`~/.claude/`). 
+Use `--target cursor` or `--target codex` for the others. 
 
-**Duplicate hooks / plugin.json?**  
-Do not add a `"hooks"` field to `.claude-plugin/plugin.json`. Claude Code loads `hooks/hooks.json` by convention. See [upstream repo](https://github.com/affaan-m/modeldev-toolkit) for history (#29, #52, #103).
+See [Installation](#installation).
+
+### Does this work with Cursor / Codex?
+
+Yes, use `--target cursor` or `--target codex`. 
+
+Each tool gets its own install directory; see [Cursor / Codex / OpenCode](#cursor--codex--opencode).
+
+### Duplicate hooks / plugin.json?
+
+Do not add a `"hooks"` field to `.claude-plugin/plugin.json`. 
+Claude Code loads `hooks/hooks.json` by convention. 
+See [upstream repo](https://github.com/affaan-m/modeldev-toolkit) for history (#29, #52, #103).
 
 More: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md), and `docs/`.
 
@@ -222,7 +248,7 @@ See [docs/token-optimization.md](docs/token-optimization.md) for recommended set
 
 ## Links
 
-- **Original project:** [ModelDev Toolkit](https://github.com/affaan-m/modeldev-toolkit) — plugin, guides, community
+- **Original project:** [Everything Claude Code](https://github.com/affaan-m/modeldev-toolkit) — plugin, guides, community
 - **Shorthand Guide:** [The Shorthand Guide to ModelDev Toolkit](https://x.com/affaanmustafa/status/2012378465664745795)
 - **Longform Guide:** [The Longform Guide to ModelDev Toolkit](https://x.com/affaanmustafa/status/2014040193557471352)
 
