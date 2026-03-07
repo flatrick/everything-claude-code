@@ -42,7 +42,7 @@ function runTests() {
     const claudeBase = path.join(tmpHome, '.claude');
 
     try {
-      const result = runInstaller(['typescript'], {
+      const result = runInstaller(['--global', 'typescript'], {
         env: {
           HOME: tmpHome,
           USERPROFILE: tmpHome,
@@ -97,7 +97,7 @@ function runTests() {
         'utf8'
       );
 
-      const result = runInstaller(['typescript'], {
+      const result = runInstaller(['--global', 'typescript'], {
         env: {
           HOME: tmpHome,
           USERPROFILE: tmpHome,
@@ -117,6 +117,33 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(claudeBase, 'settings.json.bkp')), 'installer should create backup file');
     } finally {
       cleanupTestDir(tmpHome);
+    }
+  })) passed++; else failed++;
+
+  if (test('claude project-level install copies to cwd .claude', () => {
+    const tmpProject = createTestDir('ecc-install-claude-proj-');
+
+    try {
+      const result = runInstaller(['typescript'], {
+        cwd: tmpProject,
+        env: {
+          HOME: tmpProject,
+          USERPROFILE: tmpProject
+        }
+      });
+      assertSuccess(result, 'claude project install');
+
+      const claudeRoot = path.join(tmpProject, '.claude');
+      assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'common')), 'common rules should exist');
+      assert.ok(fs.existsSync(path.join(claudeRoot, 'scripts', 'lib', 'utils.js')), 'runtime scripts should exist');
+      assert.ok(fs.existsSync(path.join(claudeRoot, 'settings.json')), 'settings.json should exist');
+
+      const settings = JSON.parse(fs.readFileSync(path.join(claudeRoot, 'settings.json'), 'utf8'));
+      const settingsRaw = fs.readFileSync(path.join(claudeRoot, 'settings.json'), 'utf8');
+      assert.ok(!settingsRaw.includes('${CLAUDE_PLUGIN_ROOT}'), 'plugin root placeholder should be resolved');
+      assert.ok(settingsRaw.includes('.claude'), 'hook paths should use project-relative .claude');
+    } finally {
+      cleanupTestDir(tmpProject);
     }
   })) passed++; else failed++;
 

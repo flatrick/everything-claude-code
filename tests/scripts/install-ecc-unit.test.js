@@ -53,15 +53,38 @@ function runTests() {
     assert.ok(plan.some((line) => line.includes('scripts/hooks + scripts/lib')));
   })) passed++; else failed++;
 
-  if(test('buildInstallPlan includes gemini local paths',()=>{
-    const plan = buildInstallPlan({target:'gemini',globalScope:false,languages:['typescript']});
-    assert.ok(plan.some((l)=>l.includes('Target: gemini')));
-    assert.ok(plan.some((l)=>l.includes('.agent')));
+  if (test('buildInstallPlan includes gemini local paths', () => {
+    const plan = buildInstallPlan({ target: 'gemini', globalScope: false, languages: ['typescript'] });
+    assert.ok(plan.some((l) => l.includes('Target: gemini')));
+    assert.ok(plan.some((l) => l.includes('.agent')));
   })) passed++; else failed++;
-  if(test('buildInstallPlan includes gemini global paths',()=>{
-    const plan = buildInstallPlan({target:'gemini',globalScope:true,languages:['typescript']});
-    assert.ok(plan.some((l)=>l.includes('Target: gemini (global)')));
-    assert.ok(plan.some((l)=>l.includes('GEMINI.md')));
+
+  if (test('buildInstallPlan includes gemini global paths', () => {
+    const plan = buildInstallPlan({ target: 'gemini', globalScope: true, languages: ['typescript'] });
+    assert.ok(plan.some((l) => l.includes('Target: gemini (global)')));
+    assert.ok(plan.some((l) => l.includes('GEMINI.md')));
+  })) passed++; else failed++;
+
+  if (test('buildInstallPlan claude project-level installs to cwd .claude', () => {
+    const plan = buildInstallPlan({ target: 'claude', globalScope: false, languages: ['typescript'] });
+    assert.ok(plan.some((line) => line.includes('.claude')));
+    assert.ok(plan.some((line) => line.includes('project-relative')));
+    assert.ok(!plan.some((line) => line.includes('Target: claude (global)')));
+  })) passed++; else failed++;
+
+  if (test('buildInstallPlan claude global installs to home .claude', () => {
+    const plan = buildInstallPlan({ target: 'claude', globalScope: true, languages: ['typescript'] });
+    const home = require('os').homedir();
+    assert.ok(plan.some((line) => line.includes('Target: claude (global)')));
+    assert.ok(plan.some((line) => line.includes(home)));
+    assert.ok(!plan.some((line) => line.includes('project-relative')));
+  })) passed++; else failed++;
+
+  if (test('parseArgsFrom parses --global for claude target', () => {
+    const parsed = parseArgsFrom(['--global', 'typescript']);
+    assert.strictEqual(parsed.target, 'claude');
+    assert.strictEqual(parsed.globalScope, true);
+    assert.deepStrictEqual(parsed.languages, ['typescript']);
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

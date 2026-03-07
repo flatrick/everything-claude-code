@@ -12,7 +12,7 @@
  *   node scripts/install-ecc.js --target codex
  *
  * Targets:
- *   claude (default) — Install to ~/.claude/
+ *   claude (default) — Install to ./.claude/ or ~/.claude/ with --global
  *   cursor           — Install to ./.cursor/ or ~/.cursor/ with --global
  *   codex            — Install to ~/.codex/ (no language args)
  */
@@ -67,7 +67,7 @@ function getAvailableLanguages() {
 }
 
 function printAvailableOptions(target) {
-  console.log('Available targets: claude, cursor, codex, gemini');
+  console.log('Available targets: claude (supports --global), cursor (supports --global), codex, gemini (supports --global)');
   if (target !== 'codex' && target !== 'gemini') {
     const langs = getAvailableLanguages();
     console.log('Available languages:');
@@ -109,10 +109,14 @@ function buildInstallPlan({ target, globalScope, languages }) {
   lines.push(`[dry-run] Languages: ${rules}`);
 
   if (target === 'claude') {
-    const homeDir = os.homedir();
-    const claudeBase = process.env.CLAUDE_BASE_DIR || path.join(homeDir, '.claude');
+    const claudeBase = globalScope
+      ? (process.env.CLAUDE_BASE_DIR || path.join(os.homedir(), '.claude'))
+      : path.join(process.cwd(), '.claude');
     lines.push(`[dry-run] Would install into ${claudeBase}`);
     lines.push('[dry-run] Would copy rules, agents, commands, skills, hooks, and runtime scripts (scripts/hooks + scripts/lib)');
+    if (!globalScope) {
+      lines.push('[dry-run] Hook script paths will use project-relative references');
+    }
     return lines;
   }
 
@@ -157,13 +161,13 @@ function usage(target) {
   console.error('Usage: node scripts/install-ecc.js [--target claude|cursor|codex|gemini] [--global] [--list] [--dry-run] [language ...]');
   console.error('');
   console.error('Targets:');
-  console.error('  claude (default) — Install rules, agents, commands, hooks, skills to ~/.claude/');
+  console.error('  claude (default) — Install to ./.claude/ (or ~/.claude/ with --global)');
   console.error('  cursor           — Install to ./.cursor/ (or ~/.cursor/ with --global)');
   console.error('  codex            — Install Codex CLI config to ~/.codex/ (no language needed)');
   console.error('  gemini           — Install Antigravity/Gemini CLI configs to .agent/ and .gemini/ (or ~/.gemini... with --global)');
   console.error('');
   console.error('Options:');
-  console.error('  --global         — For cursor and gemini, install to home directory.');
+  console.error('  --global         — Install to home directory instead of current project.');
   console.error('  --list           — Show available targets/languages and exit.');
   console.error('  --dry-run        — Print planned install actions without writing files.');
   console.error('');
@@ -174,10 +178,13 @@ function usage(target) {
   process.exit(1);
 }
 
-function installClaude(languages) {
-  const homeDir = os.homedir();
-  const claudeBase = process.env.CLAUDE_BASE_DIR || path.join(homeDir, '.claude');
-  const rulesDest = process.env.CLAUDE_RULES_DIR || path.join(claudeBase, 'rules');
+function installClaude(languages, globalScope) {
+  const claudeBase = globalScope
+    ? (process.env.CLAUDE_BASE_DIR || path.join(os.homedir(), '.claude'))
+    : path.join(process.cwd(), '.claude');
+  const rulesDest = globalScope
+    ? (process.env.CLAUDE_RULES_DIR || path.join(claudeBase, 'rules'))
+    : path.join(claudeBase, 'rules');
 
   if (!languages.length) usage('claude');
 
@@ -253,9 +260,11 @@ function installClaude(languages) {
   if (fs.existsSync(hooksJsonSrc)) {
     const settingsPath = path.join(claudeBase, 'settings.json');
     let hooksData = JSON.parse(fs.readFileSync(hooksJsonSrc, 'utf8'));
-    const absoluteBase = claudeBase.replace(/\\/g, '/');
+    const pluginRoot = globalScope
+      ? claudeBase.replace(/\\/g, '/')
+      : '.claude';
     const hooksStr = JSON.stringify(hooksData);
-    const replaced = hooksStr.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, absoluteBase);
+    const replaced = hooksStr.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, pluginRoot);
     const hooksBlock = JSON.parse(replaced).hooks;
 
     let settings = {};
@@ -573,11 +582,11 @@ function main() {
     plan.forEach((line) => console.log(line));
     process.exit(0);
   }
-  if (globalScope && target !== 'cursor' && target !== 'gemini') {
-    console.error("Warning: --global is only supported for cursor and gemini target. Ignored.");
+  if (globalScope && target === 'codex') {
+    console.error("Warning: --global is not supported for codex target. Ignored.");
   }
 
-  if (target === 'claude') installClaude(languages);
+  if (target === 'claude') installClaude(languages, globalScope);
   else if (target === 'cursor') installCursor(languages, globalScope);
   else if (target === 'gemini') installGemini(languages, globalScope);
   else installCodex();
