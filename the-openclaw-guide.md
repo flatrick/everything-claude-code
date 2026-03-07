@@ -302,7 +302,7 @@ Mac Mini (headless, 24/7)
 ├── SSH access only (ed25519 key auth, no passwords)
 ├── Tailscale mesh (no exposed ports to public internet)
 ├── tmux session (persistent, survives disconnects)
-├── Claude Code with ECC configuration
+├── Claude Code with MDT configuration
 │   ├── Sanitized skills (every skill manually reviewed)
 │   ├── Hooks for quality gates (not for external channel access)
 │   └── Agents with scoped permissions (read-only by default)
@@ -457,7 +457,7 @@ Build secure by design. Not secure by accident.
 - [Adversa AI: OpenClaw Security Guide 2026](https://adversa.ai/blog/openclaw-security-101-vulnerabilities-hardening-2026/)
 - [Cisco: Personal AI Agents Like OpenClaw Are a Security Nightmare](https://blogs.cisco.com/ai/personal-ai-agents-like-openclaw-are-a-security-nightmare)
 - [The Shorthand Guide to Securing Your Agent](./the-security-guide.md) — Practical defense guide
-- [AgentShield on npm](https://www.npmjs.com/package/ecc-agentshield) — Zero-install agent security scanning
+- [AgentShield on npm](https://www.npmjs.com/package/MDT-agentshield) — Zero-install agent security scanning
 
 > **Series navigation:**
 > - Part 1: [The Shorthand Guide to Everything Claude Code](./the-shortform-guide.md) — Setup and configuration

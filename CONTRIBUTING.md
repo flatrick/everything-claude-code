@@ -89,7 +89,7 @@ skills/
 ---
 name: your-skill-name
 description: Brief description shown in skill list
-origin: ECC
+origin: MDT
 ---
 
 # Your Skill Title

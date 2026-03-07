@@ -1,6 +1,8 @@
-# AI/LLM agent setup
+# ModelDev Toolkit
 
-**This is a fork of [Everything Claude Code](https://github.com/affaan-m/everything-claude-code).** It has been modified to use a Node-only runtime and installer; the original repo (plugin, guides, community) remains the upstream source.
+Generic model toolkit for software development workflows and scaffolding.
+
+**This project is a rebranded fork of [Everything Claude Code](https://github.com/affaan-m/everything-claude-code).** It has been modified to use a Node-only runtime and installer; the original repo (plugin, guides, community) remains the upstream source.
 
 Not just configs. A complete system: skills, agents, hooks, rules, and MCP configurations. Works with **Claude Code**, **Cursor**, **Codex**, and other AI agent harnesses.
 
@@ -9,12 +11,13 @@ Not just configs. A complete system: skills, agents, hooks, rules, and MCP confi
 ## This fork
 
 - **Node-only:** No Bash or PowerShell scripts. All install and hook logic is JavaScript run with Node.js.
-- **Single installer:** `node scripts/install-ecc.js` installs to Claude Code, Cursor, or Codex (see Installation).
+- **Single installer:** `node scripts/install-mdt.js` installs to Claude Code, Cursor, or Codex (see Installation).
 - **Per-tool installs:** Each tool gets its own directory — Claude → `~/.claude/`, Codex → `~/.codex/`, Cursor → project `.cursor/` or `~/.cursor/` with `--global`. Nothing points Cursor or Codex at `~/.claude/`.
 - **Cursor:** Default is project-local (full rules, agents, skills, commands, hooks, MCP). Use `--global` to install to `~/.cursor/` (rules skipped there; Cursor does not support file-based rules globally).
 - **Fork v1 direction:** Backwards compatibility with legacy passthrough behavior is not a goal; this fork prioritizes explicit, security-first defaults.
 
 Reset or reinstall: [docs/MIGRATION.md](docs/MIGRATION.md).
+Rename tracking for upstream sync: [docs/upstream-rename-map.md](docs/upstream-rename-map.md).
 
 ---
 
@@ -47,19 +50,19 @@ Guides refer to the upstream project; this fork may differ. For this fork, prefe
 2. **Install** (pick target and language)
    ```bash
    # Claude Code (default) — installs to ~/.claude/
-   node scripts/install-ecc.js typescript
+   node scripts/install-mdt.js typescript
 
    # Cursor — project .cursor/ (or ~/.cursor/ with --global)
-   node scripts/install-ecc.js --target cursor typescript
+   node scripts/install-mdt.js --target cursor typescript
 
    # Codex — installs to ~/.codex/
-   node scripts/install-ecc.js --target codex
+   node scripts/install-mdt.js --target codex
 
    # Discover available targets/languages
-   node scripts/install-ecc.js --list
+   node scripts/install-mdt.js --list
 
    # Preview install without writing files
-   node scripts/install-ecc.js --target cursor --global --dry-run typescript
+   node scripts/install-mdt.js --target cursor --global --dry-run typescript
    ```
 
 3. **Use** commands and agents in your tool (e.g. `/plan`, `/tdd`, `/code-review`). Full layout: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
@@ -73,7 +76,11 @@ For the official Claude Code plugin (marketplace install), use the [original rep
 One installer for all targets:
 
 ```bash
-node scripts/install-ecc.js [--target claude|cursor|codex] [--global] [--list] [--dry-run] [language ...]
+node scripts/install-mdt.js [--target claude|cursor|codex] [--global] [--list] [--dry-run] [language ...]
+```
+
+```bash
+npx mdt-install typescript
 ```
 
 | Target | Destination | Notes |
@@ -85,12 +92,12 @@ node scripts/install-ecc.js [--target claude|cursor|codex] [--global] [--list] [
 Examples:
 
 ```bash
-node scripts/install-ecc.js typescript
-node scripts/install-ecc.js --target cursor typescript python
-node scripts/install-ecc.js --target cursor --global typescript
-node scripts/install-ecc.js --target codex
-node scripts/install-ecc.js --list
-node scripts/install-ecc.js --target claude --dry-run typescript
+node scripts/install-mdt.js typescript
+node scripts/install-mdt.js --target cursor typescript python
+node scripts/install-mdt.js --target cursor --global typescript
+node scripts/install-mdt.js --target codex
+node scripts/install-mdt.js --list
+node scripts/install-mdt.js --target claude --dry-run typescript
 ```
 
 - **Reset/reinstall:** [docs/MIGRATION.md](docs/MIGRATION.md)
@@ -105,7 +112,7 @@ node scripts/install-ecc.js --target claude --dry-run typescript
 - `commands/` — Slash commands (/plan, /tdd, /e2e, /code-review, …)
 - `rules/` — Common + language-specific rules (TypeScript, Python, …)
 - `hooks/` — Hook config (hooks.json); implementations in `scripts/`
-- `scripts/` — Node.js only (install-ecc.js, hooks, lib, detect-env)
+- `scripts/` — Node.js only (install-mdt.js, hooks, lib, detect-env)
 - `.cursor/` — Cursor-ready config (rules, hooks, commands, mcp.json)
 - `.codex/` — Codex config (config.toml, AGENTS.md)
 - `tests/` — Test suite
@@ -116,9 +123,9 @@ Full layout and details: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
 
 ## Cursor / Codex / OpenCode
 
-**Cursor:** Configs in `.cursor/`. Quick start: `node scripts/install-ecc.js --target cursor typescript`. Local install gets rules, agents, skills, commands, hooks, and MCP. Use `--global` for `~/.cursor/` (rules not supported there by Cursor).
+**Cursor:** Configs in `.cursor/`. Quick start: `node scripts/install-mdt.js --target cursor typescript`. Local install gets rules, agents, skills, commands, hooks, and MCP. Use `--global` for `~/.cursor/` (rules not supported there by Cursor).
 
-**Codex:** Config in `.codex/`. Quick start: `node scripts/install-ecc.js --target codex`. Installs config.toml and AGENTS.md to `~/.codex/`.
+**Codex:** Config in `.codex/`. Quick start: `node scripts/install-mdt.js --target codex`. Installs config.toml and AGENTS.md to `~/.codex/`.
 
 **OpenCode:** Config in `.opencode/`. See [.opencode/README.md](.opencode/README.md) for plugin install and feature parity in this fork.
 
@@ -153,7 +160,7 @@ Full layout and details: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
 ## FAQ
 
 **How do I install?**  
-Use `node scripts/install-ecc.js` with your language(s). Default target is Claude (`~/.claude/`). Use `--target cursor` or `--target codex` for the others. See [Installation](#installation).
+Use `node scripts/install-mdt.js` with your language(s). Default target is Claude (`~/.claude/`). Use `--target cursor` or `--target codex` for the others. See [Installation](#installation).
 
 **Does this work with Cursor / Codex?**  
 Yes. Use `--target cursor` or `--target codex`. Each tool gets its own install directory; see [Cursor / Codex / OpenCode](#cursor--codex--opencode).
@@ -181,10 +188,10 @@ npm run test:codex
 npm run test:gemini
 ```
 
-You can also set `ECC_TEST_ENV_PROFILE` when running the test runner directly:
+You can also set `MDT_TEST_ENV_PROFILE` when running the test runner directly:
 
 ```bash
-ECC_TEST_ENV_PROFILE=cursor node tests/run-all.js
+MDT_TEST_ENV_PROFILE=cursor node tests/run-all.js
 ```
 
 Equivalent direct CLI usage:
@@ -209,7 +216,7 @@ See [docs/token-optimization.md](docs/token-optimization.md) for recommended set
 
 - **Customize:** Start with what fits your stack; add or remove rules/skills as needed.
 - **Original author:** [@affaan-m](https://github.com/affaan-m). To support the original project: [GitHub Sponsors](https://github.com/sponsors/affaan-m).
-- **Ecosystem:** Upstream has [ecc.tools](https://ecc.tools), [AgentShield](https://github.com/affaan-m/agentshield), Skill Creator, Plankton — see [original README](https://github.com/affaan-m/everything-claude-code).
+- **Ecosystem:** Upstream has AgentShield, Skill Creator, and Plankton — see [original README](https://github.com/affaan-m/everything-claude-code).
 
 ---
 

@@ -9,7 +9,7 @@ Deferred work items that are documented but not yet scheduled.
 **Why:** `CLAUDE_PLUGIN_ROOT` is a Claude-specific name, but this repo supports Claude Code, Cursor, Codex, and OpenCode. The variable name should reflect that.
 
 **Candidate names:**
-- `ECC_ROOT` — already used in `skills/configure-ecc/SKILL.md` for the install wizard
+- `MDT_ROOT` — already used in `skills/configure-mdt/SKILL.md` for the install wizard
 - `LLM_PLUGIN_ROOT` — more descriptive of intent but a new name everywhere
 
 **Scope of change (all files must be updated in one coordinated pass):**
@@ -17,7 +17,7 @@ Deferred work items that are documented but not yet scheduled.
 | File(s) | Usage | Notes |
 |---------|-------|-------|
 | `hooks/hooks.json` | Template token replaced at install time | 17 occurrences |
-| `scripts/install-ecc.js:241` | Regex replace of the token during install | Must match new name |
+| `scripts/install-mdt.js:241` | Regex replace of the token during install | Must match new name |
 | `commands/*.md` (5 files) | Runtime env var in example commands | instinct-status, instinct-import, evolve, promote, projects |
 | `.opencode/commands/*.md` (4 files) | Same | |
 | `skills/continuous-learning-v2/SKILL.md` | Runtime env var in examples | |
@@ -26,7 +26,7 @@ Deferred work items that are documented but not yet scheduled.
 | `tests/helpers/hook-integration-test-utils.js` | Replaces token in test harness | |
 
 **Key behaviour to preserve:**
-- `hooks/hooks.json` tokens are replaced with an absolute path at install time — after install the literal token must NOT remain (asserted by `tests/scripts/install-ecc.test.js:116`)
+- `hooks/hooks.json` tokens are replaced with an absolute path at install time — after install the literal token must NOT remain (asserted by `tests/scripts/install-mdt.test.js:116`)
 - Commands show `${NEW_NAME}` as the preferred path with `~/.claude/skills/...` as a fallback
 
 **Estimated effort:** Low — pure find-and-replace, no logic changes. Run tests after to verify.
@@ -35,15 +35,15 @@ Deferred work items that are documented but not yet scheduled.
 
 ## Replace hardcoded `~/.claude/` with tool-aware paths
 
-**Why:** ECC supports multiple tools (Claude Code, Cursor, Codex, OpenCode). Config and data dirs are resolved by `scripts/lib/detect-env.js`: Cursor → `~/.cursor/`, Claude Code → `~/.claude/`, overridable via `CONFIG_DIR`/`DATA_DIR`. Documentation and examples that state `~/.claude/` only are incorrect for Cursor users and should say "config dir" / "data dir" or list both (e.g. `~/.cursor/` or `~/.claude/`).
+**Why:** MDT supports multiple tools (Claude Code, Cursor, Codex, OpenCode). Config and data dirs are resolved by `scripts/lib/detect-env.js`: Cursor → `~/.cursor/`, Claude Code → `~/.claude/`, overridable via `CONFIG_DIR`/`DATA_DIR`. Documentation and examples that state `~/.claude/` only are incorrect for Cursor users and should say "config dir" / "data dir" or list both (e.g. `~/.cursor/` or `~/.claude/`).
 
-**Excluded from this list:** README.md and install-ecc.js (explicit "Claude target" wording); detect-env.test.js (tests for Claude-specific behavior); validate-no-hardcoded-paths.js and validators-rounds-2 (validator rule text); docs/MIGRATION.md (tool list); skills/skill-stocktake/SKILL.md (already says `<config>` = ~/.cursor or ~/.claude).
+**Excluded from this list:** README.md and install-mdt.js (explicit "Claude target" wording); detect-env.test.js (tests for Claude-specific behavior); validate-no-hardcoded-paths.js and validators-rounds-2 (validator rule text); docs/MIGRATION.md (tool list); skills/skill-stocktake/SKILL.md (already says `<config>` = ~/.cursor or ~/.claude).
 
 **Scope — update or add note so paths are tool-aware:**
 
 | File(s) | Lines / context | Note |
 |---------|-----------------|------|
-| **skills/configure-ecc/SKILL.md** | 22, 48, 54, 56, 213, 218–220, 228, 237, 314, 322–323 | Manual install path, TARGET examples, verification steps, continuous-learning-v2 homunculus note — use config dir or "~/.cursor or ~/.claude" |
+| **skills/configure-mdt/SKILL.md** | 22, 48, 54, 56, 213, 218–220, 228, 237, 314, 322–323 | Manual install path, TARGET examples, verification steps, continuous-learning-v2 homunculus note — use config dir or "~/.cursor or ~/.claude" |
 | **rules/README.md** | 48, 51–52 | `cp` examples — use config dir or both paths |
 | **BACKLOG.md** | 30 | Fallback path in "Key behaviour" — already in rename scope; use config-dir fallback |
 | **skills/continuous-learning-v2/SKILL.md** | 29, 135, 141, 166, 175, 182, 195, 250, 312, 350–351 | Storage table, registry path, settings.json, manual install, mkdir, file structure, promote fallback, backward compat — use getDataDir/getConfigDir wording or "config/data dir" |
@@ -102,4 +102,4 @@ Deferred work items that are documented but not yet scheduled.
 | **commands/multi-frontend.md** | 35, 50, 68–70, 102, 116, 136 | Same |
 | **commands/multi-execute.md** | 26 | codeagent-wrapper path — same |
 
-**Suggested approach:** Prefer phrasing like "config directory (e.g. `~/.claude/` for Claude Code, `~/.cursor/` for Cursor)" or "`<config>/homunculus/` where `<config>` is from ECC's detect-env". For code that already uses `getConfigDir()`/`getDataDir()`, update only comments/JSDoc and user-facing messages.
+**Suggested approach:** Prefer phrasing like "config directory (e.g. `~/.claude/` for Claude Code, `~/.cursor/` for Cursor)" or "`<config>/homunculus/` where `<config>` is from MDT's detect-env". For code that already uses `getConfigDir()`/`getDataDir()`, update only comments/JSDoc and user-facing messages.

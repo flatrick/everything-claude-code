@@ -1,6 +1,6 @@
 # Supported LLM Tools
 
-Everything Claude Code (ECC) spans multiple LLM modalities and IDEs. Because each tool has its own architecture, ECC installs distinct configurations when you use `npx ecc-install --target <tool>`.
+Everything Claude Code (MDT) spans multiple LLM modalities and IDEs. Because each tool has its own architecture, MDT installs distinct configurations when you use `npx mdt-install --target <tool>`.
 
 This matrix explains what features are supported natively in each tool and how the underlying configuration works.
 
@@ -60,12 +60,12 @@ Codex is a command-line wrapper focusing tightly on file system access and syste
 ## Gemini CLI & Antigravity
 **Target:** `gemini` (Project-local `.agent/` and `.gemini/`, or Global)
 
-Gemini (powered structurally by Antigravity) reads local workspace variables deeply. Our installer maps ECC assets perfectly to Google's folder structures.
+Gemini (powered structurally by Antigravity) reads local workspace variables deeply. Our installer maps MDT assets perfectly to Google's folder structures.
 
 - **Global Install:** `~/.gemini/antigravity/.agents` (Skills/Workflows) and `~/.gemini/commands` (CLI custom commands). Appends rules to `~/.gemini/GEMINI.md`.
 - **Local Install:** `.agent/` and `.gemini/`. 
-- **Commands:** The installer parses ECC's Markdown commands and reconstructs them into TOML structures inside `.gemini/commands/{brand}.toml` for Native Gemini CLI auto-completions.
-- **Workflows:** ECC agents drop cleanly into `workflows/`.
+- **Commands:** The installer parses MDT's Markdown commands and reconstructs them into TOML structures inside `.gemini/commands/{brand}.toml` for Native Gemini CLI auto-completions.
+- **Workflows:** MDT agents drop cleanly into `workflows/`.
 - **Skills:** Drop precisely into `skills/`.
 
 **What you can't do here:** Gemini does not natively execute post-generation JS hooks like Claude/Cursor, it operates securely via strict MCP or plugin constraints.
@@ -75,4 +75,4 @@ Gemini (powered structurally by Antigravity) reads local workspace variables dee
 ## OpenCode
 **Target:** N/A (Loaded as NPM Plugin)
 
-OpenCode reads everything dynamically from `opencode.json` plugins. No CLI scaffolding is required; you simply `npm install opencode-ecc` and run `/plan`! It maps ECC hooks directly internally.
+OpenCode reads everything dynamically from `opencode.json` plugins. No CLI scaffolding is required; you simply `npm install opencode-MDT` and run `/plan`! It maps MDT hooks directly internally.

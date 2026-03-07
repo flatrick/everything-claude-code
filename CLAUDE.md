@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Claude Code plugin** - a collection of production-ready agents, skills, hooks, commands, rules, and MCP configurations. The project provides battle-tested workflows for software development using Claude Code.
+This is **ModelDev Toolkit** - a generic model toolkit for software development workflows and scaffolding. It includes production-ready agents, skills, hooks, commands, rules, and MCP configurations across Claude Code, Cursor, Codex, and Gemini.
 
 ## Running Tests
 
@@ -43,7 +43,7 @@ The project is organized into several core components:
 
 ## Development Notes
 
-- **Runtime:** ECC is **JavaScript/Node only**. No PowerShell or Bash scripts; install via `node scripts/install-ecc.js`, hooks and skills run via Node (see `scripts/lib/detect-env.js` for config/data paths).
+- **Runtime:** ModelDev Toolkit is **JavaScript/Node only**. No PowerShell or Bash scripts; install via `node scripts/install-mdt.js`, hooks and skills run via Node (see `scripts/lib/detect-env.js` for config/data paths).
 - Package manager detection: npm, pnpm, yarn, bun (configurable via `CLAUDE_PACKAGE_MANAGER` env var or project config)
 - Cross-platform: Windows, macOS, Linux support via Node.js scripts
 - Agent format: Markdown with YAML frontmatter (name, description, tools, model)

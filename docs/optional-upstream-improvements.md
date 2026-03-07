@@ -1,6 +1,16 @@
 # Optional Improvements from affaan-m to Consider
 
-You already ported the three high-value items: **runtime hook controls** (ECC_HOOK_PROFILE / ECC_DISABLED_HOOKS), **session persistence on Stop**, and the **doc-file-warning allowlist**. Below are remaining upstream additions.
+You already ported the three high-value items: **runtime hook controls** (MDT_HOOK_PROFILE / MDT_DISABLED_HOOKS), **session persistence on Stop**, and the **doc-file-warning allowlist**. Below are remaining upstream additions.
+
+---
+
+## Work environment
+
+**Always do work in a git worktree** so you don't clash with other tools (IDE, other sessions, etc.).
+
+- Create the worktree **outside** the repository: use a path like `../{worktree-name}/` (sibling to the repo root), not a subfolder inside the repo.
+- Example, from repo root: `git worktree add ../optional-upstream-work` then `cd ../optional-upstream-work` to work there.
+- When done, merge or cherry-pick into main and remove the worktree if desired: `git worktree remove ../optional-upstream-work`.
 
 ---
 
@@ -8,7 +18,7 @@ You already ported the three high-value items: **runtime hook controls** (ECC_HO
 
 **In scope now:**
 
-1. **OpenCode profile support** — Add ECC_HOOK_PROFILE / ECC_DISABLED_HOOKS and hookEnabled gating to `.opencode/plugins/ecc-hooks.ts`.
+1. **OpenCode profile support** — Add MDT_HOOK_PROFILE / MDT_DISABLED_HOOKS and hookEnabled gating to `.opencode/plugins/mdt-hooks.ts`.
 2. **check-hook-enabled.js** — Add the small CLI script that prints yes/no for a hook ID and profiles.
 3. **Cost-tracker hook** — Port cost-tracker.js, wire on Stop in hooks.json and Cursor stop.js; use your repo's config dir for metrics path.
 4. **Harness/loop commands and agents** — Port from affaan-m: commands `/harness-audit`, `/loop-start`, `/loop-status`, `/quality-gate`, `/model-route` and agents `harness-optimizer`, `loop-operator`. Markdown only; no new scripts unless a command explicitly requires one.
@@ -25,9 +35,9 @@ You already ported the three high-value items: **runtime hook controls** (ECC_HO
 
 ## 1. OpenCode plugin: profile and disabled-hooks support
 
-**What:** In affaan-m, `.opencode/plugins/ecc-hooks.ts` reads `ECC_HOOK_PROFILE` and `ECC_DISABLED_HOOKS`, defines `hookEnabled(hookId, requiredProfile)`, and gates each behavior (format, console.log warn, tsc, etc.) with it.
+**What:** In affaan-m, `.opencode/plugins/mdt-hooks.ts` reads `MDT_HOOK_PROFILE` and `MDT_DISABLED_HOOKS`, defines `hookEnabled(hookId, requiredProfile)`, and gates each behavior (format, console.log warn, tsc, etc.) with it.
 
-**This repo:** `.opencode/plugins/ecc-hooks.ts` has no profile or disabled-hooks logic; every hook behavior always runs.
+**This repo:** `.opencode/plugins/mdt-hooks.ts` has no profile or disabled-hooks logic; every hook behavior always runs.
 
 **Why adopt:** OpenCode users get the same runtime gating as Claude Code/Cursor (e.g. disable format or tsc via env without editing the plugin).
 
@@ -51,7 +61,7 @@ You already ported the three high-value items: **runtime hook controls** (ECC_HO
 
 Revisit after OpenCode profile support, check-hook-enabled, cost-tracker, and harness/loop are in place.
 
-**What (for reference):** affaan-m's `scripts/hooks/quality-gate.js` runs after file edits: for the edited `file_path` it runs Biome (or Prettier), and for Go/Python runs gofmt/ruff. Optional env: `ECC_QUALITY_GATE_FIX`, `ECC_QUALITY_GATE_STRICT`.
+**What (for reference):** affaan-m's `scripts/hooks/quality-gate.js` runs after file edits: for the edited `file_path` it runs Biome (or Prettier), and for Go/Python runs gofmt/ruff. Optional env: `MDT_QUALITY_GATE_FIX`, `MDT_QUALITY_GATE_STRICT`.
 
 **Effort:** Low. Port the script, add a PostToolUse entry via run-with-flags (e.g. `post:quality-gate`), and optionally wire in Cursor/OpenCode if you mirror PostToolUse there.
 
