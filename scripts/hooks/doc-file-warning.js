@@ -1,30 +1,63 @@
+#!/usr/bin/env node
 /**
  * Doc file warning hook (PreToolUse - Write)
  * Warns about non-standard documentation files.
  * Exit code 0 always (warns only, never blocks).
  */
 
-const { readStdinText, parseJsonObject } = require('../lib/utils');
+'use strict';
 
-async function runCli() {
-  const data = await readStdinText({ timeoutMs: 5000, maxSize: 1024 * 1024 });
-  const input = parseJsonObject(data);
-  const filePath = input.tool_input?.file_path || '';
+const path = require('path');
 
-  if (
-    /\.(md|txt)$/.test(filePath) &&
-    !/(README|CLAUDE|AGENTS|CONTRIBUTING|CHANGELOG|LICENSE|SKILL)\.md$/i.test(filePath) &&
-    !/\.claude[/\\]plans[/\\]/.test(filePath) &&
-    !/(^|[/\\])(docs|skills|\.history)[/\\]/.test(filePath)
-  ) {
-    console.error('[Hook] WARNING: Non-standard documentation file detected');
-    console.error('[Hook] File: ' + filePath);
-    console.error('[Hook] Consider consolidating into README.md or docs/ directory');
+const MAX_STDIN = 1024 * 1024;
+let data = '';
+
+function isAllowedDocPath(filePath) {
+  const normalized = filePath.replace(/\\/g, '/');
+  const basename = path.basename(filePath);
+
+  if (!/\.(md|txt)$/i.test(filePath)) return true;
+
+  if (/^(README|CLAUDE|AGENTS|CONTRIBUTING|CHANGELOG|LICENSE|SKILL|MEMORY|WORKLOG)\.md$/i.test(basename)) {
+    return true;
   }
-  // Keep historical behavior (console.log adds trailing newline).
-  console.log(data);
+
+  if (/\.claude\/(commands|plans|projects)\//.test(normalized)) {
+    return true;
+  }
+
+  if (/(^|\/)(docs|skills|\.history|memory)\//.test(normalized)) {
+    return true;
+  }
+
+  if (/\.plan\.md$/i.test(basename)) {
+    return true;
+  }
+
+  return false;
 }
 
-runCli().catch(() => {
-  process.exit(0);
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', c => {
+  if (data.length < MAX_STDIN) {
+    const remaining = MAX_STDIN - data.length;
+    data += c.substring(0, remaining);
+  }
+});
+
+process.stdin.on('end', () => {
+  try {
+    const input = JSON.parse(data);
+    const filePath = String(input.tool_input?.file_path || '');
+
+    if (filePath && !isAllowedDocPath(filePath)) {
+      console.error('[Hook] WARNING: Non-standard documentation file detected');
+      console.error(`[Hook] File: ${filePath}`);
+      console.error('[Hook] Consider consolidating into README.md or docs/ directory');
+    }
+  } catch {
+    // ignore parse errors
+  }
+
+  process.stdout.write(data);
 });
