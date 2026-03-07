@@ -2,19 +2,46 @@
 /**
  * Run all tests
  *
- * Usage: node tests/run-all.js
+ * Usage: node tests/run-all.js [--profile <neutral|claude|cursor|codex|gemini>]
  */
 
 const { spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { ensureSubprocessCapability } = require('./helpers/subprocess-capability');
+const { buildTestEnv } = require('./helpers/test-env-profiles');
 
 ensureSubprocessCapability('tests/run-all.js');
 
 const testsDir = __dirname;
 const parsedTimeoutMs = parseInt(process.env.ECC_TEST_SUITE_TIMEOUT_MS || '60000', 10);
 const SUITE_TIMEOUT_MS = Number.isFinite(parsedTimeoutMs) && parsedTimeoutMs > 0 ? parsedTimeoutMs : 60000;
+
+function parseRequestedProfile(argv, env) {
+  const profileFromArg = argv.find((arg) => arg.startsWith('--profile='));
+  if (profileFromArg) {
+    const value = profileFromArg.slice('--profile='.length).trim();
+    if (value) return value;
+  }
+
+  const profileFlagIndex = argv.indexOf('--profile');
+  if (profileFlagIndex >= 0) {
+    const value = (argv[profileFlagIndex + 1] || '').trim();
+    if (value) return value;
+  }
+
+  return env.ECC_TEST_ENV_PROFILE || 'neutral';
+}
+
+const requestedProfile = parseRequestedProfile(process.argv.slice(2), process.env);
+
+try {
+  buildTestEnv(requestedProfile);
+} catch (error) {
+  console.error(`✗ Invalid ECC_TEST_ENV_PROFILE: ${requestedProfile}`);
+  console.error(`  ${error.message}`);
+  process.exit(1);
+}
 const testFiles = [
   'lib/detect-env.test.js',
   'lib/utils.test.js',
@@ -58,6 +85,7 @@ const boxLine = (s) => `║${s.padEnd(BOX_W)}║`;
 console.log('╔' + '═'.repeat(BOX_W) + '╗');
 console.log(boxLine('           Everything Claude Code - Test Suite'));
 console.log('╚' + '═'.repeat(BOX_W) + '╝');
+console.log(`Profile: ${requestedProfile}`);
 console.log();
 
 let totalPassed = 0;
@@ -108,7 +136,10 @@ for (const testFile of testFiles) {
   const result = spawnSync('node', [testPath], {
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'pipe'],
-    timeout: SUITE_TIMEOUT_MS
+    timeout: SUITE_TIMEOUT_MS,
+    env: buildTestEnv(requestedProfile, {
+      ECC_TEST_ENV_PROFILE: requestedProfile
+    })
   });
 
   const stdout = result.stdout || '';
