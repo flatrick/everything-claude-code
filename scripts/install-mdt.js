@@ -21,6 +21,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { getHookPlatform } = require('./lib/hook-platforms');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const RULES_DIR = path.join(REPO_ROOT, 'rules');
@@ -302,7 +303,7 @@ function readJsonFile(jsonPath, fallback = {}) {
 }
 
 function installClaudeHooks(claudeBase, globalScope) {
-  const hooksJsonSrc = path.join(REPO_ROOT, 'hooks', 'hooks.json');
+  const hooksJsonSrc = getHookPlatform('claude').sourceConfig;
   if (!fs.existsSync(hooksJsonSrc)) return;
 
   const settingsPath = path.join(claudeBase, 'settings.json');
@@ -421,7 +422,7 @@ function installCursorCoreDirs(destDir) {
 }
 
 function installCursorHooksConfig(destDir, globalScope) {
-  const hooksJsonSrc = path.join(CURSOR_SRC, 'hooks.json');
+  const hooksJsonSrc = getHookPlatform('cursor').sourceConfig;
   if (!fs.existsSync(hooksJsonSrc)) return;
 
   const hooksDestPath = path.join(destDir, 'hooks.json');
@@ -440,7 +441,7 @@ function installCursorHooksConfig(destDir, globalScope) {
 }
 
 function installCursorHookScripts(destDir) {
-  const hooksSrc = path.join(CURSOR_SRC, 'hooks');
+  const hooksSrc = getHookPlatform('cursor').sourceScriptsDir;
   if (!fs.existsSync(hooksSrc)) return;
 
   const hooksDest = path.join(destDir, 'hooks');

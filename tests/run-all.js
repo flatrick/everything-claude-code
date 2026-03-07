@@ -97,6 +97,7 @@ const testFiles = [
   'lib/session-aliases-rounds-2.test.js',
   'lib/project-detect.test.js',
   'hooks/hooks.test.js',
+  'hooks/hook-layout.test.js',
   'hooks/hooks-post-edit.test.js',
   'hooks/hooks-rounds.test.js',
   'hooks/hooks-rounds-3.test.js',
@@ -112,9 +113,11 @@ const testFiles = [
   'ci/validators-rounds-2.test.js',
   'scripts/claw.test.js',
   'scripts/check-dependencies.test.js',
+  'scripts/hook-platforms.test.js',
   'scripts/install-mdt-unit.test.js',
   'scripts/install-mdt.test.js',
   'scripts/setup-package-manager.test.js',
+  'scripts/sync-hook-mirrors.test.js',
   'scripts/skill-create-output.test.js',
   'scripts/node-runtime-scripts.test.js'
 ];

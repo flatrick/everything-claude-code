@@ -119,9 +119,9 @@ node scripts/install-mdt.js --target claude --dry-run typescript
 - `skills/` — Workflow definitions (TDD, security-review, continuous-learning, etc.)
 - `commands/` — Slash commands (/plan, /tdd, /e2e, /code-review, …)
 - `rules/` — Common + language-specific rules (TypeScript, Python, …)
-- `hooks/` — Hook config (hooks.json); implementations in `scripts/`
-- `scripts/` — Node.js only (install-mdt.js, hooks, lib, detect-env)
-- `.cursor/` — Cursor-ready config (rules, hooks, commands, mcp.json)
+- `hooks/` — Platform-scoped hook sources (`hooks/claude/`, `hooks/cursor/`) plus Claude mirror `hooks/hooks.json`
+- `scripts/` — Node.js only (install-mdt.js, hooks, lib, detect-env, sync-hook-mirrors.js)
+- `.cursor/` — Cursor-ready config (rules, commands, mcp.json) plus synced hook mirrors
 - `.codex/` — Codex config (config.toml, AGENTS.md)
 - `tests/` — Test suite
 
@@ -191,7 +191,7 @@ Each tool gets its own install directory; see [Cursor / Codex / OpenCode](#curso
 ### Duplicate hooks / plugin.json?
 
 Do not add a `"hooks"` field to `.claude-plugin/plugin.json`.
-Claude Code loads `hooks/hooks.json` by convention.
+Claude Code loads `hooks/hooks.json` by convention. Edit `hooks/claude/hooks.json` and sync mirrors with `node scripts/sync-hook-mirrors.js`.
 See [upstream repo](https://github.com/affaan-m/modeldev-toolkit) for history (#29, #52, #103).
 
 More: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md), and `docs/`.

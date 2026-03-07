@@ -85,6 +85,7 @@
   "scripts": {
     "postinstall": "echo '\\n  modeldev-toolkit installed!\\n  Run: npx mdt-install typescript\\n  Docs: https://github.com/flatrick/everything-claude-code\\n'",
     "install-mdt": "node scripts/install-mdt.js",
+    "sync:hook-mirrors": "node scripts/sync-hook-mirrors.js",
     "release": "node scripts/release.js",
     "lint": "node scripts/ci/check-dependencies.js eslint markdownlint-cli && eslint . && markdownlint \"**/*.md\" --ignore node_modules",
     "claw": "node scripts/claw.js",

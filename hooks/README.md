@@ -2,6 +2,21 @@
 
 Hooks are event-driven automations that fire before or after Claude Code tool executions. They enforce code quality, catch mistakes early, and automate repetitive checks.
 
+## Source Layout
+
+MDT now keeps hook sources under platform-specific directories:
+
+- `hooks/claude/hooks.json` — Source of truth for Claude hook config
+- `hooks/cursor/hooks.json` — Source of truth for Cursor hook config
+- `hooks/cursor/scripts/` — Source of truth for Cursor-specific hook wrapper scripts
+
+Native tool-facing files remain checked in as synced mirrors so this repo still self-hosts cleanly when opened in Claude or Cursor:
+
+- `hooks/hooks.json` — Claude mirror loaded by Claude Code
+- `.cursor/hooks.json` and `.cursor/hooks/` — Cursor mirrors loaded by Cursor
+
+Update the platform-scoped source files first, then run `node scripts/sync-hook-mirrors.js` to refresh the native mirrors.
+
 ## How Hooks Work
 
 ```
