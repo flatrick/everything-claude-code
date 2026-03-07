@@ -379,6 +379,8 @@ What you're adding and why.
 ## Testing
 How you tested this.
 
+For environment-dependent tests, follow the shared detection contract in `tests/ENVIRONMENT-CONTRACT.md` (recognized variables, precedence, and neutral assumptions).
+
 ## Checklist
 - [ ] Follows format guidelines
 - [ ] Tested with Claude Code
