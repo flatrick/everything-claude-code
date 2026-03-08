@@ -10,6 +10,7 @@ function getValidatorFunction(validatorName) {
     'validate-commands': mod.validateCommands,
     'validate-skills': mod.validateSkills,
     'validate-rules': mod.validateRules,
+    'validate-metadata': mod.validateMetadata,
     'validate-no-hardcoded-paths': mod.validateNoHardcodedPaths
   };
   if (!map[validatorName]) {

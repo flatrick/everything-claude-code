@@ -1,7 +1,7 @@
 {
   "name": "modeldev-toolkit",
   "version": "1.7.0",
-  "description": "Generic model toolkit for software development workflows: agents, skills, hooks, commands, and scaffolding across Claude Code, Cursor, Codex, and Gemini",
+  "description": "ModelDev Toolkit (MDT) is a Node-only workflow toolkit with agents, skills, hooks, commands, and scaffolding for Claude Code, Cursor, Codex, Gemini, and OpenCode",
   "keywords": [
     "model-toolkit",
     "llm-toolkit",
@@ -33,11 +33,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flatrick/everything-claude-code.git"
+    "url": "git+https://github.com/flatrick/modeldev-toolkit.git"
   },
-  "homepage": "https://github.com/flatrick/everything-claude-code#readme",
+  "homepage": "https://github.com/flatrick/modeldev-toolkit#readme",
   "bugs": {
-    "url": "https://github.com/flatrick/everything-claude-code/issues"
+    "url": "https://github.com/flatrick/modeldev-toolkit/issues"
   },
   "files": [
     ".agent/",
@@ -83,13 +83,13 @@
     "mdt-install": "scripts/install-mdt.js"
   },
   "scripts": {
-    "postinstall": "echo '\\n  modeldev-toolkit installed!\\n  Run: npx mdt-install typescript\\n  Docs: https://github.com/flatrick/everything-claude-code\\n'",
+    "postinstall": "echo '\\n  modeldev-toolkit installed!\\n  Run: npx mdt-install typescript\\n  Docs: https://github.com/flatrick/modeldev-toolkit\\n'",
     "install-mdt": "node scripts/install-mdt.js",
     "sync:hook-mirrors": "node scripts/sync-hook-mirrors.js",
     "release": "node scripts/release.js",
     "lint": "node scripts/ci/check-dependencies.js eslint markdownlint-cli && eslint . && markdownlint \"**/*.md\" --ignore node_modules",
     "claw": "node scripts/claw.js",
-    "test": "node scripts/ci/check-dependencies.js eslint markdownlint-cli && node scripts/ci/validate-agents.js && node scripts/ci/validate-commands.js && node scripts/ci/validate-rules.js && node scripts/ci/validate-skills.js && node scripts/ci/validate-hooks.js && node scripts/ci/validate-no-hardcoded-paths.js && node tests/run-all.js",
+    "test": "node scripts/ci/check-dependencies.js eslint markdownlint-cli && node scripts/ci/validate-agents.js && node scripts/ci/validate-commands.js && node scripts/ci/validate-rules.js && node scripts/ci/validate-skills.js && node scripts/ci/validate-hooks.js && node scripts/ci/validate-metadata.js && node scripts/ci/validate-no-hardcoded-paths.js && node tests/run-all.js",
     "test:neutral": "node tests/run-all.js --profile neutral",
     "test:claude": "node tests/run-all.js --profile claude",
     "test:cursor": "node tests/run-all.js --profile cursor",

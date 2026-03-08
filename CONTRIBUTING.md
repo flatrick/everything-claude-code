@@ -62,8 +62,8 @@ git checkout -b feat/my-contribution
 # 3. Add your contribution (see sections below)
 
 # 4. Test locally
-cp -r skills/my-skill ~/.claude/skills/  # for skills
-# Then test with Claude Code
+cp -r skills/my-skill <config>/skills/  # for skills
+# Then test with your installed MDT-compatible tool
 
 # 5. Submit PR
 git add . && git commit -m "feat: add my-skill" && git push

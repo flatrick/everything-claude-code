@@ -1,7 +1,7 @@
 {
   "name": "modeldev-toolkit",
   "version": "1.7.0",
-  "description": "Everything Claude Code (MDT) plugin for OpenCode - agents, commands, hooks, and skills",
+  "description": "ModelDev Toolkit (MDT) plugin for OpenCode - agents, commands, hooks, and skills",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -47,12 +47,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/affaan-m/everything-claude-code.git"
+    "url": "git+https://github.com/flatrick/modeldev-toolkit.git"
   },
   "bugs": {
-    "url": "https://github.com/affaan-m/everything-claude-code/issues"
+    "url": "https://github.com/flatrick/modeldev-toolkit/issues"
   },
-  "homepage": "https://github.com/affaan-m/everything-claude-code#readme",
+  "homepage": "https://github.com/flatrick/modeldev-toolkit#readme",
   "publishConfig": {
     "access": "public"
   },

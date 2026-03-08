@@ -331,7 +331,7 @@ export const MDTHooksPlugin = async ({
      */
     "shell.env": async () => {
       const env: Record<string, string> = {
-        MDT_VERSION: "1.6.0",
+        MDT_VERSION: "1.7.0",
         MDT_PLUGIN: "true",
         PROJECT_ROOT: worktree || directory,
       }
@@ -387,7 +387,7 @@ export const MDTHooksPlugin = async ({
       const contextBlock = [
         "# MDT Context (preserve across compaction)",
         "",
-        "## Active Plugin: ModelDev Toolkit v1.6.0",
+        "## Active Plugin: ModelDev Toolkit v1.7.0",
         "- Hooks: file.edited, tool.execute.before/after, session.created/idle/deleted, shell.env, compacting, permission.ask",
         "- Tools: run-tests, check-coverage, security-audit, format-code, lint-check, git-summary",
         "- Agents: 11 specialized (planner, architect, tdd-guide, code-reviewer, security-reviewer, build-error-resolver, e2e-runner, refactor-cleaner, doc-updater, database-reviewer, python-reviewer)",

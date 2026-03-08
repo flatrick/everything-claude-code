@@ -11,6 +11,7 @@ This document tracks naming changes from upstream `affaan-m/everything-claude-co
 | `ecc-install` (npm bin) | `mdt-install` | Old bin alias removed |
 | `npm run install-ecc` | `npm run install-mdt` | Old npm script alias removed |
 | `install-ecc` tests | `install-mdt` tests | `tests/scripts/install-mdt*.test.js` |
+| `CLAUDE_PLUGIN_ROOT` | `MDT_ROOT` | Runtime placeholder renamed; legacy alias removed in this fork |
 
 ## Upstream sync checklist
 

@@ -204,6 +204,10 @@ jobs:
         run: node scripts/ci/validate-hooks.js
         continue-on-error: false
 
+      - name: Validate metadata
+        run: node scripts/ci/validate-metadata.js
+        continue-on-error: false
+
       - name: Validate commands
         run: node scripts/ci/validate-commands.js
         continue-on-error: false
@@ -214,6 +218,10 @@ jobs:
 
       - name: Validate rules
         run: node scripts/ci/validate-rules.js
+        continue-on-error: false
+
+      - name: Validate hardcoded paths
+        run: node scripts/ci/validate-no-hardcoded-paths.js
         continue-on-error: false
 
   security:

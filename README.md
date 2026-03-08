@@ -6,14 +6,14 @@ Works with **Claude Code**, **Cursor**, **Codex**, and other AI agent harnesses.
 
 ## READ ME FIRST!
 
-This started as merely a clone of [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) but my goal is to adjust this my own liking.
+This fork started from [Everything Claude Code](https://github.com/affaan-m/everything-claude-code), then diverged into a Node-only, multi-tool workflow toolkit under the **ModelDev Toolkit (MDT)** name.
 
 My first change was to turn this into a **NodeJS-only runtime and installer**; sticking to one language that is truly cross-platform was my first goal.
 The original is, at the time of writing this (2026-03-07), using NodeJS, Bash-scripts and Python.
 
 The second goal is to steer away from being all about Claude Code as the primary LLM-tool, and instead aim for a generic toolkit that will hopefully work well for all/most alternatives.
 
-**2026-03-07 I'm still under heavy development with this, so things are likely to break often until I can begin working on stabilizing everything.**
+**2026-03-07 status:** the runtime migration is complete, and v1 stabilization is focused on contracts, metadata consistency, and tool-agnostic docs.
 
 ### This fork
 
@@ -74,8 +74,7 @@ Guides refer to the upstream project; this fork may differ. For this fork, prefe
 
 3. **Use** commands and agents in your tool (e.g. `/plan`, `/tdd`, `/code-review`). Full layout: [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
 
-**NOTE 2026-03-07 I don't think I'll bother with this for a while, but I'll leave this section to not forget about it END NOTE**
-For the official Claude Code plugin (marketplace install), use the [original repo](https://github.com/affaan-m/modeldev-toolkit).
+Marketplace/plugin support remains secondary in this fork for now. For the official upstream Claude Code plugin flow, use the [original repo](https://github.com/affaan-m/modeldev-toolkit).
 
 ---
 

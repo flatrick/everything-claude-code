@@ -1,9 +1,9 @@
 # OpenCode MDT Plugin
 
 > ⚠️ This README is specific to OpenCode usage.  
-> If you installed MDT via npm (e.g. `npm install opencode-MDT`), refer to the root README instead.
+> If you installed MDT via npm, refer to the root README instead.
 
-ModelDev Toolkit plugin for OpenCode (forked from ModelDev Toolkit) - agents, commands, hooks, and skills.
+ModelDev Toolkit plugin for OpenCode - agents, commands, hooks, and skills.
 
 ## Installation
 
@@ -43,7 +43,7 @@ npx mdt-install typescript
 Clone and run OpenCode in the repository:
 
 ```bash
-git clone https://github.com/affaan-m/modeldev-toolkit
+git clone https://github.com/flatrick/modeldev-toolkit
 cd modeldev-toolkit
 opencode
 ```

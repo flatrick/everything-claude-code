@@ -1,5 +1,5 @@
 /**
- * Everything Claude Code (MDT) Plugin for OpenCode
+ * ModelDev Toolkit (MDT) Plugin for OpenCode
  *
  * This package provides a complete OpenCode plugin with:
  * - 13 specialized agents (planner, architect, code-reviewer, etc.)
@@ -24,8 +24,8 @@
  *
  * Option 2: Clone and use directly
  * ```bash
- * git clone https://github.com/affaan-m/everything-claude-code
- * cd everything-claude-code
+ * git clone https://github.com/flatrick/modeldev-toolkit
+ * cd modeldev-toolkit
  * opencode
  * ```
  *
@@ -39,13 +39,13 @@ export { MDTHooksPlugin, default } from "./plugins/index.js"
 export * from "./plugins/index.js"
 
 // Version export
-export const VERSION = "1.6.0"
+export const VERSION = "1.7.0"
 
 // Plugin metadata
 export const metadata = {
   name: "modeldev-toolkit",
   version: VERSION,
-  description: "Everything Claude Code plugin for OpenCode",
+  description: "ModelDev Toolkit plugin for OpenCode",
   author: "affaan-m",
   features: {
     agents: 13,
