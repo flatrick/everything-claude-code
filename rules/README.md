@@ -89,7 +89,7 @@ When language-specific rules and common rules conflict, **language-specific rule
 
 `common/coding-style.md` recommends immutability as a default principle. A language-specific `python/coding-style.md` can override this:
 
-> Python dataclasses with `frozen=True` enforce immutability — see [common/coding-style.md](../common/coding-style.md) for the general principle.
+> Python dataclasses with `frozen=True` enforce immutability — see [common/coding-style.md](./common/coding-style.md) for the general principle.
 
 ### Common rules with override notes
 

@@ -224,6 +224,10 @@ jobs:
         run: node scripts/ci/validate-no-hardcoded-paths.js
         continue-on-error: false
 
+      - name: Validate markdown links
+        run: node scripts/ci/validate-markdown-links.js
+        continue-on-error: false
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest

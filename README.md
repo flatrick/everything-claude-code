@@ -41,8 +41,8 @@ Guides refer to the upstream project; this fork may differ. For this fork, prefe
 | Parallelization | Git worktrees, cascade method, when to scale instances |
 | Subagent Orchestration | The context problem, iterative retrieval pattern |
 
-- **Shorthand Guide (start here):** [The Shorthand Guide to ModelDev Toolkit](https://x.com/affaanmustafa/status/2012378465664745795)
-- **Longform Guide (advanced):** [The Longform Guide to ModelDev Toolkit](https://x.com/affaanmustafa/status/2014040193557471352)
+- **Upstream shorthand guide:** [Affaan's shorthand guide for Everything Claude Code](https://x.com/affaanmustafa/status/2012378465664745795)
+- **Upstream longform guide:** [Affaan's longform guide for Everything Claude Code](https://x.com/affaanmustafa/status/2014040193557471352)
 
 ---
 
@@ -185,7 +185,7 @@ See [Installation](#installation).
 
 Yes, use `--target cursor` or `--target codex`.
 
-Each tool gets its own install directory; see [Cursor / Codex / OpenCode](#cursor--codex--opencode).
+Each tool gets its own install directory; see [Cursor / Codex / OpenCode](#cursor-codex-opencode).
 
 ### Duplicate hooks / plugin.json?
 
@@ -248,8 +248,8 @@ See [docs/token-optimization.md](docs/token-optimization.md) for recommended set
 ## Links
 
 - **Original project:** [Everything Claude Code](https://github.com/affaan-m/modeldev-toolkit) — plugin, guides, community
-- **Shorthand Guide:** [The Shorthand Guide to ModelDev Toolkit](https://x.com/affaanmustafa/status/2012378465664745795)
-- **Longform Guide:** [The Longform Guide to ModelDev Toolkit](https://x.com/affaanmustafa/status/2014040193557471352)
+- **Upstream shorthand guide:** [Affaan's shorthand guide for Everything Claude Code](https://x.com/affaanmustafa/status/2012378465664745795)
+- **Upstream longform guide:** [Affaan's longform guide for Everything Claude Code](https://x.com/affaanmustafa/status/2014040193557471352)
 
 ---
 

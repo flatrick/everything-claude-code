@@ -11,7 +11,8 @@ function getValidatorFunction(validatorName) {
     'validate-skills': mod.validateSkills,
     'validate-rules': mod.validateRules,
     'validate-metadata': mod.validateMetadata,
-    'validate-no-hardcoded-paths': mod.validateNoHardcodedPaths
+    'validate-no-hardcoded-paths': mod.validateNoHardcodedPaths,
+    'validate-markdown-links': mod.validateMarkdownLinks
   };
   if (!map[validatorName]) {
     throw new Error(`Unsupported validator: ${validatorName}`);

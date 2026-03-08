@@ -1,10 +1,8 @@
 # The Shorthand Guide to Securing Your Agent
 
-![Header: The Shorthand Guide to Securing Your Agent](./assets/images/security/00-header.png)
-
 ---
 
-**I built the most-forked Claude Code configuration on GitHub. 50K+ stars, 6K+ forks. That also made it the biggest target.**
+**This guide is adapted from upstream security writing around Everything Claude Code and the broader agent ecosystem. The security lessons still apply here, but MDT is a separate fork.**
 
 When thousands of developers fork your configuration and run it with full system access, you start thinking differently about what goes into those files. I audited community contributions, reviewed pull requests from strangers, and traced what happens when an LLM reads instructions it was never meant to trust. What I found was bad enough to build an entire tool around it.
 
@@ -452,7 +450,7 @@ This three-perspective approach catches things that single-pass scanning misses.
 
 ## the agentshield approach
 
-AgentShield exists because I needed it. After maintaining the most-forked Claude Code configuration for months, manually reviewing every PR for security issues, and watching the community grow faster than anyone could audit — it became clear that automated scanning was mandatory.
+AgentShield exists because upstream maintainers needed it. After maintaining a widely forked Claude Code configuration for months, manually reviewing PRs for security issues, and watching the community grow faster than anyone could audit — it became clear that automated scanning was mandatory.
 
 **Zero-Install Scanning:**
 
@@ -592,4 +590,4 @@ The patterns in this guide aren't complex. They're habits. Build them into your 
 
 *Built from 10 months of maintaining the most-forked agent configuration on GitHub, auditing thousands of community contributions, and building the tools to automate what humans can't catch at scale.*
 
-*Affaan Mustafa ([@affaanmustafa](https://x.com/affaanmustafa)) — Creator of ModelDev Toolkit and AgentShield*
+*Affaan Mustafa ([@affaanmustafa](https://x.com/affaanmustafa)) created Everything Claude Code and AgentShield. The shorthand and longform guides in this repo remain upstream ECC material; ModelDev Toolkit is a separate fork maintained in this repository.*

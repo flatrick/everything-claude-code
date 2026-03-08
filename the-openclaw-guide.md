@@ -1,7 +1,5 @@
 # The Hidden Danger of OpenClaw
 
-![Header: The Hidden Danger of OpenClaw — Security Lessons from the Agent Frontier](./assets/images/openclaw/01-header.png)
-
 ---
 
 > **This is Part 3 of the ModelDev Toolkit guide series.** Part 1 is [The Shorthand Guide](./the-shortform-guide.md) (setup and configuration). Part 2 is [The Longform Guide](./the-longform-guide.md) (advanced patterns and workflows). This guide is about security — specifically, what happens when recursive agent infrastructure treats it as an afterthought.
@@ -460,11 +458,11 @@ Build secure by design. Not secure by accident.
 - [AgentShield on npm](https://www.npmjs.com/package/MDT-agentshield) — Zero-install agent security scanning
 
 > **Series navigation:**
-> - Part 1: [The Shorthand Guide to ModelDev Toolkit](./the-shortform-guide.md) — Setup and configuration
-> - Part 2: [The Longform Guide to ModelDev Toolkit](./the-longform-guide.md) — Advanced patterns and workflows
+> - Part 1: [Upstream Shorthand Guide to Everything Claude Code](./the-shortform-guide.md) — Upstream setup and configuration reference
+> - Part 2: [Upstream Longform Guide to Everything Claude Code](./the-longform-guide.md) — Upstream advanced patterns and workflows
 > - Part 3: The Hidden Danger of OpenClaw (this article) — Security lessons from the agent frontier
 > - Part 4: [The Shorthand Guide to Securing Your Agent](./the-security-guide.md) — Practical agent security
 
 ---
 
-*Affaan Mustafa ([@affaanmustafa](https://x.com/affaanmustafa)) builds AI coding tools and writes about AI infrastructure security. His ModelDev Toolkit repo has 50K+ GitHub stars. He created AgentShield and won the Anthropic x Forum Ventures hackathon building [zenith.chat](https://zenith.chat).*
+*Affaan Mustafa ([@affaanmustafa](https://x.com/affaanmustafa)) builds AI coding tools and writes about AI infrastructure security. He created Everything Claude Code and AgentShield, and won the Anthropic x Forum Ventures hackathon building [zenith.chat](https://zenith.chat). ModelDev Toolkit is a separate fork maintained in this repository.*
