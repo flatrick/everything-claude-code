@@ -8,7 +8,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { evaluateSession } = require('../../scripts/hooks/evaluate-session');
+const { evaluateSession, expandConfiguredPath } = require('../../scripts/hooks/evaluate-session');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 
 function createTranscript(dir, messageCount) {
@@ -141,6 +141,33 @@ function runTests() {
     } finally {
       cleanupTestDir(testDir);
     }
+  })) passed++; else failed++;
+
+  if (test('expands <config> placeholder in learned_skills_path config', () => {
+    const testDir = createTestDir('eval-session-test-');
+    const configPath = path.join(testDir, 'config.json');
+    const transcript = createTranscript(testDir, 12);
+    const configDir = path.join(testDir, '.cursor');
+    fs.mkdirSync(configDir, { recursive: true });
+    fs.writeFileSync(configPath, JSON.stringify({
+      min_session_length: 10,
+      learned_skills_path: '<config>/skills/learned'
+    }));
+    try {
+      const result = evaluateSession({
+        input: { transcript_path: transcript },
+        env: { ...process.env, CONFIG_DIR: configDir, MDT_CONTINUOUS_LEARNING_CONFIG: configPath }
+      });
+      assert.strictEqual(result.shouldEvaluate, true);
+      assert.strictEqual(result.learnedSkillsPath, path.join(configDir, 'skills', 'learned'));
+    } finally {
+      cleanupTestDir(testDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('expandConfiguredPath leaves mid-path tildes untouched', () => {
+    const value = path.join('C:\\tmp', 'some~dir', 'skills');
+    assert.strictEqual(expandConfiguredPath(value), value);
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

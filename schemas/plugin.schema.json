@@ -1,8 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Claude Plugin Configuration",
+  "title": "MDT Claude Plugin Manifest Reference",
+  "description": "Reference schema for .claude-plugin/plugin.json. Claude's real plugin validator has additional undocumented rules; see .claude-plugin/PLUGIN_SCHEMA_NOTES.md.",
   "type": "object",
-  "required": ["name"],
+  "required": ["name", "version"],
   "properties": {
     "name": { "type": "string" },
     "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
@@ -45,7 +46,8 @@
     },
     "hooks": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string" },
+      "description": "Reference only. Do not declare the default hooks/hooks.json file here; Claude loads it automatically."
     },
     "mcp_configs": {
       "type": "array",

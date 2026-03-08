@@ -101,7 +101,7 @@ async function runTests() {
     const blockingCommand = hooks.hooks.PreToolUse[0].hooks[0].command;
     const result = await runHookCommand(blockingCommand, {
       tool_input: { command: 'npm run dev' }
-    }, { CLAUDE_PLUGIN_ROOT: repoRoot });
+    }, { MDT_ROOT: repoRoot });
 
     // Hook only blocks on non-Windows platforms (tmux is Unix-only)
     if (process.platform === 'win32') {
@@ -127,7 +127,7 @@ async function runTests() {
     const blockingCommand = hooks.hooks.PreToolUse[0].hooks[0].command;
     const result = await runHookCommand(blockingCommand, {
       tool_input: { command: 'yarn dev' }
-    }, { CLAUDE_PLUGIN_ROOT: repoRoot });
+    }, { MDT_ROOT: repoRoot });
 
     // Hook only blocks on non-Windows platforms (tmux is Unix-only)
     if (process.platform === 'win32') {
@@ -220,7 +220,7 @@ async function runTests() {
     const result = await runHookCommand(prHook.hooks[0].command, {
       tool_input: { command: 'gh pr create --title "Test"' },
       tool_output: { output: 'Creating pull request...\nhttps://github.com/owner/repo/pull/123' }
-    }, { CLAUDE_PLUGIN_ROOT: repoRoot });
+    }, { MDT_ROOT: repoRoot });
 
     assert.ok(
       result.stderr.includes('PR created') || result.stderr.includes('github.com'),

@@ -127,7 +127,7 @@ function runTests() {
           assert.strictEqual(settings.theme, 'dark', 'existing non-hook keys should be preserved');
           assert.strictEqual(settings.customFlag, true, 'existing boolean key should be preserved');
           assert.ok(settings.hooks && settings.hooks.PreToolUse, 'hooks should be replaced with installer hooks block');
-          assert.ok(!settingsRaw.includes('${CLAUDE_PLUGIN_ROOT}'), 'hooks should be materialized to absolute paths');
+          assert.ok(!settingsRaw.includes('${MDT_ROOT}'), 'hooks should be materialized to absolute paths');
           assert.ok(fs.existsSync(path.join(claudeBase, 'settings.json.bkp')), 'installer should create backup file');
         } finally {
           cleanupTestDir(tmpHome);
@@ -155,7 +155,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(claudeRoot, 'settings.json')), 'settings.json should exist');
 
           const settingsRaw = fs.readFileSync(path.join(claudeRoot, 'settings.json'), 'utf8');
-          assert.ok(!settingsRaw.includes('${CLAUDE_PLUGIN_ROOT}'), 'plugin root placeholder should be resolved');
+          assert.ok(!settingsRaw.includes('${MDT_ROOT}'), 'plugin root placeholder should be resolved');
           assert.ok(settingsRaw.includes('.claude'), 'hook paths should use project-relative .claude');
         } finally {
           cleanupTestDir(tmpProject);

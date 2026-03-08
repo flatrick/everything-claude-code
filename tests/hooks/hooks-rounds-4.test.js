@@ -343,6 +343,36 @@ async function runTests() {
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 
+  if (await asyncTest('expands <config> in learned_skills_path to active config dir', async () => {
+    const testDir = createTestDir();
+    const transcriptPath = path.join(testDir, 'transcript.jsonl');
+    fs.writeFileSync(transcriptPath, '{"type":"user","content":"msg"}');
+
+    const skillsDir = path.join(testDir, 'skills', 'continuous-learning');
+    fs.mkdirSync(skillsDir, { recursive: true });
+    const configPath = path.join(skillsDir, 'config.json');
+    fs.writeFileSync(configPath, JSON.stringify({
+      learned_skills_path: '<config>/skills/learned'
+    }));
+
+    const configDir = path.join(testDir, '.cursor');
+    fs.mkdirSync(configDir, { recursive: true });
+
+    const stdinJson = JSON.stringify({ transcript_path: transcriptPath });
+    const result = await runScript(evaluateSessionScript, stdinJson, {
+      HOME: testDir,
+      USERPROFILE: testDir,
+      CONFIG_DIR: configDir,
+      MDT_CONTINUOUS_LEARNING_CONFIG: configPath
+    });
+    assert.strictEqual(result.code, 0);
+    assert.ok(
+      fs.existsSync(path.join(configDir, 'skills', 'learned')),
+      'Should create learned skills dir under the active config dir'
+    );
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
   if (await asyncTest('uses defaults when config file does not exist', async () => {
     const testDir = createTestDir();
     const transcriptPath = path.join(testDir, 'transcript.jsonl');
@@ -384,5 +414,4 @@ async function runTests() {
 
 ensureSubprocessCapability('tests/hooks/hooks-rounds-4.test.js');
 runTests();
-
 

@@ -10,6 +10,8 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const {
+  getConfigDir,
+  getDataDir,
   getLearnedSkillsDir,
   ensureDir,
   readFile,
@@ -24,7 +26,25 @@ function getDefaultConfigPath(env = process.env) {
   return env.MDT_CONTINUOUS_LEARNING_CONFIG || path.join(__dirname, '..', '..', 'skills', 'continuous-learning', 'config.json');
 }
 
-function loadEvaluateConfig(configPath, logger = log) {
+function expandConfiguredPath(configuredPath, env = process.env) {
+  if (!configuredPath || typeof configuredPath !== 'string') {
+    return null;
+  }
+
+  const configDir = env.CONFIG_DIR || getConfigDir();
+  const dataDir = env.DATA_DIR || getDataDir();
+
+  if (/^<config>(?=[\\/]|$)/.test(configuredPath)) {
+    return path.normalize(configuredPath.replace(/^<config>(?=[\\/]|$)/, configDir));
+  }
+  if (/^<data>(?=[\\/]|$)/.test(configuredPath)) {
+    return path.normalize(configuredPath.replace(/^<data>(?=[\\/]|$)/, dataDir));
+  }
+
+  return path.normalize(configuredPath.replace(/^~/, os.homedir()));
+}
+
+function loadEvaluateConfig(configPath, logger = log, env = process.env) {
   const configContent = readFile(configPath);
   let minSessionLength = 10;
   let learnedSkillsPath = getLearnedSkillsDir();
@@ -34,7 +54,7 @@ function loadEvaluateConfig(configPath, logger = log) {
       const config = JSON.parse(configContent);
       minSessionLength = config.min_session_length ?? 10;
       if (config.learned_skills_path) {
-        learnedSkillsPath = config.learned_skills_path.replace(/^~/, os.homedir());
+        learnedSkillsPath = expandConfiguredPath(config.learned_skills_path, env) || learnedSkillsPath;
       }
     } catch (err) {
       logger(`[ContinuousLearning] Failed to parse config: ${err.message}, using defaults`);
@@ -54,7 +74,7 @@ function evaluateSession(options = {}) {
 
   const transcriptPath = input.transcript_path || env.CLAUDE_TRANSCRIPT_PATH || null;
   const configPath = getDefaultConfigPath(env);
-  const { minSessionLength, learnedSkillsPath } = loadEvaluateConfig(configPath, logger);
+  const { minSessionLength, learnedSkillsPath } = loadEvaluateConfig(configPath, logger, env);
 
   ensureDir(learnedSkillsPath);
 
@@ -90,6 +110,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  expandConfiguredPath,
   getDefaultConfigPath,
   loadEvaluateConfig,
   evaluateSession,

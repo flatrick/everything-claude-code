@@ -956,7 +956,7 @@ async function runTests() {
     }
   })) passed++; else failed++;
 
-  if (test('script references use CLAUDE_PLUGIN_ROOT variable', () => {
+  if (test('script references use MDT_ROOT variable', () => {
     const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
     const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
 
@@ -964,11 +964,11 @@ async function runTests() {
       for (const entry of hookArray) {
         for (const hook of entry.hooks) {
           if (hook.type === 'command' && hook.command.includes('scripts/hooks/')) {
-            // Check for the literal string "${CLAUDE_PLUGIN_ROOT}" in the command
-            const hasPluginRoot = hook.command.includes('${CLAUDE_PLUGIN_ROOT}');
+            // Check for the literal string "${MDT_ROOT}" in the command
+            const hasPluginRoot = hook.command.includes('${MDT_ROOT}');
             assert.ok(
               hasPluginRoot,
-              `Script paths should use CLAUDE_PLUGIN_ROOT: ${hook.command.substring(0, 80)}...`
+              `Script paths should use MDT_ROOT: ${hook.command.substring(0, 80)}...`
             );
           }
         }
@@ -1209,4 +1209,3 @@ async function runTests() {
 
 ensureSubprocessCapability('tests/hooks/hooks.test.js');
 runTests();
-

@@ -31,8 +31,8 @@ function readStdinRaw() {
 }
 
 function getPluginRoot() {
-  if (process.env.CLAUDE_PLUGIN_ROOT && process.env.CLAUDE_PLUGIN_ROOT.trim()) {
-    return process.env.CLAUDE_PLUGIN_ROOT;
+  if (process.env.MDT_ROOT && process.env.MDT_ROOT.trim()) {
+    return process.env.MDT_ROOT;
   }
   return path.resolve(__dirname, '..', '..');
 }

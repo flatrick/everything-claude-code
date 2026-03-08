@@ -1,39 +1,46 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Claude Code Hooks Configuration",
-  "description": "Configuration for Claude Code hooks. Event types are validated at runtime and must be one of: PreToolUse, PostToolUse, PreCompact, SessionStart, SessionEnd, Stop, Notification, SubagentStop",
+  "title": "MDT Claude Hook Configuration",
+  "description": "Schema for the Claude-style hook config shipped in hooks/claude/hooks.json and mirrored to hooks/hooks.json.",
   "$defs": {
-    "hookItem": {
+    "eventName": {
+      "type": "string",
+      "enum": [
+        "PreToolUse",
+        "PostToolUse",
+        "PreCompact",
+        "SessionStart",
+        "SessionEnd",
+        "Stop",
+        "Notification",
+        "SubagentStop"
+      ]
+    },
+    "commandHook": {
       "type": "object",
       "required": [
         "type",
         "command"
       ],
+      "additionalProperties": false,
       "properties": {
         "type": {
-          "type": "string",
-          "enum": [
-            "PreToolUse",
-            "PostToolUse",
-            "PreCompact",
-            "SessionStart",
-            "SessionEnd",
-            "Stop",
-            "Notification",
-            "SubagentStop"
-          ],
-          "description": "Hook event type that triggers this hook"
+          "const": "command",
+          "description": "Claude hook entries in this repo are command hooks."
         },
         "command": {
           "oneOf": [
             {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             {
               "type": "array",
               "items": {
-                "type": "string"
-              }
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
             }
           ]
         },
@@ -61,24 +68,29 @@
         "hooks": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/hookItem"
+            "$ref": "#/$defs/commandHook"
           }
         },
         "description": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   "oneOf": [
     {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "$schema": {
           "type": "string"
         },
         "hooks": {
           "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/eventName"
+          },
           "additionalProperties": {
             "type": "array",
             "items": {

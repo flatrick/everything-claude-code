@@ -80,7 +80,7 @@ function parseHookCommand(command, pluginRoot) {
 
   const scriptMatch = command.match(/^node "([^"]+)"(?: (.+))?$/s);
   if (scriptMatch) {
-    const scriptPath = scriptMatch[1].replace('${CLAUDE_PLUGIN_ROOT}', pluginRoot);
+    const scriptPath = scriptMatch[1].replace('${MDT_ROOT}', pluginRoot);
     const extraArgs = scriptMatch[2] ? parseArgsWithQuotes(scriptMatch[2]) : [];
     return { cmd: 'node', args: [scriptPath, ...extraArgs] };
   }

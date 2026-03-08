@@ -22,8 +22,32 @@ function getConfigDir() {
   }
 }
 
+function getDataDir() {
+  const root = path.join(skillRoot, '..', '..');
+  try {
+    return require(path.join(root, 'scripts', 'lib', 'detect-env.js')).detectEnv.getDataDir();
+  } catch {
+    return require(path.join(root, 'scripts', 'lib', 'utils.js')).getDataDir();
+  }
+}
+
 function getLearnedSkillsDir() {
   return path.join(getConfigDir(), 'skills', 'learned');
+}
+
+function expandConfiguredPath(configuredPath) {
+  if (!configuredPath || typeof configuredPath !== 'string') {
+    return null;
+  }
+
+  if (/^<config>(?=[\\/]|$)/.test(configuredPath)) {
+    return path.normalize(configuredPath.replace(/^<config>(?=[\\/]|$)/, getConfigDir()));
+  }
+  if (/^<data>(?=[\\/]|$)/.test(configuredPath)) {
+    return path.normalize(configuredPath.replace(/^<data>(?=[\\/]|$)/, getDataDir()));
+  }
+
+  return path.normalize(configuredPath.replace(/^~/, require('os').homedir()));
 }
 
 function ensureDir(dir) {
@@ -69,7 +93,7 @@ process.stdin.on('end', () => {
         const config = JSON.parse(configContent);
         minSessionLength = config.min_session_length ?? 10;
         if (config.learned_skills_path) {
-          learnedSkillsPath = config.learned_skills_path.replace(/^~/, require('os').homedir());
+          learnedSkillsPath = expandConfiguredPath(config.learned_skills_path) || learnedSkillsPath;
         }
       } catch (_err) {
         // Keep defaults when config parsing fails.

@@ -309,7 +309,7 @@ function installClaudeHooks(claudeBase, globalScope) {
   const settingsPath = path.join(claudeBase, 'settings.json');
   const hooksData = readJsonFile(hooksJsonSrc, {});
   const pluginRoot = globalScope ? claudeBase.replace(/\\/g, '/') : '.claude';
-  const hooksJson = JSON.stringify(hooksData).replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, pluginRoot);
+  const hooksJson = JSON.stringify(hooksData).replace(/\$\{MDT_ROOT\}/g, pluginRoot);
   const parsedHooks = JSON.parse(hooksJson);
 
   let settings = {};
