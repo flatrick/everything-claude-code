@@ -3,8 +3,8 @@
   "version": "1.7.0",
   "description": "ModelDev Toolkit (MDT) for Claude Code: a Node-only toolkit of agents, skills, hooks, commands, and rules for stable software workflows",
   "author": {
-    "name": "Affaan Mustafa",
-    "url": "https://x.com/affaanmustafa"
+    "name": "flatrick",
+    "url": "https://github.com/flatrick"
   },
   "homepage": "https://github.com/flatrick/modeldev-toolkit",
   "repository": "https://github.com/flatrick/modeldev-toolkit",

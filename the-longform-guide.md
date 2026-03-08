@@ -1,13 +1,13 @@
-# The Longform Guide to ModelDev Toolkit
+# Upstream Longform Guide to Everything Claude Code
 
-![Header: The Longform Guide to ModelDev Toolkit](./assets/images/longform/01-header.png)
+![Header: The Longform Guide to Everything Claude Code](./assets/images/longform/01-header.png)
 
 ---
 
-> **Prerequisite**: This guide builds on [The Shorthand Guide to ModelDev Toolkit](./the-shortform-guide.md). Read that first if you haven't set up skills, hooks, subagents, MCPs, and plugins.
+> **Prerequisite**: This guide builds on the upstream [Shorthand Guide to Everything Claude Code](./the-shortform-guide.md). Read that first if you haven't set up skills, hooks, subagents, MCPs, and plugins.
 
 ![Reference to Shorthand Guide](./assets/images/longform/02-shortform-reference.png)
-*The Shorthand Guide - read it first*
+*The upstream shorthand guide - read it first*
 
 In the shorthand guide, I covered the foundational setup: skills and commands, hooks, subagents, MCPs, plugins, and the configuration patterns that form the backbone of an effective Claude Code workflow. That was the setup guide and the base infrastructure.
 
@@ -15,7 +15,7 @@ This longform guide goes into the techniques that separate productive sessions f
 
 The themes here: token economics, memory persistence, verification patterns, parallelization strategies, and the compound effects of building reusable workflows. These are the patterns I've refined over 10+ months of daily use that make the difference between being plagued by context rot within the first hour, versus maintaining productive sessions for hours.
 
-Everything covered in the shorthand and longform guides is available on GitHub: `github.com/flatrick/modeldev-toolkit`
+These shorthand and longform guides originate from Affaan Mustafa's Everything Claude Code project. MDT preserves them here as upstream reference material while the fork's own docs live in `README.md`, `AGENTS.md`, and `docs/`.
 
 ---
 

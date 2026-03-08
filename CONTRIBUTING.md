@@ -441,7 +441,6 @@ Design expectations for runtime scripts:
 ## Questions?
 
 - **Issues:** [github.com/flatrick/modeldev-toolkit/issues](https://github.com/flatrick/modeldev-toolkit/issues)
-- **X/Twitter:** [@affaanmustafa](https://x.com/affaanmustafa)
 
 ---
 
