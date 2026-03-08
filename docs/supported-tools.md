@@ -21,6 +21,7 @@ Use this when you need to answer:
 
 - [Docs Pack Index](./tools/README.md)
 - [Capability Matrix](./tools/capability-matrix.md)
+- [Workflow Matrix](./tools/workflow-matrix.md)
 - [Claude Code](./tools/claude-code.md)
 - [Cursor](./tools/cursor.md)
 - [Codex](./tools/codex.md)
@@ -45,5 +46,6 @@ Use this when you need to answer:
 ## Source Policy
 
 - Prefer these docs first when working in MDT.
+- Use [Workflow Matrix](./tools/workflow-matrix.md) when the question is "how should MDT realize workflow X on tool Y?"
 - If a page here is stale, use the verification workflow in [Local Verification Playbook](./tools/local-verification.md).
 - Do not promote a claim from `experimental` or `repo-adapter` to `official` without checking vendor docs.

@@ -14,6 +14,7 @@ It exists to prevent repeated web searches and prevent agents from guessing base
 ## Files
 
 - [capability-matrix.md](./capability-matrix.md) - side-by-side comparison by MDT feature family
+- [workflow-matrix.md](./workflow-matrix.md) - intended MDT workflows and the repo artifacts that enable them per tool
 - [claude-code.md](./claude-code.md) - Claude Code reference target
 - [cursor.md](./cursor.md) - Cursor IDE plus terminal agent
 - [codex.md](./codex.md) - OpenAI Codex CLI
@@ -23,8 +24,9 @@ It exists to prevent repeated web searches and prevent agents from guessing base
 ## Read Order
 
 1. Read the matrix to identify the feature family.
-2. Open the per-tool page for exact syntax, paths, limits, and repo mapping.
-3. Use the verification playbook if the claim needs re-checking.
+2. Read the workflow matrix if the question is about intended MDT behavior rather than native tool capability.
+3. Open the per-tool page for exact syntax, paths, limits, and repo mapping.
+4. Use the verification playbook if the claim needs re-checking.
 
 ## Audit Baseline
 
