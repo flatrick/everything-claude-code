@@ -1,16 +1,5 @@
 # Next Steps
 
-The repo now has:
-
-- audited cross-tool capability docs under `docs/tools/`
-- a local-first setup contract for Claude, Cursor, Codex, and OpenCode
-- local smoke probes for installed CLIs
-- deeper Codex workflow smoke for `plan`, `tdd`, and `verify`
-
-The next work should stay narrow, local-first, and focused on real workflow confidence rather than new features.
-
----
-
 ## Current Direction
 
 - This fork is primarily for personal daily use, with possible reuse by friends and coworkers.
@@ -21,51 +10,163 @@ The next work should stay narrow, local-first, and focused on real workflow conf
 
 ## Next Practical Steps
 
-### 1. Add deeper Claude workflow smoke
+### 1. Cursor parity — fix silently broken hooks (P0)
 
-Codex now has workflow-level smoke coverage beyond simple CLI reachability.
-Claude should get the same treatment for the MDT workflows that matter most.
+The Cursor hook adapter exists but two core hooks silently no-op because Cursor
+does not provide Claude's `transcript_path`:
 
-Recommended first scope:
+- `session-end.js` — reads JSONL transcript to build session summary → writes nothing in Cursor
+- `evaluate-session.js` — also transcript-dependent → skips entirely
+- `cost-tracker.js` — reads token data from transcript → skips silently
+
+**Fix**: rewrite `.cursor/hooks/session-end.js` and `.cursor/hooks/stop.js` to
+consume Cursor's native `stop`/`sessionEnd` payload (`conversation_id`,
+`modified_files`, `messages[]`) instead of delegating to the Claude-format scripts.
+Session summaries can still be written to the same sessions dir so `session-start`
+keeps working cross-session.
+
+### 2. Cursor parity — MDT_ROOT for shared scripts (P0)
+
+Shared scripts in `scripts/hooks/` that spawn subprocesses may fail when
+`MDT_ROOT` is not set in Cursor's environment.
+
+**Fix**: in `adapter.js` `runExistingHook()`, inject `MDT_ROOT` into the child
+process env (set to the resolved plugin root). Alternatively, set it in
+`session-start.js` at the top of each Cursor session.
+
+### 3. Cursor parity — cost tracker (P1)
+
+Either detect token usage from Cursor's stop payload (if available) or write a
+Cursor-native stub that logs `[MDT] Cost tracking: not available in Cursor` instead
+of silently skipping. Respect `MDT_DISABLED_HOOKS=stop:cost-tracker` to opt out.
+
+### 4. Cursor parity — wire continuous learning (P1)
+
+`skills/continuous-learning-v2/hooks/observe.js` is called at Pre/PostToolUse in
+Claude hooks but is not wired in Cursor hooks at all. `observe.js` already supports
+Cursor via `detect-env.js`. Add calls to `afterFileEdit` and `afterShellExecution`
+Cursor hooks.
+
+### 5. Cursor parity — populate `.cursor/skills/` (P2)
+
+Cursor has a native skills system using the same `SKILL.md` format and
+auto-discovery as Claude Code. Skills live in `.cursor/skills/` (project) or
+`~/.cursor/skills/` (user) and are invocable via `/` in Agent chat.
+
+Currently only `frontend-slides` is in `.cursor/skills/`. All other skills need
+to be added there — not converted to rules.
+
+Priority skills to add first:
+- `tdd-workflow`
+- `verification-loop`
+- `coding-standards`
+- `security-review`
+- `backend-patterns`
+- `frontend-patterns`
+
+Update `scripts/install-mdt.js` to copy `skills/*/` to `.cursor/skills/` on
+Cursor installs (same as it does for Claude Code).
+
+Note: Cursor user-level rules (`~/.cursor/rules/`) are stored in a database and
+cannot be file-installed. The install script must only target project-level paths
+(`.cursor/rules/`, `.cursor/skills/`). This is unlike Claude Code where
+`~/.claude/rules/` is file-based.
+
+### 6. Add dependency declarations to SKILL.md frontmatter (P1)
+
+Currently all inter-component dependencies are implicit. Skills that assume rules
+are loaded don't declare it, so the install script cannot warn when installing to
+an environment where those dependencies can't be satisfied (e.g. Cursor global
+install, where user-level rules are database-backed and unavailable).
+
+**Proposed addition to SKILL.md frontmatter:**
+
+```yaml
+---
+name: tdd-workflow
+description: ...
+requires:
+  rules:
+    - common/testing
+    - common/coding-style
+  hooks: true          # needs hook infrastructure active
+  skills: []           # inter-skill dependencies
+---
+```
+
+**What this enables:**
+- The install script can check `requires.rules` and warn (or block) when rules
+  can't be guaranteed (e.g. Cursor global scope)
+- The install script can check `requires.hooks` and skip or warn when installing
+  to a tool that doesn't support hooks
+- Users see upfront what a skill needs before installing it
+- Test suite can validate that declared dependencies are actually present
+
+**Scope of work:**
+1. Add `requires:` to the SKILL.md schema (or document it as a convention)
+2. Audit each skill and add `requires:` where the dependency is real (not just
+   "nice to have") — start with skills that embed explicit rule guidance:
+   `tdd-workflow`, `security-review`, `coding-standards`, `verification-loop`
+3. Update `scripts/install-mdt.js` to read `requires:` and emit warnings when
+   installing to a tool/scope that can't satisfy them
+4. Update tests to cover the dependency-check logic
+
+### 7. Cursor parity — convert commands to Cursor custom commands (P2)
+
+All commands in `commands/*.md` use Claude Code slash command format. Cursor has
+its own custom command system. Create `.cursor/commands/` and convert the core
+workflows, stripping Claude-specific subagent syntax:
+
+- `/tdd`, `/plan`, `/verify`, `/code-review`, `/learn`, `/skill-create`
+
+Update `scripts/install-mdt.js` to copy these for Cursor installs.
+
+### 8. Add deeper Claude workflow smoke (P2)
+
+Codex has workflow-level smoke coverage. Claude should get the same for:
 
 - `plan`
 - `tdd`
 - `verify`
 - `security`
 
-### 2. Keep Cursor desktop verification manual for now
+### 9. Add Cursor parity tests (P3)
 
-Cursor Agent CLI is locally smoke-tested, but the desktop app should be treated
-as a manual verification surface until there is a reliable non-interactive
-workflow worth automating.
+Add test coverage for:
+- `.cursor/hooks/*.js` with Cursor-format input (no `transcript_path`)
+- Cursor session-end writing a fallback summary when no transcript is available
+- Skill-to-rule and command conversion output
 
-Document manual checks in `docs/tools/` instead of forcing a brittle script.
+### 10. Cut a stabilization release boundary (P3)
 
-### 3. Add OpenCode local smoke once installed
+Once Cursor hook parity is working and Claude workflow smoke is added, prepare
+release notes covering:
 
-OpenCode remains structurally documented and contract-checked, but not locally
-verified on this machine. Once it is installed locally:
+- Cursor hook parity (no Claude Code dependencies)
+- Claude workflow smoke coverage
+- Skills/commands conversion for Cursor
+
+### 11. Add OpenCode local smoke once installed
+
+OpenCode is structurally documented but not locally verified. Once installed:
 
 - run `node scripts/smoke-tool-setups.js`
 - add an OpenCode-specific workflow smoke if the adapter is going to stay first-class
 
-### 4. Continue replacing stale workflow references
+---
 
-There are still likely skills and docs that refer to removed Python/shell-era
-scripts or older workflow assumptions. Continue fixing those as they are found,
-and prefer the local validators plus workflow smoke scripts over manual guessing.
+## Design Principle for Cursor Hooks
 
-### 5. Cut a stabilization release boundary after Claude workflow smoke
+> Never fake Claude format in Cursor hooks. `transformToClaude()` works for hooks
+> that only use `command` or `file_path`, but breaks for anything reading
+> `transcript_path`. Write Cursor hooks that consume Cursor's native JSON directly
+> and call the business-logic layer (format checking, secret detection) directly —
+> not via the Claude Code hook runner.
 
-Once Claude gets the same deeper workflow verification that Codex now has,
-the repo will have a stronger stabilization boundary for the two primary tools
-currently in use.
-
-That would be a sensible point to prepare release notes covering:
-
-- local-first tool setup verification
-- Codex workflow smoke coverage
-- cross-tool workflow contract docs
+Shared scripts that are transcript-independent (format, typecheck, console-warn,
+secret detection) are safe to delegate to via adapter. The ones that are
+transcript-dependent (session-end, cost-tracker, evaluate-session) need Cursor-native
+reimplementations.
 
 ---
 
