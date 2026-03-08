@@ -214,6 +214,7 @@ After each phase, run locally:
 - `node scripts/verify-tool-setups.js`
 - `node scripts/smoke-tool-setups.js`
 - `node scripts/smoke-codex-workflows.js`
+- `node scripts/ci/validate-hook-mirrors.js`
 - relevant install tests
 - `node scripts/ci/validate-markdown-links.js`
 - `node scripts/ci/validate-markdown-path-refs.js`

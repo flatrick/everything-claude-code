@@ -122,11 +122,31 @@ Expected targets:
 
 ### 3. Add a durable migration-complete checklist
 
-Once the final structure is chosen, this status file should be updated with:
+Define and maintain a durable migration-complete checklist (see the draft checklist and verification commands below) and keep it updated as the template-source migration is finalized.
 
-- final accepted layout
-- explicit “done” criteria
-- verification commands for a migration-complete repo
+
+
+## Migration-Complete Checklist (Draft)
+
+A migration-complete repository should satisfy all of the following:
+
+- [ ] no tracked canonical tool source remains under repo-root runtime directories (`.claude/`, `.cursor/`, `.codex/`, `.opencode/`)
+- [ ] canonical adapter source lives only in `claude-template/`, `cursor-template/`, `codex-template/`, and `opencode-template/`
+- [ ] Claude hook ownership is explicit:
+  - source-of-truth file: `claude-template/hooks.json`
+  - repo mirror file: `hooks/hooks.json`
+  - mirror is byte-identical to source and validated in CI
+- [ ] installer and verification flows treat `*-template/` directories as source of truth
+- [ ] docs consistently describe template directories as source and runtime dot-directories as local/rendered outputs
+
+Verification commands:
+
+- `node scripts/ci/validate-hook-mirrors.js`
+- `node scripts/verify-tool-setups.js`
+- `node scripts/smoke-tool-setups.js`
+- `node scripts/smoke-codex-workflows.js`
+- `node scripts/ci/validate-markdown-links.js`
+- `node scripts/ci/validate-markdown-path-refs.js`
 
 ## Newly Locked Decision
 
