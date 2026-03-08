@@ -122,7 +122,10 @@ const testFiles = [
   'scripts/install-mdt.test.js',
   'scripts/run-with-flags.test.js',
   'scripts/setup-package-manager.test.js',
+  'scripts/smoke-codex-workflows.test.js',
+  'scripts/smoke-tool-setups.test.js',
   'scripts/sync-hook-mirrors.test.js',
+  'scripts/verify-tool-setups.test.js',
   'scripts/skill-create-output.test.js',
   'scripts/node-runtime-scripts.test.js'
 ];

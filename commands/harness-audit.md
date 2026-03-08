@@ -6,7 +6,7 @@ Audit the current repository's agent harness setup and return a prioritized scor
 
 `/harness-audit [scope] [--format text|json]`
 
-- `scope` (optional): `repo` (default), `hooks`, `skills`, `commands`, `agents`
+- `scope` (optional): `repo` (default), `hooks`, `skills`, `commands`, `agents`, `setup`
 - `--format`: output style (`text` default, `json` for automation)
 
 ## What to Evaluate
@@ -30,12 +30,20 @@ Return:
 3. Top 3 actions with exact file paths
 4. Suggested MDT skills to apply next
 
+For `setup` scope, return:
+
+1. Per-workflow coverage across Claude, Cursor, Codex, and OpenCode
+2. Deterministic contract status from `node scripts/verify-tool-setups.js`
+3. Optional local smoke status from `node scripts/smoke-tool-setups.js`
+4. Top 3 setup fixes with exact file paths
+
 ## Checklist
 
 - Inspect `hooks/hooks.json`, `scripts/hooks/`, and hook tests.
 - Inspect `skills/`, command coverage, and agent coverage.
 - Verify cross-harness parity for `.cursor/`, `.opencode/`, `.codex/`.
 - Flag broken or stale references.
+- For `setup` scope, use `skills/tool-setup-verifier/SKILL.md`, `docs/tools/workflow-matrix.md`, and `scripts/lib/tool-workflow-contract.js`.
 
 ## Example Result
 
@@ -54,5 +62,5 @@ Top 3 Actions:
 ## Arguments
 
 $ARGUMENTS:
-- `repo|hooks|skills|commands|agents` (optional scope)
+- `repo|hooks|skills|commands|agents|setup` (optional scope)
 - `--format text|json` (optional output format)
