@@ -110,6 +110,7 @@ const testFiles = [
   'ci/validators.test.js',
   'ci/metadata-validator.test.js',
   'ci/markdown-links-validator.test.js',
+  'ci/markdown-path-refs-validator.test.js',
   'ci/schema-contracts.test.js',
   'ci/validators-rounds.test.js',
   'ci/validators-rounds-3.test.js',

@@ -228,6 +228,10 @@ jobs:
         run: node scripts/ci/validate-markdown-links.js
         continue-on-error: false
 
+      - name: Validate markdown path references
+        run: node scripts/ci/validate-markdown-path-refs.js
+        continue-on-error: false
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest
