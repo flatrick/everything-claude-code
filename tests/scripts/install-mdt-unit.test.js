@@ -8,6 +8,8 @@ const assert = require('assert');
 const { test } = require('../helpers/test-runner');
 const {
   parseArgsFrom,
+  getAvailablePackages,
+  loadPackageManifest,
   buildInstallPlan
 } = require('../../scripts/install-mdt');
 
@@ -23,7 +25,7 @@ function runTests() {
     assert.strictEqual(parsed.globalScope, true);
     assert.strictEqual(parsed.listMode, true);
     assert.strictEqual(parsed.dryRun, true);
-    assert.deepStrictEqual(parsed.languages, ['typescript']);
+    assert.deepStrictEqual(parsed.packageNames, ['typescript']);
   })) passed++; else failed++;
 
   if (test('parseArgsFrom defaults to claude target with no flags', () => {
@@ -32,48 +34,64 @@ function runTests() {
     assert.strictEqual(parsed.globalScope, false);
     assert.strictEqual(parsed.listMode, false);
     assert.strictEqual(parsed.dryRun, false);
-    assert.deepStrictEqual(parsed.languages, []);
+    assert.deepStrictEqual(parsed.packageNames, []);
   })) passed++; else failed++;
 
   if (test('buildInstallPlan returns codex plan without language requirement', () => {
-    const plan = buildInstallPlan({ target: 'codex', globalScope: false, languages: [] });
+    const plan = buildInstallPlan({ target: 'codex', globalScope: false, packageNames: [] });
     assert.ok(plan.some((line) => line.includes('[dry-run] Target: codex')));
     assert.ok(plan.some((line) => line.includes('Would install from')));
   })) passed++; else failed++;
 
-  if (test('buildInstallPlan includes global cursor rule-skip note', () => {
-    const plan = buildInstallPlan({ target: 'cursor', globalScope: true, languages: ['typescript'] });
+  if (test('getAvailablePackages lists typescript package', () => {
+    assert.ok(getAvailablePackages().includes('typescript'));
+  })) passed++; else failed++;
+
+  if (test('loadPackageManifest loads typescript cursor package details', () => {
+    const manifest = loadPackageManifest('typescript');
+    assert.strictEqual(manifest.name, 'typescript');
+    assert.strictEqual(manifest.ruleDirectory, 'typescript');
+    assert.ok(Array.isArray(manifest.tools.cursor.rules));
+    assert.ok(manifest.tools.cursor.rules.includes('typescript-coding-style.md'));
+    assert.deepStrictEqual(manifest.tools.cursor.skills, ['frontend-slides']);
+  })) passed++; else failed++;
+
+  if (test('buildInstallPlan includes global cursor rule-skip note and packages', () => {
+    const plan = buildInstallPlan({ target: 'cursor', globalScope: true, packageNames: ['typescript'] });
     assert.ok(plan.some((line) => line.includes('Target: cursor (global)')));
+    assert.ok(plan.some((line) => line.includes('Packages: typescript')));
     assert.ok(plan.some((line) => line.includes('Would skip file-based rules')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes claude runtime scripts detail', () => {
-    const plan = buildInstallPlan({ target: 'claude', globalScope: false, languages: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'claude', globalScope: false, packageNames: ['typescript'] });
     assert.ok(plan.some((line) => line.includes('runtime scripts')));
     assert.ok(plan.some((line) => line.includes('scripts/hooks + scripts/lib')));
+    assert.ok(plan.some((line) => line.includes('Packages: typescript')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes gemini local paths', () => {
-    const plan = buildInstallPlan({ target: 'gemini', globalScope: false, languages: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'gemini', globalScope: false, packageNames: ['typescript'] });
     assert.ok(plan.some((l) => l.includes('Target: gemini')));
     assert.ok(plan.some((l) => l.includes('.agent')));
+    assert.ok(plan.some((line) => line.includes('Packages: typescript')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes gemini global paths', () => {
-    const plan = buildInstallPlan({ target: 'gemini', globalScope: true, languages: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'gemini', globalScope: true, packageNames: ['typescript'] });
     assert.ok(plan.some((l) => l.includes('Target: gemini (global)')));
     assert.ok(plan.some((l) => l.includes('GEMINI.md')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan claude project-level installs to cwd .claude', () => {
-    const plan = buildInstallPlan({ target: 'claude', globalScope: false, languages: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'claude', globalScope: false, packageNames: ['typescript'] });
     assert.ok(plan.some((line) => line.includes('.claude')));
     assert.ok(plan.some((line) => line.includes('project-relative')));
     assert.ok(!plan.some((line) => line.includes('Target: claude (global)')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan claude global installs to home .claude', () => {
-    const plan = buildInstallPlan({ target: 'claude', globalScope: true, languages: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'claude', globalScope: true, packageNames: ['typescript'] });
     const home = require('os').homedir();
     assert.ok(plan.some((line) => line.includes('Target: claude (global)')));
     assert.ok(plan.some((line) => line.includes(home)));
@@ -84,7 +102,7 @@ function runTests() {
     const parsed = parseArgsFrom(['--global', 'typescript']);
     assert.strictEqual(parsed.target, 'claude');
     assert.strictEqual(parsed.globalScope, true);
-    assert.deepStrictEqual(parsed.languages, ['typescript']);
+    assert.deepStrictEqual(parsed.packageNames, ['typescript']);
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

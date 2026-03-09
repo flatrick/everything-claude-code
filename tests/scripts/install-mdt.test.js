@@ -98,6 +98,41 @@ function runTests() {
       }
     },
     {
+      name: 'cursor install copies only package-selected cursor skills',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-cursor-skills-home-');
+        const tmpProject = createTestDir('mdt-install-cursor-skills-proj-');
+
+        try {
+          const result = runInstaller(['--target', 'cursor', 'typescript'], {
+            cwd: tmpProject,
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome
+            }
+          });
+          assertSuccess(result, 'cursor package install');
+
+          const cursorRoot = path.join(tmpProject, '.cursor');
+          assert.ok(
+            fs.existsSync(path.join(cursorRoot, 'skills', 'frontend-slides', 'SKILL.md')),
+            'Cursor install should copy the declared frontend-slides skill'
+          );
+          assert.ok(
+            !fs.existsSync(path.join(cursorRoot, 'skills', 'rust-patterns')),
+            'Cursor install should not copy unrelated shared rust skills'
+          );
+          assert.ok(
+            !fs.existsSync(path.join(cursorRoot, 'skills', 'sqlserver-patterns')),
+            'Cursor install should not copy unrelated shared sql skills'
+          );
+        } finally {
+          cleanupTestDir(tmpHome);
+          cleanupTestDir(tmpProject);
+        }
+      }
+    },
+    {
       name: 'claude install merges hooks into existing settings.json and preserves other keys',
       run: () => {
         const tmpHome = createTestDir('mdt-install-settings-');

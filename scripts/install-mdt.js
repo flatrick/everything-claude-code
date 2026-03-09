@@ -4,7 +4,7 @@
  * Node-only installer for rules, agents, skills, commands, hooks, and configs.
  *
  * Usage:
- *   node scripts/install-mdt.js [--target claude|cursor|codex] [--global] [language ...]
+ *   node scripts/install-mdt.js [--target claude|cursor|codex] [--global] [package ...]
  *
  * Examples:
  *   node scripts/install-mdt.js typescript
@@ -25,6 +25,7 @@ const { getHookPlatform } = require('./lib/hook-platforms');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const RULES_DIR = path.join(REPO_ROOT, 'rules');
+const PACKAGES_DIR = path.join(REPO_ROOT, 'packages');
 const CURSOR_SRC = path.join(REPO_ROOT, 'cursor-template');
 const CODEX_SRC = path.join(REPO_ROOT, 'codex-template');
 
@@ -38,7 +39,7 @@ function parseArgsFrom(args) {
   let globalScope = false;
   let listMode = false;
   let dryRun = false;
-  const languages = [];
+  const packageNames = [];
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--target' && args[i + 1]) {
@@ -51,32 +52,70 @@ function parseArgsFrom(args) {
     } else if (args[i] === '--dry-run') {
       dryRun = true;
     } else if (!args[i].startsWith('-')) {
-      languages.push(args[i]);
+      packageNames.push(args[i]);
     }
   }
 
-  return { target, globalScope, listMode, dryRun, languages };
+  return { target, globalScope, listMode, dryRun, packageNames };
 }
 
-function getAvailableLanguages() {
-  if (!fs.existsSync(RULES_DIR)) {
+function getAvailablePackages() {
+  if (!fs.existsSync(PACKAGES_DIR)) {
     return [];
   }
-  return fs.readdirSync(RULES_DIR, { withFileTypes: true })
-    .filter(e => e.isDirectory() && e.name !== 'common')
-    .map(e => e.name)
+
+  return fs.readdirSync(PACKAGES_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(PACKAGES_DIR, entry.name, 'package.json')))
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function loadPackageManifest(packageName) {
+  const packagePath = path.join(PACKAGES_DIR, packageName, 'package.json');
+  if (!fs.existsSync(packagePath)) {
+    throw new Error(`Unknown package '${packageName}'`);
+  }
+
+  const parsed = readJsonFile(packagePath, null);
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error(`Invalid package manifest for '${packageName}'`);
+  }
+
+  return {
+    name: parsed.name || packageName,
+    ruleDirectory: parsed.ruleDirectory || packageName,
+    tools: typeof parsed.tools === 'object' && parsed.tools ? parsed.tools : {}
+  };
+}
+
+function resolveSelectedPackages(packageNames) {
+  return packageNames.map(loadPackageManifest);
+}
+
+function getSelectedPackageSummary(selectedPackages) {
+  if (!selectedPackages.length) {
+    return '(none provided)';
+  }
+
+  return selectedPackages.map((pkg) => pkg.name).join(', ');
+}
+
+function getPackageRuleDirectories(selectedPackages) {
+  return selectedPackages
+    .map((pkg) => pkg.ruleDirectory)
+    .filter(Boolean)
     .sort();
 }
 
 function printAvailableOptions(target) {
   console.log('Available targets: claude (supports --global), cursor (supports --global), codex, gemini (supports --global)');
-  if (target !== 'codex' && target !== 'gemini') {
-    const langs = getAvailableLanguages();
-    console.log('Available languages:');
-    if (langs.length === 0) {
-      console.log('  (none found under rules/)');
+  if (target !== 'codex') {
+    const packages = getAvailablePackages();
+    console.log('Available packages:');
+    if (packages.length === 0) {
+      console.log('  (none found under packages/)');
     } else {
-      langs.forEach((lang) => console.log('  - ' + lang));
+      packages.forEach((packageName) => console.log('  - ' + packageName));
     }
   }
 }
@@ -93,41 +132,43 @@ function buildCodexInstallPlan(lines) {
   ];
 }
 
-function buildGeminiInstallPlan(lines, globalScope, languages) {
+function buildGeminiInstallPlan(lines, globalScope, selectedPackages) {
   const agentsDest = globalScope ? path.join(os.homedir(), '.gemini/antigravity/.agents') : path.join(process.cwd(), '.agent');
   const cmdsDest = globalScope ? path.join(os.homedir(), '.gemini/commands') : path.join(process.cwd(), '.gemini/commands');
   const nextLines = [
     ...lines,
+    `[dry-run] Packages: ${getSelectedPackageSummary(selectedPackages)}`,
     `[dry-run] Would install agents and skills to ${agentsDest}`,
     `[dry-run] Would install custom commands to ${cmdsDest}`
   ];
 
-  if (languages.length === 0) {
+  if (selectedPackages.length === 0) {
     return nextLines;
   }
 
+  const packageNames = selectedPackages.map((pkg) => pkg.name);
   if (globalScope) {
     return [
       ...nextLines,
-      `[dry-run] Would append rules for [${languages.join(', ')}] to ${path.join(os.homedir(), '.gemini/GEMINI.md')}`
+      `[dry-run] Would append rules for packages [${packageNames.join(', ')}] to ${path.join(os.homedir(), '.gemini/GEMINI.md')}`
     ];
   }
 
   return [
     ...nextLines,
-    `[dry-run] Would install rules for [${languages.join(', ')}] to ${path.join(agentsDest, 'rules')}`
+    `[dry-run] Would install rules for packages [${packageNames.join(', ')}] to ${path.join(agentsDest, 'rules')}`
   ];
 }
 
-function buildClaudeInstallPlan(lines, globalScope, languages) {
-  const rules = languages.length > 0 ? languages.join(', ') : '(none provided)';
+function buildClaudeInstallPlan(lines, globalScope, selectedPackages) {
+  const packages = getSelectedPackageSummary(selectedPackages);
   const claudeBase = globalScope
     ? (process.env.CLAUDE_BASE_DIR || path.join(os.homedir(), '.claude'))
     : path.join(process.cwd(), '.claude');
 
   const nextLines = [
     ...lines,
-    `[dry-run] Languages: ${rules}`,
+    `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${claudeBase}`,
     '[dry-run] Would copy rules, agents, commands, skills, hooks, and runtime scripts (scripts/hooks + scripts/lib)'
   ];
@@ -138,30 +179,31 @@ function buildClaudeInstallPlan(lines, globalScope, languages) {
   return [...nextLines, '[dry-run] Hook script paths will use project-relative references'];
 }
 
-function buildCursorInstallPlan(lines, globalScope, languages) {
-  const rules = languages.length > 0 ? languages.join(', ') : '(none provided)';
+function buildCursorInstallPlan(lines, globalScope, selectedPackages) {
+  const packages = getSelectedPackageSummary(selectedPackages);
   const cursorBase = globalScope ? path.join(os.homedir(), '.cursor') : path.join(process.cwd(), '.cursor');
   const nextLines = [
     ...lines,
-    `[dry-run] Languages: ${rules}`,
+    `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${cursorBase}`,
-    '[dry-run] Would copy agents, skills, commands, hook scripts, hooks config, mcp config, and runtime scripts (scripts/hooks + scripts/lib)'
+    '[dry-run] Would copy agents, package-selected skills, commands, hook scripts, hooks config, mcp config, and runtime scripts (scripts/hooks + scripts/lib)'
   ];
 
   if (globalScope) {
     return [...nextLines, '[dry-run] Would skip file-based rules (Cursor global mode limitation)'];
   }
-  return [...nextLines, '[dry-run] Would install matching Cursor rules for provided languages'];
+  return [...nextLines, '[dry-run] Would install Cursor rules and skills declared by the selected packages'];
 }
 
-function buildInstallPlan({ target, globalScope, languages }) {
+function buildInstallPlan({ target, globalScope, packageNames }) {
   const header = getDryRunHeader(target, globalScope);
+  const selectedPackages = target === 'codex' ? [] : resolveSelectedPackages(packageNames);
 
   if (target === 'codex') return buildCodexInstallPlan(header);
-  if (target === 'gemini') return buildGeminiInstallPlan(header, globalScope, languages);
-  if (target === 'claude') return buildClaudeInstallPlan(header, globalScope, languages);
+  if (target === 'gemini') return buildGeminiInstallPlan(header, globalScope, selectedPackages);
+  if (target === 'claude') return buildClaudeInstallPlan(header, globalScope, selectedPackages);
 
-  return buildCursorInstallPlan(header, globalScope, languages);
+  return buildCursorInstallPlan(header, globalScope, selectedPackages);
 }
 
 function copyRecursiveSync(srcDir, destDir, filter = () => true) {
@@ -191,7 +233,7 @@ function copyRuntimeScripts(destScriptsDir) {
 }
 
 function usage(target) {
-  console.error('Usage: node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--list] [--dry-run] [language ...]');
+  console.error('Usage: node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--list] [--dry-run] [package ...]');
   console.error('');
   console.error('Targets:');
   console.error('  claude (default) — Install to ./.claude/ (or ~/.claude/ with --global)');
@@ -201,12 +243,12 @@ function usage(target) {
   console.error('');
   console.error('Options:');
   console.error('  --global         — Install to home directory instead of current project.');
-  console.error('  --list           — Show available targets/languages and exit.');
+  console.error('  --list           — Show available targets/packages and exit.');
   console.error('  --dry-run        — Print planned install actions without writing files.');
   console.error('');
-  if (target !== 'codex' && target !== 'gemini') {
-    console.error('Available languages:');
-    getAvailableLanguages().forEach((lang) => console.error('  - ' + lang));
+  if (target !== 'codex') {
+    console.error('Available packages:');
+    getAvailablePackages().forEach((packageName) => console.error('  - ' + packageName));
   }
   process.exit(1);
 }
@@ -250,8 +292,9 @@ function installClaudeCommonRules(rulesDest) {
   }
 }
 
-function installClaudeLanguageRules(languages, rulesDest) {
-  for (const language of languages) {
+function installClaudeLanguageRules(selectedPackages, rulesDest) {
+  for (const ruleDirectory of getPackageRuleDirectories(selectedPackages)) {
+    const language = ruleDirectory;
     if (!isValidLanguageName(language)) {
       console.error("Error: invalid language name '" + language + "'. Only alphanumeric, dash, underscore allowed.");
       continue;
@@ -338,13 +381,14 @@ function printWindowsHookNote(prefix) {
   console.log('');
 }
 
-function installClaude(languages, globalScope) {
+function installClaude(packageNames, globalScope) {
   const { claudeBase, rulesDest } = resolveClaudePaths(globalScope);
-  if (!languages.length) usage('claude');
+  if (!packageNames.length) usage('claude');
+  const selectedPackages = resolveSelectedPackages(packageNames);
 
   warnExistingRulesDir(rulesDest);
   installClaudeCommonRules(rulesDest);
-  installClaudeLanguageRules(languages, rulesDest);
+  installClaudeLanguageRules(selectedPackages, rulesDest);
   installClaudeContentDirs(claudeBase);
   installClaudeHooks(claudeBase, globalScope);
   installClaudeRuntimeScripts(claudeBase);
@@ -364,8 +408,8 @@ function printCursorGlobalRulesNote(globalScope) {
   console.log('');
 }
 
-function installCursorRules(destDir, languages, globalScope) {
-  const cursorRules = path.join(CURSOR_SRC, 'rules');
+function installCursorRules(destDir, selectedPackages, globalScope) {
+  const cursorRulesSrc = path.join(CURSOR_SRC, 'rules');
   if (globalScope) {
     console.log('Skipping rules (not supported globally by Cursor).');
     return;
@@ -373,32 +417,69 @@ function installCursorRules(destDir, languages, globalScope) {
 
   const rulesDest = path.join(destDir, 'rules');
   fs.mkdirSync(rulesDest, { recursive: true });
-  if (fs.existsSync(cursorRules)) {
-    fs.readdirSync(cursorRules).forEach(fileName => {
-      if (fileName.startsWith('common-') && fileName.endsWith('.md')) {
-        fs.copyFileSync(path.join(cursorRules, fileName), path.join(rulesDest, fileName));
-      }
-    });
-    console.log('Installing common rules -> ' + rulesDest + '/');
+  if (!fs.existsSync(cursorRulesSrc)) {
+    return;
   }
 
-  for (const language of languages) {
-    if (!isValidLanguageName(language) || !fs.existsSync(cursorRules)) continue;
+  const copiedRules = new Set();
+  for (const selectedPackage of selectedPackages) {
+    const cursorRules = Array.isArray(selectedPackage.tools.cursor?.rules)
+      ? selectedPackage.tools.cursor.rules
+      : [];
 
-    let found = false;
-    fs.readdirSync(cursorRules).forEach(fileName => {
-      if (fileName.startsWith(language + '-') && fileName.endsWith('.md')) {
-        fs.copyFileSync(path.join(cursorRules, fileName), path.join(rulesDest, fileName));
-        found = true;
+    if (cursorRules.length === 0) {
+      console.error(`Warning: package '${selectedPackage.name}' declares no Cursor rules, skipping.`);
+      continue;
+    }
+
+    for (const ruleFile of cursorRules) {
+      const srcPath = path.join(cursorRulesSrc, ruleFile);
+      const destPath = path.join(rulesDest, ruleFile);
+      if (!fs.existsSync(srcPath)) {
+        console.error(`Warning: Cursor rule '${ruleFile}' for package '${selectedPackage.name}' does not exist, skipping.`);
+        continue;
       }
-    });
+      fs.copyFileSync(srcPath, destPath);
+      copiedRules.add(ruleFile);
+    }
+  }
 
-    if (found) console.log('Installing ' + language + ' rules -> ' + rulesDest + '/');
-    else console.error("Warning: no Cursor rules for '" + language + "' found, skipping.");
+  if (copiedRules.size > 0) {
+    console.log('Installing Cursor package rules -> ' + rulesDest + '/');
   }
 }
 
-function installCursorCoreDirs(destDir) {
+function installCursorSkills(destDir, selectedPackages) {
+  const skillsSrc = path.join(CURSOR_SRC, 'skills');
+  if (!fs.existsSync(skillsSrc)) {
+    return;
+  }
+
+  const skillsDest = path.join(destDir, 'skills');
+  let copied = 0;
+  for (const selectedPackage of selectedPackages) {
+    const cursorSkills = Array.isArray(selectedPackage.tools.cursor?.skills)
+      ? selectedPackage.tools.cursor.skills
+      : [];
+
+    for (const skillName of cursorSkills) {
+      const skillSrc = path.join(skillsSrc, skillName);
+      const skillDest = path.join(skillsDest, skillName);
+      if (!fs.existsSync(skillSrc)) {
+        console.error(`Warning: Cursor skill '${skillName}' for package '${selectedPackage.name}' does not exist, skipping.`);
+        continue;
+      }
+      copyRecursiveSync(skillSrc, skillDest);
+      copied++;
+    }
+  }
+
+  if (copied > 0) {
+    console.log('Installing Cursor package skills -> ' + skillsDest + '/');
+  }
+}
+
+function installCursorCoreDirs(destDir, selectedPackages) {
   const agentsSrc = path.join(REPO_ROOT, 'agents');
   const agentsDest = path.join(destDir, 'agents');
   if (fs.existsSync(agentsSrc)) {
@@ -406,12 +487,7 @@ function installCursorCoreDirs(destDir) {
     copyMarkdownFiles(agentsSrc, agentsDest);
   }
 
-  const skillsSrc = path.join(REPO_ROOT, 'skills');
-  const skillsDest = path.join(destDir, 'skills');
-  if (fs.existsSync(skillsSrc)) {
-    console.log('Installing skills -> ' + skillsDest + '/');
-    copyRecursiveSync(skillsSrc, skillsDest);
-  }
+  installCursorSkills(destDir, selectedPackages);
 
   const commandsSrc = path.join(CURSOR_SRC, 'commands');
   const commandsDest = path.join(destDir, 'commands');
@@ -465,14 +541,15 @@ function installCursorMcp(destDir) {
   console.log('Installing MCP config -> ' + mcpDest);
 }
 
-function installCursor(languages, globalScope) {
+function installCursor(packageNames, globalScope) {
   const destDir = resolveCursorDestDir(globalScope);
-  if (!languages.length) usage('cursor');
+  if (!packageNames.length) usage('cursor');
+  const selectedPackages = resolveSelectedPackages(packageNames);
 
   console.log('Installing Cursor configs to ' + destDir + '/');
   printCursorGlobalRulesNote(globalScope);
-  installCursorRules(destDir, languages, globalScope);
-  installCursorCoreDirs(destDir);
+  installCursorRules(destDir, selectedPackages, globalScope);
+  installCursorCoreDirs(destDir, selectedPackages);
   installCursorHooksConfig(destDir, globalScope);
   installCursorHookScripts(destDir);
   installCursorRuntimeScripts(destDir);
@@ -556,7 +633,7 @@ function resolveGeminiDestinations(globalScope) {
   };
 }
 
-function collectGeminiRuleContent(cursorRules, languages) {
+function collectGeminiRuleContent(cursorRules, selectedPackages) {
   let combined = '';
   const ruleFiles = fs.readdirSync(cursorRules);
 
@@ -566,7 +643,7 @@ function collectGeminiRuleContent(cursorRules, languages) {
     }
   });
 
-  for (const language of languages) {
+  for (const language of getPackageRuleDirectories(selectedPackages)) {
     if (!isValidLanguageName(language)) continue;
     ruleFiles.forEach(fileName => {
       if (fileName.startsWith(language + '-') && fileName.endsWith('.md')) {
@@ -578,18 +655,18 @@ function collectGeminiRuleContent(cursorRules, languages) {
   return combined;
 }
 
-function appendGeminiGlobalRules(cursorRules, languages, destDirGemini) {
+function appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini) {
   const geminiMdPath = path.join(destDirGemini, 'GEMINI.md');
   fs.mkdirSync(destDirGemini, { recursive: true });
-  const rulesCombined = collectGeminiRuleContent(cursorRules, languages);
+  const rulesCombined = collectGeminiRuleContent(cursorRules, selectedPackages);
   if (!rulesCombined.trim()) return;
 
   const existing = fs.existsSync(geminiMdPath) ? fs.readFileSync(geminiMdPath, 'utf8') : '';
   fs.writeFileSync(geminiMdPath, existing + '\n' + rulesCombined.trim() + '\n', 'utf8');
-  console.log('Appended rules for ' + languages.join(', ') + ' to ' + geminiMdPath);
+  console.log('Appended rules for ' + selectedPackages.map((pkg) => pkg.name).join(', ') + ' to ' + geminiMdPath);
 }
 
-function copyGeminiLocalRules(cursorRules, languages, destDirAgent) {
+function copyGeminiLocalRules(cursorRules, selectedPackages, destDirAgent) {
   const rulesDest = path.join(destDirAgent, 'rules');
   const ruleFiles = fs.readdirSync(cursorRules);
   let foundRules = false;
@@ -602,7 +679,7 @@ function copyGeminiLocalRules(cursorRules, languages, destDirAgent) {
     }
   });
 
-  for (const language of languages) {
+  for (const language of getPackageRuleDirectories(selectedPackages)) {
     if (!isValidLanguageName(language)) continue;
     ruleFiles.forEach(fileName => {
       if (fileName.startsWith(language + '-') && fileName.endsWith('.md')) {
@@ -613,23 +690,23 @@ function copyGeminiLocalRules(cursorRules, languages, destDirAgent) {
   }
 
   if (foundRules) {
-    console.log('Installing base & ' + languages.join(', ') + ' rules -> ' + rulesDest + '/');
+    console.log('Installing base & ' + selectedPackages.map((pkg) => pkg.name).join(', ') + ' rules -> ' + rulesDest + '/');
   }
 }
 
-function installGeminiRules(languages, globalScope, destDirAgent, destDirGemini) {
+function installGeminiRules(selectedPackages, globalScope, destDirAgent, destDirGemini) {
   const cursorRules = path.join(CURSOR_SRC, 'rules');
-  if (languages.length === 0) {
-    console.log('No languages provided, skipping rules...');
+  if (selectedPackages.length === 0) {
+    console.log('No packages provided, skipping rules...');
     return;
   }
   if (!fs.existsSync(cursorRules)) return;
 
   if (globalScope) {
-    appendGeminiGlobalRules(cursorRules, languages, destDirGemini);
+    appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini);
     return;
   }
-  copyGeminiLocalRules(cursorRules, languages, destDirAgent);
+  copyGeminiLocalRules(cursorRules, selectedPackages, destDirAgent);
 }
 
 function installGeminiContent(destDirAgent, destDirGemini) {
@@ -655,16 +732,17 @@ function installGeminiContent(destDirAgent, destDirGemini) {
   }
 }
 
-function installGemini(languages, globalScope) {
+function installGemini(packageNames, globalScope) {
   console.log('Installing Gemini CLI / Antigravity configs...');
   const { destDirAgent, destDirGemini } = resolveGeminiDestinations(globalScope);
-  installGeminiRules(languages, globalScope, destDirAgent, destDirGemini);
+  const selectedPackages = resolveSelectedPackages(packageNames);
+  installGeminiRules(selectedPackages, globalScope, destDirAgent, destDirGemini);
   installGeminiContent(destDirAgent, destDirGemini);
   console.log('Done. Gemini configs installed.');
 }
 
 function main() {
-  const { target, globalScope, listMode, dryRun, languages } = parseArgs();
+  const { target, globalScope, listMode, dryRun, packageNames } = parseArgs();
 
   if (target !== 'claude' && target !== 'cursor' && target !== 'codex' && target !== 'gemini') {
     console.error("Error: unknown target '" + target + "'. Must be claude, cursor, codex, or gemini.");
@@ -675,7 +753,7 @@ function main() {
     process.exit(0);
   }
   if (dryRun) {
-    const plan = buildInstallPlan({ target, globalScope, languages });
+    const plan = buildInstallPlan({ target, globalScope, packageNames });
     plan.forEach((line) => console.log(line));
     process.exit(0);
   }
@@ -683,9 +761,9 @@ function main() {
     console.error("Warning: --global is not supported for codex target. Ignored.");
   }
 
-  if (target === 'claude') installClaude(languages, globalScope);
-  else if (target === 'cursor') installCursor(languages, globalScope);
-  else if (target === 'gemini') installGemini(languages, globalScope);
+  if (target === 'claude') installClaude(packageNames, globalScope);
+  else if (target === 'cursor') installCursor(packageNames, globalScope);
+  else if (target === 'gemini') installGemini(packageNames, globalScope);
   else installCodex();
 }
 
@@ -694,7 +772,9 @@ if (require.main === module) {
 }
 
 module.exports = {
+  getAvailablePackages,
+  loadPackageManifest,
   parseArgsFrom,
-  getAvailableLanguages,
+  resolveSelectedPackages,
   buildInstallPlan
 };

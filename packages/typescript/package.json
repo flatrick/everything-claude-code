@@ -1,0 +1,27 @@
+{
+  "name": "typescript",
+  "ruleDirectory": "typescript",
+  "tools": {
+    "cursor": {
+      "rules": [
+        "common-agents.md",
+        "common-coding-style.md",
+        "common-development-workflow.md",
+        "common-git-workflow.md",
+        "common-hooks.md",
+        "common-patterns.md",
+        "common-performance.md",
+        "common-security.md",
+        "common-testing.md",
+        "typescript-coding-style.md",
+        "typescript-hooks.md",
+        "typescript-patterns.md",
+        "typescript-security.md",
+        "typescript-testing.md"
+      ],
+      "skills": [
+        "frontend-slides"
+      ]
+    }
+  }
+}
