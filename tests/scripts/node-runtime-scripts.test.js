@@ -30,7 +30,7 @@ function runTests() {
 
   const repoRoot = path.join(__dirname, '..', '..');
   const scripts = [
-    'skills/continuous-learning/evaluate-session.js',
+    'scripts/hooks/evaluate-session.js',
     'skills/strategic-compact/suggest-compact.js',
     'skills/continuous-learning-v2/scripts/detect-project.js',
     'skills/continuous-learning-v2/agents/start-observer.js',
@@ -49,7 +49,7 @@ function runTests() {
 
   console.log('\nScript Smoke Tests:');
   if (test('evaluate-session.js exits 0 with empty stdin', () => {
-    const result = runNode(path.join(repoRoot, 'skills/continuous-learning/evaluate-session.js'), '', { cwd: repoRoot });
+    const result = runNode(path.join(repoRoot, 'scripts/hooks/evaluate-session.js'), '', { cwd: repoRoot });
     assert.strictEqual(result.status, 0, `Expected 0, got ${result.status} stderr=${result.stderr}`);
   })) passed++; else failed++;
 

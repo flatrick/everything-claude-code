@@ -1,5 +1,7 @@
 # ModelDev Toolkit
 
+<!-- Current tool: Cursor -->
+
 Generic model toolkit for software development workflows and scaffolding.
 Not just configs. A complete system: skills, agents, hooks, rules, and MCP configurations.
 Works with **Claude Code**, **Cursor**, **Codex**, and other AI agent harnesses.
