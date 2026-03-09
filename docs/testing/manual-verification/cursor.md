@@ -30,7 +30,9 @@ sanity check before doing deeper runtime verification.
 Expected:
 - it reports whether `.cursor/` is installed
 - it checks for rules, skills, commands, and `AGENTS.md`
-- it distinguishes runtime `OK`, `SKIPPED`, and `FAIL`
+- it distinguishes runtime `OK`, `PARTIAL`, `SKIPPED`, and `FAIL`
+- it should treat a missing `.cursor/homunculus/` as `PARTIAL` if install paths
+  exist but no continuous-learning activity has happened yet
 - it tells you what to test next if runtime behavior is not yet proven
 
 ## Continuous Learning
