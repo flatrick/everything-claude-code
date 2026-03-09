@@ -232,7 +232,7 @@ Edit `config.json` to control the background observer:
     "tool": null,
     "models": {
       "claude": "haiku",
-      "cursor": "gpt-5"
+      "cursor": "auto"
     },
     "commands": {
       "claude": "claude",
@@ -249,7 +249,7 @@ Edit `config.json` to control the background observer:
 | `observer.min_observations_to_analyze` | `20` | Minimum observations before analysis runs |
 | `observer.tool` | `null` | Force a specific native observer runner (`claude` or `cursor`); otherwise infer from environment/config |
 | `observer.models.claude` | `haiku` | Claude observer model preference |
-| `observer.models.cursor` | `gpt-5` | Cursor observer model preference; set this to your cheaper/faster Cursor model tier if available |
+| `observer.models.cursor` | `auto` | Cursor observer model preference; `auto` is the default so Cursor can choose the best available model tier, but you can pin a cheaper/faster model if you want stricter spend control |
 | `observer.commands.*` | tool default | Override the native CLI command used for each tool (`claude`, `agent`, `cursor-agent`, etc.) |
 
 All scripts are Node.js (`.js`); no shell or PowerShell variants. Same commands work on Windows, macOS, and Linux.

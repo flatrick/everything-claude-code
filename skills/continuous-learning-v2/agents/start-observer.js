@@ -23,7 +23,7 @@ const DEFAULT_CONFIG = {
   tool: null,
   models: {
     claude: 'haiku',
-    cursor: 'gpt-5'
+    cursor: 'auto'
   },
   commands: {
     claude: 'claude',
