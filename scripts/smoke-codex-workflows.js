@@ -104,8 +104,65 @@ function buildVerifyChecks(files) {
   };
 }
 
+function buildSecurityChecks(files) {
+  return {
+    workflow: 'security',
+    checks: [
+      {
+        path: 'codex-template/AGENTS.md',
+        ok:
+          files['codex-template/AGENTS.md'].exists &&
+          files['codex-template/AGENTS.md'].content.includes('security-review'),
+        message: 'Codex AGENTS should advertise the security-review skill'
+      },
+      {
+        path: '.agents/skills/security-review/SKILL.md',
+        ok:
+          files['.agents/skills/security-review/SKILL.md'].exists &&
+          files['.agents/skills/security-review/SKILL.md'].content.includes('Security Review Skill'),
+        message: 'Codex security-review skill should exist and describe the security review workflow'
+      },
+      {
+        path: 'codex-template/config.toml',
+        ok:
+          files['codex-template/config.toml'].exists &&
+          files['codex-template/config.toml'].content.includes('Security-First'),
+        message: 'Codex config should reinforce Security-First in persistent instructions'
+      }
+    ]
+  };
+}
+
+function buildE2eChecks(files) {
+  return {
+    workflow: 'e2e',
+    checks: [
+      {
+        path: 'codex-template/AGENTS.md',
+        ok:
+          files['codex-template/AGENTS.md'].exists &&
+          files['codex-template/AGENTS.md'].content.includes('e2e-testing'),
+        message: 'Codex AGENTS should advertise the e2e-testing skill'
+      },
+      {
+        path: '.agents/skills/e2e-testing/SKILL.md',
+        ok:
+          files['.agents/skills/e2e-testing/SKILL.md'].exists &&
+          files['.agents/skills/e2e-testing/SKILL.md'].content.includes('E2E Testing Patterns'),
+        message: 'Codex e2e-testing skill should exist and describe the E2E testing patterns'
+      }
+    ]
+  };
+}
+
 function buildWorkflowChecks(files) {
-  return [buildPlanChecks(files), buildTddChecks(files), buildVerifyChecks(files)];
+  return [
+    buildPlanChecks(files),
+    buildTddChecks(files),
+    buildVerifyChecks(files),
+    buildSecurityChecks(files),
+    buildE2eChecks(files)
+  ];
 }
 
 function smokeCodexWorkflows(options = {}) {
@@ -116,7 +173,18 @@ function smokeCodexWorkflows(options = {}) {
     'codex-template/AGENTS.md': readRepoFile(rootDir, path.join('codex-template', 'AGENTS.md')),
     'codex-template/config.toml': readRepoFile(rootDir, path.join('codex-template', 'config.toml')),
     '.agents/skills/tdd-workflow/SKILL.md': readRepoFile(rootDir, path.join('.agents', 'skills', 'tdd-workflow', 'SKILL.md')),
-    '.agents/skills/verification-loop/SKILL.md': readRepoFile(rootDir, path.join('.agents', 'skills', 'verification-loop', 'SKILL.md'))
+    '.agents/skills/verification-loop/SKILL.md': readRepoFile(
+      rootDir,
+      path.join('.agents', 'skills', 'verification-loop', 'SKILL.md')
+    ),
+    '.agents/skills/security-review/SKILL.md': readRepoFile(
+      rootDir,
+      path.join('.agents', 'skills', 'security-review', 'SKILL.md')
+    ),
+    '.agents/skills/e2e-testing/SKILL.md': readRepoFile(
+      rootDir,
+      path.join('.agents', 'skills', 'e2e-testing', 'SKILL.md')
+    )
   };
 
   const workflows = buildWorkflowChecks(files).map(entry => {

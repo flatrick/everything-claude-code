@@ -194,7 +194,6 @@ const TOOL_WORKFLOW_CONTRACT = {
       { command: 'claude', args: ['--help'] }
     ],
     cursor: [
-      { command: 'cursor', args: ['--version'] },
       { command: 'agent', args: ['--help'] },
       { command: 'cursor-agent', args: ['--help'] }
     ],

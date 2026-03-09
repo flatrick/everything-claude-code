@@ -92,6 +92,10 @@ opencode --version
 opencode --help
 ```
 
+In this repo, `scripts/smoke-tool-setups.js` treats a missing `opencode` binary as `SKIP` rather than `FAIL`.
+This is expected while OpenCode is not installed locally — keep the status as `not-locally-verified` until you
+install `opencode`, rerun the smoke script, and update this page based on the new results.
+
 Repo-only checks available right now:
 
 ```bash
