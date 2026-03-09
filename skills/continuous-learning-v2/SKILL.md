@@ -7,13 +7,13 @@ version: 2.1.0
 # Continuous Learning v2.1 - Instinct
 -Based Architecture
 
-An advanced learning system that turns your Claude Code sessions into reusable knowledge through atomic "instincts" - small learned behaviors with confidence scoring.
+An advanced learning system that turns MDT tool sessions into reusable knowledge through atomic "instincts" - small learned behaviors with confidence scoring.
 
 **v2.1** adds **project-scoped instincts** — React patterns stay in your React project, Python conventions stay in your Python project, and universal patterns (like "always validate input") are shared globally.
 
 ## When to Activate
 
-- Setting up automatic learning from Claude Code sessions
+- Setting up automatic learning from Claude Code or Cursor sessions
 - Configuring instinct-based behavior extraction via hooks
 - Tuning confidence thresholds for learned behaviors
 - Reviewing, exporting, or importing instinct libraries
@@ -37,7 +37,7 @@ An advanced learning system that turns your Claude Code sessions into reusable k
 | Feature | v1 | v2 |
 |---------|----|----|
 | Observation | Stop hook (session end) | PreToolUse/PostToolUse (100% reliable) |
-| Analysis | Main context | Background agent (Haiku) |
+| Analysis | Main context | Background observer using the active tool's cheaper/faster model tier when configured |
 | Granularity | Full skills | Atomic "instincts" |
 | Confidence | None | 0.3-0.9 weighted |
 | Evolution | Direct to skill | Instincts -> cluster -> skill/command/agent |
@@ -89,7 +89,7 @@ Session Activity (in a git repo)
 |   (prompts, tool calls, outcomes, project)   |
 +---------------------------------------------+
       |
-      | Observer agent reads (background, Haiku)
+      | Observer agent reads (background, cheap model tier)
       v
 +---------------------------------------------+
 |          PATTERN DETECTION                   |
@@ -228,7 +228,16 @@ Edit `config.json` to control the background observer:
   "observer": {
     "enabled": false,
     "run_interval_minutes": 5,
-    "min_observations_to_analyze": 20
+    "min_observations_to_analyze": 20,
+    "tool": null,
+    "models": {
+      "claude": "haiku",
+      "cursor": "gpt-5"
+    },
+    "commands": {
+      "claude": "claude",
+      "cursor": "agent"
+    }
   }
 }
 ```
@@ -238,8 +247,14 @@ Edit `config.json` to control the background observer:
 | `observer.enabled` | `false` | Enable the background observer agent |
 | `observer.run_interval_minutes` | `5` | How often the observer analyzes observations |
 | `observer.min_observations_to_analyze` | `20` | Minimum observations before analysis runs |
+| `observer.tool` | `null` | Force a specific native observer runner (`claude` or `cursor`); otherwise infer from environment/config |
+| `observer.models.claude` | `haiku` | Claude observer model preference |
+| `observer.models.cursor` | `gpt-5` | Cursor observer model preference; set this to your cheaper/faster Cursor model tier if available |
+| `observer.commands.*` | tool default | Override the native CLI command used for each tool (`claude`, `agent`, `cursor-agent`, etc.) |
 
 All scripts are Node.js (`.js`); no shell or PowerShell variants. Same commands work on Windows, macOS, and Linux.
+
+The observer must use the active tool's native CLI. Cursor setups must not depend on the `claude` binary, and Claude setups must not depend on Cursor.
 
 Other behavior (observation capture, instinct thresholds, project scoping, promotion criteria) is configured via code defaults in `instinct-cli.js` and the observe hook script.
 

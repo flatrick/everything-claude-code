@@ -1,12 +1,12 @@
 ---
 name: observer
-description: Background agent that analyzes session observations to detect patterns and create instincts. Uses Haiku for cost-efficiency. v2.1 adds project-scoped instincts.
-model: haiku
+description: Background observer that analyzes session observations to detect patterns and create instincts using the active MDT tool's cheaper/faster model tier when configured. v2.1 adds project-scoped instincts.
+model: inherit
 ---
 
 # Observer Agent
 
-A background agent that analyzes observations from Claude Code sessions to detect patterns and create instincts.
+A background observer that analyzes observations from MDT tool sessions to detect patterns and create instincts. The observer must use the active tool's native CLI, not a different tool's binary.
 
 ## When to Run
 
@@ -32,7 +32,7 @@ Reads observations from the **project-scoped** observations file:
 Look for these patterns in observations:
 
 ### 1. User Corrections
-When a user's follow-up message corrects Claude's previous action:
+When a user's follow-up message corrects the previous action:
 - "No, use X instead of Y"
 - "Actually, I meant..."
 - Immediate undo/redo patterns
