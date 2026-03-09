@@ -3,6 +3,26 @@
 Use this page for quick Claude Code sanity checks and deeper runtime verification
 when MDT is installed into `.claude/`.
 
+## Preconditions
+
+1. Start from a clean repo checkout or remove the existing local `.claude/` install.
+2. Install MDT into Claude Code:
+
+```bash
+node scripts/install-mdt.js typescript continuous-learning
+```
+
+3. Confirm the install exists:
+
+```bash
+node -e "const fs=require('fs'); console.log(fs.existsSync('.claude/settings.json'));"
+```
+
+Expected:
+- `.claude/settings.json` exists
+- `.claude/commands/smoke.md` exists
+- `.claude/skills/continuous-learning-v2/` exists
+
 ## Quick Smoke
 
 Run the shared `smoke` command from a Claude Code session when you want a fast
@@ -11,7 +31,9 @@ check before doing deeper validation.
 Expected:
 - it reports whether the active `.claude/` install is present
 - it checks for commands, agents, skills, and hook/runtime assets
-- it distinguishes runtime `OK`, `SKIPPED`, and `FAIL`
+- it distinguishes runtime `OK`, `PARTIAL`, `SKIPPED`, and `FAIL`
+- it should treat a missing continuous-learning storage path as `PARTIAL` if the
+  install exists but no relevant runtime activity has happened yet
 - it points you at the next manual step if runtime behavior still needs proof
 
 ## Likely Deeper Checks
