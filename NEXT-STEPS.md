@@ -5,6 +5,8 @@
 - This fork is primarily for personal daily use, with possible reuse by friends and coworkers.
 - Upstream ECC is now reference material, not an active sync source.
 - v1 is still stabilization work: remove drift, verify real workflows, and avoid guesswork across tools.
+- Until a commit is tagged `v1.0.0`, install layout and package composition are allowed to change.
+- Before `v1.0.0`, assume fresh installs rather than in-place migration: re-run `node scripts/install-mdt.js` instead of preserving upgrade workflows between intermediate layouts.
 
 Recently completed:
 
@@ -17,21 +19,72 @@ Recently completed:
 
 ## Next Practical Steps
 
-### 1. Cursor parity — wire continuous learning (P1)
+### 1. Replace rule-driven install selection with package manifests (P1)
+
+The next major restructuring step is to stop using `rules/` as the indirect source
+of truth for what gets installed. That model is already leaking in Cursor, where:
+
+```text
+node scripts/install-mdt.js --target cursor typescript
+```
+
+can install unrelated skills because the installer copies content based on
+hardcoded directories rather than an explicit install package definition.
+
+Introduce a `packages/` model that declares install bundles directly. Each
+package should describe which rules, skills, commands, hooks, and tool-specific
+assets belong together.
+
+Design note:
+
+- [docs/packages-install-model.md](docs/packages-install-model.md)
+
+Proposed direction:
+
+- keep source assets in `rules/`, `skills/`, `commands/`, `hooks/`, and per-tool template dirs
+- add package manifests under `packages/`
+- make `scripts/install-mdt.js` resolve requested install scopes from package manifests instead of inferring behavior from `rules/`
+- allow tool-specific package overrides where Cursor/Claude/Codex/OpenCode need different assets
+
+What this should solve:
+
+- language-scoped installs stop pulling unrelated skills implicitly
+- install behavior becomes explicit and testable
+- tool-specific differences stop living as scattered installer conditionals
+- future dependency handling can attach to packages instead of ad hoc path rules
+
+Important pre-v1 constraint:
+
+- do not preserve intermediate migration workflows for package layout changes
+- until `v1.0.0`, the expected update path is: start fresh and run `node scripts/install-mdt.js`
+- docs should describe reset/reinstall, not compatibility migration, while this restructuring is in progress
+
+Suggested first slice:
+
+1. define the package manifest shape
+2. model the current `typescript` install as a package
+3. switch Cursor skill install logic to use package selection instead of copying the shared `skills/` tree
+4. add tests proving `--target cursor typescript` does not install unrelated skills
+
+### 2. Cursor parity — wire continuous learning (P1)
 
 `skills/continuous-learning-v2/hooks/observe.js` is called at Pre/PostToolUse in
 Claude hooks but is not wired in Cursor hooks at all. `observe.js` already supports
 Cursor via `detect-env.js`. Add calls to `afterFileEdit` and `afterShellExecution`
 Cursor hooks.
 
-### 2. Cursor parity — populate `.cursor/skills/` (P2)
+### 3. Cursor parity — populate `.cursor/skills/` (P2)
 
 Cursor has a native skills system using the same `SKILL.md` format and
 auto-discovery as Claude Code. Skills live in `.cursor/skills/` (project) or
 `~/.cursor/skills/` (user) and are invocable via `/` in Agent chat.
 
-Currently only `frontend-slides` is in `.cursor/skills/`. All other skills need
-to be added there — not converted to rules.
+This should happen through the package-manifest model above, not by blindly
+copying the shared repo `skills/` tree.
+
+Currently only `frontend-slides` is in `.cursor/skills/`. Additional skills
+should be added intentionally through Cursor-facing package definitions, not
+converted to rules and not copied implicitly.
 
 Priority skills to add first:
 - `tdd-workflow`
@@ -41,15 +94,16 @@ Priority skills to add first:
 - `backend-patterns`
 - `frontend-patterns`
 
-Update `scripts/install-mdt.js` to copy `skills/*/` to `.cursor/skills/` on
-Cursor installs (same as it does for Claude Code).
+Update `scripts/install-mdt.js` so Cursor installs resolve skills from package
+definitions and Cursor-facing sources, not from the entire shared `skills/`
+directory.
 
 Note: Cursor user-level rules (`~/.cursor/rules/`) are stored in a database and
 cannot be file-installed. The install script must only target project-level paths
 (`.cursor/rules/`, `.cursor/skills/`). This is unlike Claude Code where
 `~/.claude/rules/` is file-based.
 
-### 3. Add dependency declarations to SKILL.md frontmatter (P1)
+### 4. Add dependency declarations to SKILL.md frontmatter (P1)
 
 Currently all inter-component dependencies are implicit. Skills that assume rules
 are loaded don't declare it, so the install script cannot warn when installing to
@@ -88,7 +142,7 @@ requires:
    installing to a tool/scope that can't satisfy them
 4. Update tests to cover the dependency-check logic
 
-### 4. Cursor parity — convert commands to Cursor custom commands (P2)
+### 5. Cursor parity — convert commands to Cursor custom commands (P2)
 
 All commands in `commands/*.md` use Claude Code slash command format. Cursor has
 its own custom command system. Create `.cursor/commands/` and convert the core
@@ -96,9 +150,10 @@ workflows, stripping Claude-specific subagent syntax:
 
 - `/tdd`, `/plan`, `/verify`, `/code-review`, `/learn`, `/skill-create`
 
-Update `scripts/install-mdt.js` to copy these for Cursor installs.
+Update `scripts/install-mdt.js` to install these via package selection rather
+than path-by-path hardcoding.
 
-### 5. Add deeper Claude workflow smoke (P2)
+### 6. Add deeper Claude workflow smoke (P2)
 
 Codex has workflow-level smoke coverage. Claude should get the same for:
 
@@ -107,22 +162,22 @@ Codex has workflow-level smoke coverage. Claude should get the same for:
 - `verify`
 - `security`
 
-### 6. Extend Cursor parity tests (P2)
+### 7. Extend Cursor parity tests (P2)
 
 Add test coverage for:
 - continuous-learning wiring in Cursor `afterFileEdit` / `afterShellExecution`
-- Skill-to-rule and command conversion output
+- package-driven skill/command install output
 
-### 7. Cut a stabilization release boundary (P3)
+### 8. Cut a stabilization release boundary (P3)
 
 Once Cursor hook parity is working and Claude workflow smoke is added, prepare
 release notes covering:
 
 - Cursor lifecycle parity (no Claude Code transcript dependency)
 - Claude workflow smoke coverage
-- Skills/commands conversion for Cursor
+- package-driven install selection and Cursor skills/commands composition
 
-### 8. Add OpenCode local smoke once installed
+### 9. Add OpenCode local smoke once installed
 
 OpenCode is structurally documented but not locally verified. Once installed:
 

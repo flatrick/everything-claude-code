@@ -29,3 +29,24 @@ Remaining follow-up:
 - Add deeper workflow smoke coverage for Claude
 - Decide whether Cursor desktop verification should remain manual or get a documented assisted workflow
 - Add OpenCode local smoke coverage once OpenCode is installed locally
+
+---
+
+## Cursor install copies non-requested skills
+
+**Status:** Open.
+
+**Repro:**
+
+```text
+node scripts/install-mdt.js --target cursor typescript
+```
+
+**Current behavior:** Cursor install copies skills for unrelated languages as
+well, including items such as Rust and SQL-oriented skills.
+
+**Expected behavior:** A language-scoped Cursor install should only copy the
+skills intended for the requested install scope, or otherwise follow an explicit
+tool-level rule for which skills are global versus language-specific. It should
+not silently install unrelated language skills when only `typescript` was
+requested.
