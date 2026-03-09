@@ -1,0 +1,10 @@
+{
+  "name": "dotnet",
+  "ruleDirectory": "dotnet",
+  "tools": {
+    "cursor": {
+      "rules": [],
+      "skills": []
+    }
+  }
+}

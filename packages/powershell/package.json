@@ -1,0 +1,10 @@
+{
+  "name": "powershell",
+  "ruleDirectory": "powershell",
+  "tools": {
+    "cursor": {
+      "rules": [],
+      "skills": []
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "sql",
+  "ruleDirectory": "sql",
+  "tools": {
+    "cursor": {
+      "rules": [],
+      "skills": []
+    }
+  }
+}

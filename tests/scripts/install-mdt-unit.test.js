@@ -43,8 +43,18 @@ function runTests() {
     assert.ok(plan.some((line) => line.includes('Would install from')));
   })) passed++; else failed++;
 
-  if (test('getAvailablePackages lists typescript package', () => {
+  if (test('getAvailablePackages lists explicit package manifests', () => {
     assert.ok(getAvailablePackages().includes('typescript'));
+    assert.ok(getAvailablePackages().includes('python'));
+    assert.ok(getAvailablePackages().includes('sql'));
+    assert.ok(getAvailablePackages().includes('dotnet'));
+    assert.ok(getAvailablePackages().includes('rust'));
+    assert.ok(getAvailablePackages().includes('bash'));
+    assert.ok(getAvailablePackages().includes('powershell'));
+  })) passed++; else failed++;
+
+  if (test('loadPackageManifest throws for unknown package', () => {
+    assert.throws(() => loadPackageManifest('typescirpt'), /Unknown package 'typescirpt'/);
   })) passed++; else failed++;
 
   if (test('loadPackageManifest loads typescript cursor package details', () => {
@@ -54,6 +64,14 @@ function runTests() {
     assert.ok(Array.isArray(manifest.tools.cursor.rules));
     assert.ok(manifest.tools.cursor.rules.includes('typescript-coding-style.md'));
     assert.deepStrictEqual(manifest.tools.cursor.skills, ['frontend-slides']);
+  })) passed++; else failed++;
+
+  if (test('loadPackageManifest loads python explicit package details', () => {
+    const manifest = loadPackageManifest('python');
+    assert.strictEqual(manifest.name, 'python');
+    assert.strictEqual(manifest.ruleDirectory, 'python');
+    assert.ok(Array.isArray(manifest.tools.cursor.rules));
+    assert.ok(manifest.tools.cursor.rules.includes('python-coding-style.md'));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes global cursor rule-skip note and packages', () => {

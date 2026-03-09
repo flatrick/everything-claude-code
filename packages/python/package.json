@@ -1,0 +1,25 @@
+{
+  "name": "python",
+  "ruleDirectory": "python",
+  "tools": {
+    "cursor": {
+      "rules": [
+        "common-agents.md",
+        "common-coding-style.md",
+        "common-development-workflow.md",
+        "common-git-workflow.md",
+        "common-hooks.md",
+        "common-patterns.md",
+        "common-performance.md",
+        "common-security.md",
+        "common-testing.md",
+        "python-coding-style.md",
+        "python-hooks.md",
+        "python-patterns.md",
+        "python-security.md",
+        "python-testing.md"
+      ],
+      "skills": []
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "bash",
+  "ruleDirectory": "bash",
+  "tools": {
+    "cursor": {
+      "rules": [],
+      "skills": []
+    }
+  }
+}

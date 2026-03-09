@@ -119,8 +119,16 @@ function runTests() {
             'Cursor install should copy the declared frontend-slides skill'
           );
           assert.ok(
+            fs.existsSync(path.join(cursorRoot, 'rules', 'typescript-coding-style.md')),
+            'Cursor install should copy package-declared TypeScript rules'
+          );
+          assert.ok(
             !fs.existsSync(path.join(cursorRoot, 'skills', 'rust-patterns')),
             'Cursor install should not copy unrelated shared rust skills'
+          );
+          assert.ok(
+            !fs.existsSync(path.join(cursorRoot, 'rules', 'python-coding-style.md')),
+            'Cursor install should not copy unrelated Cursor rules'
           );
           assert.ok(
             !fs.existsSync(path.join(cursorRoot, 'skills', 'sqlserver-patterns')),

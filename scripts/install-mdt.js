@@ -428,7 +428,6 @@ function installCursorRules(destDir, selectedPackages, globalScope) {
       : [];
 
     if (cursorRules.length === 0) {
-      console.error(`Warning: package '${selectedPackage.name}' declares no Cursor rules, skipping.`);
       continue;
     }
 
@@ -753,18 +752,28 @@ function main() {
     process.exit(0);
   }
   if (dryRun) {
-    const plan = buildInstallPlan({ target, globalScope, packageNames });
-    plan.forEach((line) => console.log(line));
-    process.exit(0);
+    try {
+      const plan = buildInstallPlan({ target, globalScope, packageNames });
+      plan.forEach((line) => console.log(line));
+      process.exit(0);
+    } catch (error) {
+      console.error(`Error: ${error.message}`);
+      usage(target);
+    }
   }
   if (globalScope && target === 'codex') {
     console.error("Warning: --global is not supported for codex target. Ignored.");
   }
 
-  if (target === 'claude') installClaude(packageNames, globalScope);
-  else if (target === 'cursor') installCursor(packageNames, globalScope);
-  else if (target === 'gemini') installGemini(packageNames, globalScope);
-  else installCodex();
+  try {
+    if (target === 'claude') installClaude(packageNames, globalScope);
+    else if (target === 'cursor') installCursor(packageNames, globalScope);
+    else if (target === 'gemini') installGemini(packageNames, globalScope);
+    else installCodex();
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    usage(target);
+  }
 }
 
 if (require.main === module) {

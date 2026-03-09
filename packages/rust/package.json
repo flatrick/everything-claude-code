@@ -1,0 +1,10 @@
+{
+  "name": "rust",
+  "ruleDirectory": "rust",
+  "tools": {
+    "cursor": {
+      "rules": [],
+      "skills": []
+    }
+  }
+}
