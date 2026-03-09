@@ -141,6 +141,33 @@ function runTests() {
       }
     },
     {
+      name: 'claude install copies only package-selected shared rules',
+      run: () => {
+        const tmpProject = createTestDir('mdt-install-claude-rules-');
+
+        try {
+          const result = runInstaller(['typescript'], {
+            cwd: tmpProject,
+            env: {
+              HOME: tmpProject,
+              USERPROFILE: tmpProject
+            }
+          });
+          assertSuccess(result, 'claude project install with explicit package rules');
+
+          const claudeRoot = path.join(tmpProject, '.claude');
+          assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'common', 'coding-style.md')));
+          assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'typescript', 'coding-style.md')));
+          assert.ok(
+            !fs.existsSync(path.join(claudeRoot, 'rules', 'python', 'coding-style.md')),
+            'Claude install should not copy unrelated Python rules'
+          );
+        } finally {
+          cleanupTestDir(tmpProject);
+        }
+      }
+    },
+    {
       name: 'claude install merges hooks into existing settings.json and preserves other keys',
       run: () => {
         const tmpHome = createTestDir('mdt-install-settings-');
@@ -178,6 +205,34 @@ function runTests() {
       }
     },
     {
+      name: 'claude install merges explicit shared rules from multiple packages only',
+      run: () => {
+        const tmpProject = createTestDir('mdt-install-claude-multi-rules-');
+
+        try {
+          const result = runInstaller(['typescript', 'python'], {
+            cwd: tmpProject,
+            env: {
+              HOME: tmpProject,
+              USERPROFILE: tmpProject
+            }
+          });
+          assertSuccess(result, 'claude multi-package install');
+
+          const claudeRoot = path.join(tmpProject, '.claude');
+          assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'common', 'coding-style.md')));
+          assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'typescript', 'coding-style.md')));
+          assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'python', 'coding-style.md')));
+          assert.ok(
+            !fs.existsSync(path.join(claudeRoot, 'rules', 'rust', 'coding-style.md')),
+            'Claude install should not copy unrelated Rust rules'
+          );
+        } finally {
+          cleanupTestDir(tmpProject);
+        }
+      }
+    },
+    {
       name: 'claude project-level install copies to cwd .claude',
       run: () => {
         const tmpProject = createTestDir('mdt-install-claude-proj-');
@@ -202,6 +257,56 @@ function runTests() {
           assert.ok(settingsRaw.includes('.claude'), 'hook paths should use project-relative .claude');
         } finally {
           cleanupTestDir(tmpProject);
+        }
+      }
+    },
+    {
+      name: 'gemini local install copies only package-selected gemini rules',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-gemini-home-');
+        const tmpProject = createTestDir('mdt-install-gemini-proj-');
+
+        try {
+          const result = runInstaller(['--target', 'gemini', 'typescript'], {
+            cwd: tmpProject,
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome
+            }
+          });
+          assertSuccess(result, 'gemini install');
+
+          const agentRulesRoot = path.join(tmpProject, '.agent', 'rules');
+          assert.ok(fs.existsSync(path.join(agentRulesRoot, 'common-coding-style.md')));
+          assert.ok(fs.existsSync(path.join(agentRulesRoot, 'typescript-coding-style.md')));
+          assert.ok(!fs.existsSync(path.join(agentRulesRoot, 'python-coding-style.md')));
+        } finally {
+          cleanupTestDir(tmpHome);
+          cleanupTestDir(tmpProject);
+        }
+      }
+    },
+    {
+      name: 'gemini global install appends only package-selected gemini rules',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-gemini-global-home-');
+
+        try {
+          const result = runInstaller(['--target', 'gemini', '--global', 'typescript'], {
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome
+            }
+          });
+          assertSuccess(result, 'gemini global install');
+
+          const geminiMdPath = path.join(tmpHome, '.gemini', 'GEMINI.md');
+          const geminiMd = fs.readFileSync(geminiMdPath, 'utf8');
+          assert.ok(geminiMd.includes('# TypeScript/JavaScript Coding Style'), 'GEMINI.md should include selected TypeScript rule content');
+          assert.ok(geminiMd.includes('# Coding Style'), 'GEMINI.md should include selected common rule content');
+          assert.ok(!geminiMd.includes('# Python Coding Style'), 'GEMINI.md should not include unrelated Python rule content');
+        } finally {
+          cleanupTestDir(tmpHome);
         }
       }
     }

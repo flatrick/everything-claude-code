@@ -2,6 +2,22 @@
   "name": "sql",
   "description": "Base SQL and data workflow package",
   "ruleDirectory": "sql",
+  "rules": [
+    "common/agents.md",
+    "common/coding-style.md",
+    "common/development-workflow.md",
+    "common/git-workflow.md",
+    "common/hooks.md",
+    "common/patterns.md",
+    "common/performance.md",
+    "common/security.md",
+    "common/testing.md",
+    "sql/coding-style.md",
+    "sql/hooks.md",
+    "sql/patterns.md",
+    "sql/security.md",
+    "sql/testing.md"
+  ],
   "agents": [
     "planner.md",
     "code-reviewer.md",
@@ -24,6 +40,19 @@
     "cursor": {
       "rules": [],
       "skills": []
+    },
+    "gemini": {
+      "rules": [
+        "common-agents.md",
+        "common-coding-style.md",
+        "common-development-workflow.md",
+        "common-git-workflow.md",
+        "common-hooks.md",
+        "common-patterns.md",
+        "common-performance.md",
+        "common-security.md",
+        "common-testing.md"
+      ]
     }
   }
 }

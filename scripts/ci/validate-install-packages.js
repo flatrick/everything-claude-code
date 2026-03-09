@@ -94,6 +94,26 @@ function validateInstallPackages(options = {}) {
       hasErrors = true;
     }
 
+    if (!isStringArray(manifest.rules)) {
+      io.error(`ERROR: ${packageName}/package.json - rules must be an array of non-empty strings`);
+      hasErrors = true;
+    } else {
+      for (const rulePath of manifest.rules) {
+        const normalizedRulePath = rulePath.replace(/\\/g, '/');
+        if (normalizedRulePath.startsWith('/') || normalizedRulePath.includes('..')) {
+          io.error(`ERROR: ${packageName}/package.json - invalid shared rule reference: ${rulePath}`);
+          hasErrors = true;
+          continue;
+        }
+
+        const ruleSegments = normalizedRulePath.split('/');
+        if (!fs.existsSync(path.join(rulesDir, ...ruleSegments))) {
+          io.error(`ERROR: ${packageName}/package.json - missing shared rule reference: ${rulePath}`);
+          hasErrors = true;
+        }
+      }
+    }
+
     if (!isStringArray(manifest.agents)) {
       io.error(`ERROR: ${packageName}/package.json - agents must be an array of non-empty strings`);
       hasErrors = true;
@@ -163,6 +183,25 @@ function validateInstallPackages(options = {}) {
       for (const skillName of cursor.skills) {
         if (!fs.existsSync(path.join(cursorSkillsDir, skillName))) {
           io.error(`ERROR: ${packageName}/package.json - missing Cursor skill reference: ${skillName}`);
+          hasErrors = true;
+        }
+      }
+    }
+
+    const gemini = tools.gemini;
+    if (!gemini || typeof gemini !== 'object' || Array.isArray(gemini)) {
+      io.error(`ERROR: ${packageName}/package.json - tools.gemini must be an object`);
+      hasErrors = true;
+      continue;
+    }
+
+    if (!isStringArray(gemini.rules)) {
+      io.error(`ERROR: ${packageName}/package.json - tools.gemini.rules must be an array of non-empty strings`);
+      hasErrors = true;
+    } else {
+      for (const ruleFile of gemini.rules) {
+        if (!fs.existsSync(path.join(cursorRulesDir, ruleFile))) {
+          io.error(`ERROR: ${packageName}/package.json - missing Gemini rule reference: ${ruleFile}`);
           hasErrors = true;
         }
       }

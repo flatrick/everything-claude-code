@@ -78,11 +78,16 @@ function runTests() {
     assert.strictEqual(manifest.name, 'typescript');
     assert.ok(manifest.description.includes('TypeScript'));
     assert.strictEqual(manifest.ruleDirectory, 'typescript');
+    assert.ok(Array.isArray(manifest.rules));
+    assert.ok(manifest.rules.includes('common/coding-style.md'));
+    assert.ok(manifest.rules.includes('typescript/coding-style.md'));
     assert.ok(manifest.agents.includes('planner.md'));
     assert.ok(manifest.commands.includes('plan.md'));
     assert.ok(manifest.skills.includes('coding-standards'));
     assert.ok(Array.isArray(manifest.tools.cursor.rules));
     assert.ok(manifest.tools.cursor.rules.includes('typescript-coding-style.md'));
+    assert.ok(Array.isArray(manifest.tools.gemini.rules));
+    assert.ok(manifest.tools.gemini.rules.includes('typescript-coding-style.md'));
     assert.deepStrictEqual(manifest.tools.cursor.skills, ['frontend-slides']);
   })) passed++; else failed++;
 
@@ -90,11 +95,16 @@ function runTests() {
     const manifest = loadPackageManifest('python');
     assert.strictEqual(manifest.name, 'python');
     assert.strictEqual(manifest.ruleDirectory, 'python');
+    assert.ok(Array.isArray(manifest.rules));
+    assert.ok(manifest.rules.includes('common/coding-style.md'));
+    assert.ok(manifest.rules.includes('python/coding-style.md'));
     assert.ok(manifest.agents.includes('python-reviewer.md'));
     assert.ok(manifest.commands.includes('python-review.md'));
     assert.ok(manifest.skills.includes('python-patterns'));
     assert.ok(Array.isArray(manifest.tools.cursor.rules));
     assert.ok(manifest.tools.cursor.rules.includes('python-coding-style.md'));
+    assert.ok(Array.isArray(manifest.tools.gemini.rules));
+    assert.ok(manifest.tools.gemini.rules.includes('python-coding-style.md'));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes global cursor rule-skip note and packages', () => {

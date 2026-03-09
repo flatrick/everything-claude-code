@@ -85,6 +85,7 @@ function loadPackageManifest(packageName) {
     name: parsed.name || packageName,
     description: parsed.description || '',
     ruleDirectory: parsed.ruleDirectory || packageName,
+    rules: Array.isArray(parsed.rules) ? parsed.rules : [],
     agents: Array.isArray(parsed.agents) ? parsed.agents : [],
     commands: Array.isArray(parsed.commands) ? parsed.commands : [],
     skills: Array.isArray(parsed.skills) ? parsed.skills : [],
@@ -111,9 +112,24 @@ function getPackageRuleDirectories(selectedPackages) {
     .sort();
 }
 
+function getManifestRuleSelections(selectedPackages) {
+  return [...new Set(
+    selectedPackages.flatMap((pkg) => Array.isArray(pkg.rules) ? pkg.rules : [])
+  )].sort();
+}
+
 function getManifestSelections(selectedPackages, key) {
   return [...new Set(
     selectedPackages.flatMap((pkg) => Array.isArray(pkg[key]) ? pkg[key] : [])
+  )].sort();
+}
+
+function getToolManifestSelections(selectedPackages, toolName, key) {
+  return [...new Set(
+    selectedPackages.flatMap((pkg) => {
+      const toolConfig = pkg.tools && typeof pkg.tools === 'object' ? pkg.tools[toolName] : null;
+      return Array.isArray(toolConfig?.[key]) ? toolConfig[key] : [];
+    })
   )].sort();
 }
 
@@ -330,34 +346,38 @@ function warnExistingRulesDir(rulesDest) {
   console.log('      Back up any local customizations before proceeding.');
 }
 
-function installClaudeCommonRules(rulesDest) {
-  const commonDest = path.join(rulesDest, 'common');
-  const commonSrc = path.join(RULES_DIR, 'common');
-  console.log('Installing common rules -> ' + commonDest + '/');
-  if (fs.existsSync(commonSrc) && path.resolve(REPO_ROOT) !== path.resolve(rulesDest)) {
-    copyRecursiveSync(commonSrc, commonDest);
+function installClaudeRules(selectedPackages, rulesDest) {
+  const selectedRules = getManifestRuleSelections(selectedPackages);
+  if (selectedRules.length === 0) {
+    console.log('No package-selected rules to install.');
+    return;
   }
-}
 
-function installClaudeLanguageRules(selectedPackages, rulesDest) {
-  for (const ruleDirectory of getPackageRuleDirectories(selectedPackages)) {
-    const language = ruleDirectory;
-    if (!isValidLanguageName(language)) {
-      console.error("Error: invalid language name '" + language + "'. Only alphanumeric, dash, underscore allowed.");
+  const installedDirectories = new Set();
+  for (const rulePath of selectedRules) {
+    const normalizedRulePath = typeof rulePath === 'string' ? rulePath.replace(/\\/g, '/') : '';
+    if (!normalizedRulePath || normalizedRulePath.startsWith('/') || normalizedRulePath.includes('..')) {
+      console.error(`Warning: invalid rule path '${rulePath}', skipping.`);
       continue;
     }
 
-    const langSrc = path.join(RULES_DIR, language);
-    if (!fs.existsSync(langSrc)) {
-      console.error('Warning: rules/' + language + '/ does not exist, skipping.');
+    const srcPath = path.join(RULES_DIR, ...normalizedRulePath.split('/'));
+    if (!fs.existsSync(srcPath)) {
+      console.error(`Warning: package-selected rule '${normalizedRulePath}' does not exist, skipping.`);
       continue;
     }
 
-    const langDest = path.join(rulesDest, language);
-    console.log('Installing ' + language + ' rules -> ' + langDest + '/');
-    if (path.resolve(REPO_ROOT) !== path.resolve(rulesDest)) {
-      copyRecursiveSync(langSrc, langDest);
+    const destPath = path.join(rulesDest, ...normalizedRulePath.split('/'));
+    fs.mkdirSync(path.dirname(destPath), { recursive: true });
+    fs.copyFileSync(srcPath, destPath);
+    const ruleDir = normalizedRulePath.split('/')[0];
+    if (ruleDir) {
+      installedDirectories.add(ruleDir);
     }
+  }
+
+  for (const ruleDir of [...installedDirectories].sort()) {
+    console.log('Installing package-selected rules -> ' + path.join(rulesDest, ruleDir) + '/');
   }
 }
 
@@ -440,8 +460,7 @@ function installClaude(packageNames, globalScope) {
   const selectedPackages = resolveSelectedPackages(packageNames);
 
   warnExistingRulesDir(rulesDest);
-  installClaudeCommonRules(rulesDest);
-  installClaudeLanguageRules(selectedPackages, rulesDest);
+  installClaudeRules(selectedPackages, rulesDest);
   installClaudeContentDirs(claudeBase, selectedPackages);
   installClaudeHooks(claudeBase, globalScope);
   installClaudeRuntimeScripts(claudeBase);
@@ -687,23 +706,19 @@ function resolveGeminiDestinations(globalScope) {
   };
 }
 
+function getGeminiRuleSelections(selectedPackages) {
+  return getToolManifestSelections(selectedPackages, 'gemini', 'rules');
+}
+
 function collectGeminiRuleContent(cursorRules, selectedPackages) {
   let combined = '';
-  const ruleFiles = fs.readdirSync(cursorRules);
-
-  ruleFiles.forEach(fileName => {
-    if (fileName.startsWith('common-') && fileName.endsWith('.md')) {
-      combined += '\n\n' + fs.readFileSync(path.join(cursorRules, fileName), 'utf8');
+  for (const ruleFile of getGeminiRuleSelections(selectedPackages)) {
+    const srcPath = path.join(cursorRules, ruleFile);
+    if (!fs.existsSync(srcPath)) {
+      console.error(`Warning: Gemini rule '${ruleFile}' does not exist, skipping.`);
+      continue;
     }
-  });
-
-  for (const language of getPackageRuleDirectories(selectedPackages)) {
-    if (!isValidLanguageName(language)) continue;
-    ruleFiles.forEach(fileName => {
-      if (fileName.startsWith(language + '-') && fileName.endsWith('.md')) {
-        combined += '\n\n' + fs.readFileSync(path.join(cursorRules, fileName), 'utf8');
-      }
-    });
+    combined += '\n\n' + fs.readFileSync(srcPath, 'utf8');
   }
 
   return combined;
@@ -722,29 +737,22 @@ function appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini) {
 
 function copyGeminiLocalRules(cursorRules, selectedPackages, destDirAgent) {
   const rulesDest = path.join(destDirAgent, 'rules');
-  const ruleFiles = fs.readdirSync(cursorRules);
+  const selectedRules = getGeminiRuleSelections(selectedPackages);
   let foundRules = false;
 
   fs.mkdirSync(rulesDest, { recursive: true });
-  ruleFiles.forEach(fileName => {
-    if (fileName.startsWith('common-') && fileName.endsWith('.md')) {
-      fs.copyFileSync(path.join(cursorRules, fileName), path.join(rulesDest, fileName));
-      foundRules = true;
+  for (const ruleFile of selectedRules) {
+    const srcPath = path.join(cursorRules, ruleFile);
+    if (!fs.existsSync(srcPath)) {
+      console.error(`Warning: Gemini rule '${ruleFile}' does not exist, skipping.`);
+      continue;
     }
-  });
-
-  for (const language of getPackageRuleDirectories(selectedPackages)) {
-    if (!isValidLanguageName(language)) continue;
-    ruleFiles.forEach(fileName => {
-      if (fileName.startsWith(language + '-') && fileName.endsWith('.md')) {
-        fs.copyFileSync(path.join(cursorRules, fileName), path.join(rulesDest, fileName));
-        foundRules = true;
-      }
-    });
+    fs.copyFileSync(srcPath, path.join(rulesDest, ruleFile));
+    foundRules = true;
   }
 
   if (foundRules) {
-    console.log('Installing base & ' + selectedPackages.map((pkg) => pkg.name).join(', ') + ' rules -> ' + rulesDest + '/');
+    console.log('Installing package-selected Gemini rules -> ' + rulesDest + '/');
   }
 }
 
