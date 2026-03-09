@@ -1,16 +1,11 @@
 # Template Source Migration
 
-This document is the entrypoint for the template-source migration record.
-
-Use these documents together:
-
-- [Plan](template-source-migration-plan.md) — target architecture, phases, risks, and verification plan
-- [Inventory](template-source-migration-inventory.md) — original classification of tracked runtime-style source assets
-- [Status](template-source-migration-status.md) — final completion state, accepted layout, and verification checklist
+This document is the stable entrypoint for the completed template-source
+migration record.
 
 ## Purpose
 
-The migration separates:
+The migration separated:
 
 - canonical MDT source assets
 - per-tool adapter/template source
@@ -20,18 +15,30 @@ The goal is to stop treating repo-root runtime-style directories like `.cursor/`
 
 ## Current State
 
-The migration is now structurally complete:
+The migration is complete.
 
-- Cursor source moved to `cursor-template/`
-- Codex source moved to `codex-template/`
-- OpenCode source moved to `opencode-template/`
-- Claude hook config moved to `claude-template/hooks.json`
-- local Claude package-manager state stopped being tracked
-- repo-root runtime dirs are treated as install outputs or local state, not canonical source
+- `claude-template/`, `cursor-template/`, `codex-template/`, and
+  `opencode-template/` are the canonical per-tool template dirs.
+- `.claude/`, `.cursor/`, `.codex/`, and `.opencode/` are runtime/install dirs,
+  not canonical repo source.
+- `claude-template/hooks.json` is the canonical Claude hook config source.
+- `hooks/hooks.json` remains the synced Claude-facing mirror.
 
-Claude-specific repo surfaces that intentionally remain outside template dirs are documented in the inventory/status notes. The main example is the hook config split:
+## Historical Record
 
-- `claude-template/hooks.json` is the canonical tracked source
-- `hooks/hooks.json` is the synced Claude-facing mirror
+Detailed migration history now lives in:
 
-For the latest exact state, see [Status](template-source-migration-status.md).
+- [History: 2026-03-09 template-source migration](history/2026-03-09.template-source-migration.md)
+
+Legacy migration child-note paths are preserved as historical stubs:
+
+- [Plan stub](template-source-migration-plan.md)
+- [Inventory stub](template-source-migration-inventory.md)
+- [Status stub](template-source-migration-status.md)
+
+## Active Follow-Up
+
+Further work should be tracked outside this migration record:
+
+- [NEXT-STEPS.md](../NEXT-STEPS.md)
+- [README.md](../README.md)

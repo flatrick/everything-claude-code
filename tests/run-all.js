@@ -99,6 +99,7 @@ const testFiles = [
   'hooks/hooks.test.js',
   'hooks/hook-layout.test.js',
   'hooks/hooks-post-edit.test.js',
+  'hooks/cursor-lifecycle.test.js',
   'hooks/hooks-rounds.test.js',
   'hooks/hooks-rounds-3.test.js',
   'hooks/hooks-rounds-4.test.js',
