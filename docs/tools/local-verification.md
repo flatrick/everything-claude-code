@@ -77,6 +77,26 @@ codex exec --help
 codex features list
 ```
 
+Default local Codex sessions should stay on `workspace-write`.
+
+When verification work needs nested subprocesses, broader temp-dir access, or
+other behavior blocked by the default sandbox, use an explicit per-invocation
+Codex command instead of loosening your global Codex config.
+
+Examples:
+
+```bash
+codex --sandbox danger-full-access --ask-for-approval on-request
+```
+
+```powershell
+codex --sandbox danger-full-access --ask-for-approval on-request
+```
+
+Use this only for trusted local verification inside this repository.
+This keeps the relaxation scoped to the current Codex launch instead of
+changing `~/.codex/config.toml`.
+
 ### OpenCode
 
 ```bash
