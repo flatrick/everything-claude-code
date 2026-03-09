@@ -135,6 +135,22 @@ The intended output is low-noise and automation-focused:
 - repeated external CLI workflows that may justify MCP integrations
 - repeated tool sequences that deserve a documented workflow
 
+Important operational note:
+
+- Codex project detection should prefer repo-scoped `.codex/homunculus/projects/<id>/...`
+  storage even when Node cannot spawn `git` in the active shell
+- background analysis is different: if the active Codex shell blocks subprocess
+  spawn (`EPERM`/`EACCES`), `analyze` may still be unable to launch the native
+  Codex CLI from inside that session
+
+Planned Codex-specific direction:
+
+- keep the explicit/manual `status`, `capture`, `analyze`, and `weekly` flows
+- allow an optional externally running Node observer for Codex
+- let that external observer watch `.codex/homunculus/` and run analysis in a
+  normal shell environment where `codex exec` is allowed
+- do not make Cursor/Claude depend on that external process
+
 ### Built-in slash commands
 
 Codex slash commands are built-in session controls, not markdown workflow prompts. They are closer to terminal controls than to MDT's `commands/*.md`.

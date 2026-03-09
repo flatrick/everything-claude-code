@@ -75,6 +75,8 @@ Expected:
 - observations are archived after analysis
 - `observer.log` is written under project `.codex/homunculus/projects/<id>/`
 - project-scoped instincts can be created under `.codex/homunculus/projects/<id>/instincts/personal/`
+- if the active Codex shell blocks subprocess spawn (`EPERM`/`EACCES`), treat
+  that as an environment limitation, not as proof that project detection is broken
 
 4. Generate one weekly retrospective:
 
@@ -87,6 +89,24 @@ Expected:
 - the summary includes automation-oriented sections such as repeated commands,
   repeated files, repeated workflows, and automation candidates
 - the output stays sparse and reflects only the requested ISO week
+
+## Optional External Observer
+
+For Codex specifically, an optional external Node observer is an acceptable
+future design.
+
+Use that direction when:
+
+- project-scoped storage works
+- explicit `capture` and `weekly` flows work
+- but background `analyze` is blocked by the active Codex shell environment
+
+The intended shape is:
+
+- Codex sessions keep writing explicit local learning artifacts
+- a separate Node process watches project `.codex/homunculus/`
+- that process runs heavier analysis outside the restricted Codex session
+- the explicit/manual flow remains the baseline even if the external observer is added later
 
 ## Likely Deeper Checks
 

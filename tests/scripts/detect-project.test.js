@@ -1,0 +1,120 @@
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
+const {
+  detectProject,
+  findProjectRootFromFilesystem,
+  inferInstalledConfigDir
+} = require('../../skills/continuous-learning-v2/scripts/detect-project.js');
+
+function withEnv(overrides, fn) {
+  const previous = {};
+  for (const [key, value] of Object.entries(overrides)) {
+    previous[key] = process.env[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  try {
+    return fn();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+function runTests() {
+  console.log('\n=== Testing detect-project.js ===\n');
+
+  let passed = 0;
+  let failed = 0;
+
+  if (test('inferInstalledConfigDir detects installed Codex config roots', () => {
+    const tempDir = createTestDir('detect-project-installed-');
+    try {
+      const scriptDir = path.join(tempDir, '.agents', 'skills', 'continuous-learning-v2', 'scripts');
+      fs.mkdirSync(scriptDir, { recursive: true });
+      assert.strictEqual(inferInstalledConfigDir(scriptDir), path.join(tempDir, '.agents'));
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('findProjectRootFromFilesystem walks up to repo markers without git subprocesses', () => {
+    const tempDir = createTestDir('detect-project-root-');
+    try {
+      const repoRoot = path.join(tempDir, 'repo');
+      const nested = path.join(repoRoot, 'src', 'deep');
+      fs.mkdirSync(path.join(repoRoot, '.git'), { recursive: true });
+      fs.mkdirSync(nested, { recursive: true });
+      assert.strictEqual(findProjectRootFromFilesystem(nested), repoRoot);
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('detectProject uses MDT_PROJECT_ROOT fallback when git subprocesses are blocked', () => {
+    const tempDir = createTestDir('detect-project-mdt-root-');
+    try {
+      const repoRoot = path.join(tempDir, 'repo');
+      fs.mkdirSync(path.join(repoRoot, '.git'), { recursive: true });
+      fs.mkdirSync(path.join(repoRoot, '.agents'), { recursive: true });
+      fs.mkdirSync(path.join(repoRoot, '.codex'), { recursive: true });
+
+      const project = withEnv({
+        MDT_PROJECT_ROOT: repoRoot,
+        CONFIG_DIR: path.join(repoRoot, '.agents'),
+        DATA_DIR: path.join(repoRoot, '.codex'),
+        CODEX_AGENT: '1',
+        CLAUDE_PROJECT_DIR: undefined
+      }, () => detectProject(path.join(repoRoot, 'src')));
+
+      assert.notStrictEqual(project.id, 'global');
+      assert.strictEqual(project.name, 'repo');
+      assert.strictEqual(project.root, repoRoot);
+      assert.ok(project.project_dir.includes(path.join(repoRoot, '.codex', 'homunculus', 'projects')));
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('detectProject falls back to filesystem repo markers when git spawn is unavailable', () => {
+    const tempDir = createTestDir('detect-project-fs-fallback-');
+    try {
+      const repoRoot = path.join(tempDir, 'repo');
+      const nested = path.join(repoRoot, 'app', 'src');
+      fs.mkdirSync(path.join(repoRoot, '.git'), { recursive: true });
+      fs.mkdirSync(path.join(repoRoot, '.agents'), { recursive: true });
+      fs.mkdirSync(path.join(repoRoot, '.codex'), { recursive: true });
+      fs.mkdirSync(nested, { recursive: true });
+
+      const project = withEnv({
+        CONFIG_DIR: path.join(repoRoot, '.agents'),
+        DATA_DIR: path.join(repoRoot, '.codex'),
+        CODEX_AGENT: '1',
+        MDT_PROJECT_ROOT: undefined,
+        CLAUDE_PROJECT_DIR: undefined
+      }, () => detectProject(nested));
+
+      assert.notStrictEqual(project.id, 'global');
+      assert.strictEqual(project.root, repoRoot);
+      assert.strictEqual(project.name, 'repo');
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
+  process.exit(failed > 0 ? 1 : 0);
+}
+
+runTests();

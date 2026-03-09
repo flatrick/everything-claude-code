@@ -223,6 +223,11 @@ Follow-ups for Codex should focus on:
 - reducing remaining source-layout drift between `codex-template/skills/` and the current `.agents/skills/` mirror
 - deciding whether any Codex app automations are worth using after the explicit path has proven itself
 - expanding Codex workflow verification beyond smoke into richer manual verification
+- keeping project detection repo-scoped even when the active Codex shell blocks
+  Node subprocess calls to `git`
+- deciding whether Codex background analysis should remain purely explicit or
+  gain an optional externally running Node observer that watches `.codex/`
+  outside the restricted Codex session
 ### 8. Extend Cursor parity tests (P2)
 
 Add test coverage for:
