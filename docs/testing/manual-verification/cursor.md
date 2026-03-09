@@ -1,0 +1,117 @@
+# Cursor Manual Verification
+
+Use this page to confirm MDT behavior inside Cursor desktop after installing into a fresh `.cursor/` directory.
+
+## Preconditions
+
+1. Start from a clean repo checkout or remove the existing local `.cursor/` install.
+2. Install MDT into Cursor:
+
+```bash
+node scripts/install-mdt.js --target cursor typescript continuous-learning
+```
+
+3. Confirm the install exists:
+
+```bash
+node -e "const fs=require('fs'); console.log(fs.existsSync('.cursor/hooks.json'));"
+```
+
+Expected:
+- `.cursor/hooks.json` exists
+- `.cursor/hooks/` exists
+- `.cursor/skills/continuous-learning-v2/` exists
+
+## Continuous Learning
+
+### Observation Capture
+
+Run this inside Cursor desktop with an Agent session:
+
+1. Ask the agent to edit a file.
+2. Ask the agent to run a shell command such as `node -v`.
+
+Expected after the edit and shell command:
+- `.cursor/homunculus/projects.json` exists
+- `.cursor/homunculus/projects/<project-id>/observations.jsonl` exists
+- the observations file contains:
+  - `"event":"tool_complete"`
+  - `"tool":"Edit"` for file edits
+  - `"tool":"Bash"` for shell commands
+
+Helpful local check:
+
+```bash
+node -e "const fs=require('fs');const path=require('path');const root=path.join(process.cwd(),'.cursor','homunculus');const projects=JSON.parse(fs.readFileSync(path.join(root,'projects.json'),'utf8'));const id=Object.keys(projects)[0];console.log(fs.readFileSync(path.join(root,'projects',id,'observations.jsonl'),'utf8'));"
+```
+
+### Observer Tool Selection
+
+Check observer status from the repo root:
+
+```bash
+node .cursor/skills/continuous-learning-v2/agents/start-observer.js status
+```
+
+Expected:
+- output includes `Observer tool: cursor`
+
+### Observer Runtime
+
+1. Edit `.cursor/skills/continuous-learning-v2/config.json`
+2. Set:
+
+```json
+{
+  "observer": {
+    "enabled": true
+  }
+}
+```
+
+3. Start the observer:
+
+```bash
+node .cursor/skills/continuous-learning-v2/agents/start-observer.js start
+```
+
+Expected:
+- output includes `Observer tool: cursor`
+- output includes `Observer started`
+
+4. After enough observations accumulate, inspect:
+
+```bash
+node .cursor/skills/continuous-learning-v2/agents/start-observer.js status
+```
+
+Expected:
+- `Observations:` shows a non-zero line count before analysis
+- `.cursor/homunculus/projects/<project-id>/observations.archive/` is created after analysis runs
+- `.cursor/homunculus/projects/<project-id>/observer.log` includes `with cursor (auto)` by default
+
+5. Stop the observer when done:
+
+```bash
+node .cursor/skills/continuous-learning-v2/agents/start-observer.js stop
+```
+
+## Session Lifecycle
+
+Run a normal Cursor Agent session and then end it cleanly.
+
+Expected:
+- `.cursor/sessions/` contains a new session file
+- the newest session file includes:
+  - `## Session Summary`
+  - your user requests
+  - modified files
+  - `Total user messages:`
+
+## Pass Criteria
+
+- Cursor hooks create continuous-learning observations under `.cursor/homunculus/`
+- continuous-learning resolves Cursor-native storage instead of `~/.claude`
+- observer status reports `cursor`
+- observer uses Cursor CLI defaults, with model `auto` unless overridden
+- session summaries still persist correctly under `.cursor/sessions/`

@@ -68,6 +68,8 @@ Cursor desktop should currently be treated as a manual verification surface.
 Prefer `agent` or `cursor-agent` for automated local smoke checks, and use the
 desktop app only for manual workflow confirmation inside Cursor itself.
 
+Manual tool checklists live under [docs/testing/manual-verification/](../testing/manual-verification/README.md), including prepared pages for Claude Code, Cursor, and Codex.
+
 ### Codex
 
 ```bash
