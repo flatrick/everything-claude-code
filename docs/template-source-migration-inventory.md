@@ -63,15 +63,17 @@ This inventory is about tracked source ownership, not about installed runtime
 outputs. Real project/home-directory outputs such as `./.cursor/` or
 `~/.codex/` should remain install targets after the migration.
 
-## Claude Adapter Classification Kickoff (Current Next Task)
+## Claude Adapter Closeout Classification
 
-To start the next migration task, the remaining Claude-adjacent tracked assets were classified from the current repo layout.
+To close out the migration, the remaining Claude-adjacent tracked assets were classified from the current repo layout.
 
 | Path | Classification | Planned Handling | Notes |
 | --- | --- | --- | --- |
 | `claude-template/hooks.json` | `claude-template/` source | keep in `claude-template/` | Canonical Claude hook config source already migrated. |
 | `hooks/hooks.json` | Claude-facing mirror | keep as generated/synced mirror | Mirror consumed by Claude hook flow; source remains `claude-template/hooks.json`. |
 | `schemas/claude-hooks.schema.json` | root-level shared MDT source | keep at repo root | Shared schema/validation asset, not Claude-template adapter content. |
+| `CLAUDE.md` | root-level Claude-native source | keep at repo root | Intentional Claude project-guidance surface, not install-template content. |
+| `.claude-plugin/` | root-level Claude-native source | keep at repo root | Marketplace/package metadata for the Claude plugin flow, not runtime-dir template source. |
 | `.claude/` runtime files (untracked/local) | local/runtime-only state | keep ignored | Runtime state remains out of canonical source ownership. |
 
-This classification confirms there are no additional obvious repo-root `.claude/` tracked source assets to move right now, and the remaining work is primarily to document/solidify mirror semantics and completion criteria.
+This classification confirms there are no additional obvious tracked `.claude/` runtime-dir source assets to move. Remaining Claude-facing files are either canonical template source, intentionally root-level Claude-native source, or synced mirrors.

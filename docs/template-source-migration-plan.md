@@ -228,20 +228,17 @@ Acceptance criteria:
 
 ## Recommended Next Implementation Slice
 
-The initial Cursor/Codex/OpenCode migration slices are complete, and the top-level adapter layout decision is locked to root-level `*-template/` directories.
+This slice has now been completed.
 
-Start next with Claude adapter completion and migration closeout:
+The migration closeout established:
 
-1. classify remaining Claude-adjacent tracked assets as:
+1. the final Claude classification model:
    - `claude-template/` source
    - root-level shared MDT source
+   - root-level Claude-native source outside templates
    - mirror/rendered output
    - local/runtime-only state
-2. document and enforce mirror semantics for Claude hook config (source vs mirror ownership)
-3. define and add migration-complete criteria and verification commands in the status docs
+2. explicit source-vs-mirror ownership for Claude hook config
+3. migration-complete criteria and verification commands in the status docs
 
-Reason:
-
-- this finishes the only partially migrated adapter
-- it avoids unnecessary path churn after the layout decision
-- it creates a clear end-state gate for future migration work
+Use [template-source-migration-status.md](template-source-migration-status.md) for the final accepted state and verification checklist. Further work should be tracked as normal stabilization or parity follow-up, not as template-source migration work.
