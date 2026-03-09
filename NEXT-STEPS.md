@@ -38,6 +38,7 @@ assets belong together.
 Design note:
 
 - [docs/packages-install-model.md](docs/packages-install-model.md)
+- [docs/package-manifest-v1.md](docs/package-manifest-v1.md)
 
 Proposed direction:
 
