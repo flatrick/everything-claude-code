@@ -6,48 +6,25 @@
 - Upstream ECC is now reference material, not an active sync source.
 - v1 is still stabilization work: remove drift, verify real workflows, and avoid guesswork across tools.
 
+Recently completed:
+
+- Cursor lifecycle hooks now use native Cursor payloads for session summaries and session evaluation instead of depending on Claude `transcript_path`.
+- The Cursor adapter now guarantees `MDT_ROOT` for delegated subprocesses.
+- Cursor cost tracking now records usage when payload data is present and logs an explicit fallback when it is not.
+- Focused Cursor lifecycle tests now cover the native session-end/stop path.
+
 ---
 
 ## Next Practical Steps
 
-### 1. Cursor parity — fix silently broken hooks (P0)
-
-The Cursor hook adapter exists but two core hooks silently no-op because Cursor
-does not provide Claude's `transcript_path`:
-
-- `session-end.js` — reads JSONL transcript to build session summary → writes nothing in Cursor
-- `evaluate-session.js` — also transcript-dependent → skips entirely
-- `cost-tracker.js` — reads token data from transcript → skips silently
-
-**Fix**: rewrite `.cursor/hooks/session-end.js` and `.cursor/hooks/stop.js` to
-consume Cursor's native `stop`/`sessionEnd` payload (`conversation_id`,
-`modified_files`, `messages[]`) instead of delegating to the Claude-format scripts.
-Session summaries can still be written to the same sessions dir so `session-start`
-keeps working cross-session.
-
-### 2. Cursor parity — MDT_ROOT for shared scripts (P0)
-
-Shared scripts in `scripts/hooks/` that spawn subprocesses may fail when
-`MDT_ROOT` is not set in Cursor's environment.
-
-**Fix**: in `adapter.js` `runExistingHook()`, inject `MDT_ROOT` into the child
-process env (set to the resolved plugin root). Alternatively, set it in
-`session-start.js` at the top of each Cursor session.
-
-### 3. Cursor parity — cost tracker (P1)
-
-Either detect token usage from Cursor's stop payload (if available) or write a
-Cursor-native stub that logs `[MDT] Cost tracking: not available in Cursor` instead
-of silently skipping. Respect `MDT_DISABLED_HOOKS=stop:cost-tracker` to opt out.
-
-### 4. Cursor parity — wire continuous learning (P1)
+### 1. Cursor parity — wire continuous learning (P1)
 
 `skills/continuous-learning-v2/hooks/observe.js` is called at Pre/PostToolUse in
 Claude hooks but is not wired in Cursor hooks at all. `observe.js` already supports
 Cursor via `detect-env.js`. Add calls to `afterFileEdit` and `afterShellExecution`
 Cursor hooks.
 
-### 5. Cursor parity — populate `.cursor/skills/` (P2)
+### 2. Cursor parity — populate `.cursor/skills/` (P2)
 
 Cursor has a native skills system using the same `SKILL.md` format and
 auto-discovery as Claude Code. Skills live in `.cursor/skills/` (project) or
@@ -72,7 +49,7 @@ cannot be file-installed. The install script must only target project-level path
 (`.cursor/rules/`, `.cursor/skills/`). This is unlike Claude Code where
 `~/.claude/rules/` is file-based.
 
-### 6. Add dependency declarations to SKILL.md frontmatter (P1)
+### 3. Add dependency declarations to SKILL.md frontmatter (P1)
 
 Currently all inter-component dependencies are implicit. Skills that assume rules
 are loaded don't declare it, so the install script cannot warn when installing to
@@ -111,7 +88,7 @@ requires:
    installing to a tool/scope that can't satisfy them
 4. Update tests to cover the dependency-check logic
 
-### 7. Cursor parity — convert commands to Cursor custom commands (P2)
+### 4. Cursor parity — convert commands to Cursor custom commands (P2)
 
 All commands in `commands/*.md` use Claude Code slash command format. Cursor has
 its own custom command system. Create `.cursor/commands/` and convert the core
@@ -121,7 +98,7 @@ workflows, stripping Claude-specific subagent syntax:
 
 Update `scripts/install-mdt.js` to copy these for Cursor installs.
 
-### 8. Add deeper Claude workflow smoke (P2)
+### 5. Add deeper Claude workflow smoke (P2)
 
 Codex has workflow-level smoke coverage. Claude should get the same for:
 
@@ -130,23 +107,22 @@ Codex has workflow-level smoke coverage. Claude should get the same for:
 - `verify`
 - `security`
 
-### 9. Add Cursor parity tests (P3)
+### 6. Extend Cursor parity tests (P2)
 
 Add test coverage for:
-- `.cursor/hooks/*.js` with Cursor-format input (no `transcript_path`)
-- Cursor session-end writing a fallback summary when no transcript is available
+- continuous-learning wiring in Cursor `afterFileEdit` / `afterShellExecution`
 - Skill-to-rule and command conversion output
 
-### 10. Cut a stabilization release boundary (P3)
+### 7. Cut a stabilization release boundary (P3)
 
 Once Cursor hook parity is working and Claude workflow smoke is added, prepare
 release notes covering:
 
-- Cursor hook parity (no Claude Code dependencies)
+- Cursor lifecycle parity (no Claude Code transcript dependency)
 - Claude workflow smoke coverage
 - Skills/commands conversion for Cursor
 
-### 11. Add OpenCode local smoke once installed
+### 8. Add OpenCode local smoke once installed
 
 OpenCode is structurally documented but not locally verified. Once installed:
 
