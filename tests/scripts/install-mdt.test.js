@@ -484,6 +484,11 @@ function runTests() {
 
           assert.ok(fs.existsSync(path.join(codexRoot, 'config.toml')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'AGENTS.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'rules', 'common-coding-style.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'rules', 'common-testing.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'rules', 'common-security.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'rules', 'common-git-workflow.md')));
+          assert.ok(!fs.existsSync(path.join(codexRoot, 'rules', 'typescript-coding-style.md')), 'no unrelated rules');
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'coding-standards', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'documentation-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'tool-setup-verifier', 'SKILL.md')));

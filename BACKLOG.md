@@ -32,6 +32,46 @@ Remaining follow-up:
 
 ---
 
+## Harden tool home directories for all supported tools
+
+**Status:** Open — Codex only.
+
+`codex-template/hardening/` contains an optional hardening bundle for Codex:
+
+- `apply-codex-home-hardening.mjs` — restricts `auth.json` to owner-only permissions
+  (Windows: removes sandbox-user ACL entries via `icacls`; POSIX: `chmod 600`)
+- `verify-codex-home-hardening.mjs` — checks that the hardening is in place
+- `PROMPT.md` — an adaptive Codex prompt for hardening on another machine or as
+  another user, without requiring the scripts to be present
+
+This is **opt-in** — the installer does not apply hardening automatically.
+Users run it manually: `node codex-template/hardening/apply-codex-home-hardening.mjs`.
+
+**What to replicate for other tools:**
+
+Each tool stores sensitive local state (auth tokens, session history, API keys)
+in its home directory. The specific files differ per tool:
+
+| Tool | Sensitive files | Home path |
+|---|---|---|
+| Codex | `auth.json`, `history.jsonl`, `sessions/`, `state_*.sqlite*` | `~/.codex/` |
+| Claude Code | `credentials`, session data | `~/.claude/` |
+| Cursor | auth state, telemetry | `~/.cursor/` |
+| OpenCode | auth, session state | tool-specific |
+
+**Proposed approach:**
+
+- Add a `<tool>-template/hardening/` bundle for each tool following the Codex pattern
+- Each bundle: `apply-<tool>-home-hardening.mjs`, `verify-<tool>-home-hardening.mjs`, `PROMPT.md`
+- Keep them opt-in — never run from `install-mdt.js` automatically
+- Consider a future `scripts/harden.js --target <tool>` unified entry point once
+  multiple bundles exist
+
+**Constraint:** Do not implement until the tool is installed and locally verified,
+so that actual sensitive file paths can be confirmed rather than guessed.
+
+---
+
 ## Cursor install copies non-requested skills
 
 **Status:** Open.
