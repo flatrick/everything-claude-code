@@ -210,7 +210,7 @@ LIMIT 20 OFFSET 20;
 **Pros:** Easy to implement, supports "jump to page N"
 **Cons:** Slow on large offsets (OFFSET 100000), inconsistent with concurrent inserts
 
-### Cursor-Based (Scalable)
+### Keyset-Based (Scalable)
 
 ```
 GET /api/v1/users?cursor=eyJpZCI6MTIzfQ&limit=20
@@ -240,8 +240,8 @@ LIMIT 21;  -- fetch one extra to determine has_next
 | Use Case | Pagination Type |
 |----------|----------------|
 | Admin dashboards, small datasets (<10K) | Offset |
-| Infinite scroll, feeds, large datasets | Cursor |
-| Public APIs | Cursor (default) with offset (optional) |
+| Infinite scroll, feeds, large datasets | Keyset |
+| Public APIs | Keyset (default) with offset (optional) |
 | Search results | Offset (users expect page numbers) |
 
 ## Filtering, Sorting, and Search

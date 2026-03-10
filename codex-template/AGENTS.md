@@ -39,21 +39,9 @@ MDT development installs (`--dev`) additionally materialize:
 Configure optional MCP servers in `~/.codex/config.toml` under `[mcp_servers]`.
 MDT does not enable any Codex MCP servers by default.
 
-## Key Differences from Claude Code
+## Codex Security Model
 
-| Feature | Claude Code | Codex CLI |
-|---------|------------|-----------|
-| Hooks | 8+ event types | Not yet supported |
-| Context file | CLAUDE.md + AGENTS.md | AGENTS.md only |
-| Skills | Skills loaded via plugin | `.codex/skills/` directory |
-| Commands | `/slash` commands | Instruction-based |
-| Agents | Subagent Task tool | Single agent model |
-| Security | Hook-based enforcement | Instruction + sandbox |
-| MCP | Full support | Official but opt-in |
-
-## Security Without Hooks
-
-Since Codex lacks hooks, security enforcement is instruction-based:
+Codex security enforcement in MDT is instruction-based:
 1. Always validate inputs at system boundaries
 2. Never hardcode secrets — use environment variables
 3. Run `npm audit` / `pip audit` before committing

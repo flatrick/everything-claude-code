@@ -61,12 +61,10 @@ node scripts/ci/validate-markdown-links.js
 node scripts/ci/validate-markdown-path-refs.js
 ```
 
-If the current repo is an installed MDT target repo and `scripts/ci/` is not
-present at repo root, use the installed local copies instead:
+If the current repo is an installed MDT Codex target repo and `scripts/ci/` is
+not present at repo root, use the installed local copies under:
 
-- Claude Code: `.claude/scripts/ci/`
-- Cursor: `.cursor/scripts/ci/`
-- Codex: `.codex/scripts/ci/`
+- `.codex/scripts/ci/`
 
 Treat these validator checks as baseline gates, not optional extras.
 
@@ -85,11 +83,11 @@ If a page mixes these, split or trim it.
 
 ### 2. Verify support claims before repeating them
 
-For cross-tool behavior:
+For MDT capability docs in a Codex-installed repo:
 
 - use `skills/tool-doc-maintainer/SKILL.md` when it is available in the current repo
 - treat `docs/tools/` as the source of truth
-- do not treat repo adapter files as proof of native vendor support
+- do not treat repo adapter files as proof of native support
 
 ### 3. Check whether the content belongs in `docs/`
 

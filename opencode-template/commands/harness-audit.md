@@ -32,7 +32,7 @@ Return:
 
 For `setup` scope, return:
 
-1. Per-workflow coverage across Claude, Cursor, Codex, and OpenCode
+1. Per-workflow coverage across the current OpenCode setup
 2. Deterministic contract status from `node scripts/verify-tool-setups.js`
 3. Optional local smoke status from `node scripts/smoke-tool-setups.js`
 4. Top 3 setup fixes with exact file paths
@@ -41,7 +41,7 @@ For `setup` scope, return:
 
 - Inspect `hooks/hooks.json`, `scripts/hooks/`, and hook tests.
 - Inspect `skills/`, command coverage, and agent coverage.
-- Verify cross-harness parity for `cursor-template/`, `opencode-template/`, and `codex-template/`.
+- Verify the current OpenCode harness surface under `opencode-template/`.
 - Flag broken or stale references.
 - For `setup` scope, use `skills/tool-setup-verifier/SKILL.md`, `docs/tools/workflow-matrix.md`, and `scripts/lib/tool-workflow-contract.js`.
 

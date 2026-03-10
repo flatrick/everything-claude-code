@@ -399,6 +399,40 @@ function runTests() {
     assert.ok(result.stdout.includes('Validated'), 'Should report validation success');
   })) passed++; else failed++;
 
+  // ==========================================
+  // validate-template-doc-boundaries.js
+  // ==========================================
+  console.log('\nvalidate-template-doc-boundaries.js:');
+
+  if (test('passes on real project template docs', () => {
+    const result = runValidator('validate-template-doc-boundaries');
+    assert.strictEqual(result.code, 0, `Should pass, got stderr: ${result.stderr}`);
+    assert.ok(result.stdout.includes('Validated template-doc boundaries'), 'Should report validation success');
+  })) passed++; else failed++;
+
+  if (test('fails when a codex-template doc references Cursor', () => {
+    const testDir = createTestDir();
+    const codexDir = path.join(testDir, 'codex-template', 'skills', 'example');
+    fs.mkdirSync(codexDir, { recursive: true });
+    fs.writeFileSync(path.join(codexDir, 'SKILL.md'), '# Example\n\nUse Cursor here.');
+
+    const result = runValidatorWithDir('validate-template-doc-boundaries', 'REPO_ROOT', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail on other-tool reference in template doc');
+    assert.ok(result.stderr.includes('Cursor'), 'Should report the other tool reference');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('allows explicitly allowlisted migration docs', () => {
+    const testDir = createTestDir();
+    const migrationDir = path.join(testDir, 'opencode-template');
+    fs.mkdirSync(migrationDir, { recursive: true });
+    fs.writeFileSync(path.join(migrationDir, 'MIGRATION.md'), '# Migration\n\nClaude Code to OpenCode.');
+
+    const result = runValidatorWithDir('validate-template-doc-boundaries', 'REPO_ROOT', testDir);
+    assert.strictEqual(result.code, 0, 'Should allow allowlisted migration docs');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
   if (test('fails when a required package is missing', () => {
     const packagesDir = createTestDir();
     const rulesDir = createTestDir();

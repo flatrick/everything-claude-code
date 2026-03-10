@@ -4,53 +4,78 @@ description: Instinct-based learning system that turns explicit session summarie
 version: 2.1.0
 ---
 
-# Continuous Learning v2.1 - Instinct
--Based Architecture
+# Continuous Learning v2.1
 
-An advanced learning system that turns MDT tool sessions into reusable knowledge through atomic "instincts" - small learned behaviors with confidence scoring.
+An instinct-based learning system for MDT that turns repeated behavior into small reusable instincts with confidence scoring, project scoping, and optional evolution into larger assets.
 
-**v2.1** adds **project-scoped instincts** — React patterns stay in your React project, Python conventions stay in your Python project, and universal patterns (like "always validate input") are shared globally.
+`v2.1` adds project-scoped instincts so project-specific patterns stay local while broader workflow and security patterns can still be shared globally.
 
-## When to Activate
+## When To Activate
 
-- Setting up automatic learning from Claude Code or Cursor sessions
-- Configuring instinct-based behavior extraction via hooks
-- Tuning confidence thresholds for learned behaviors
-- Reviewing, exporting, or importing instinct libraries
-- Evolving instincts into full skills, commands, or agents
-- Managing project-scoped vs global instincts
-- Promoting instincts from project to global scope
-- Running low-noise weekly retrospectives to find automation candidates
+- Reviewing or capturing reusable workflow patterns
+- Running explicit Codex learning passes
+- Setting up Claude Code or Cursor observation hooks
+- Reviewing instinct confidence, scope, export, import, or promotion
+- Running weekly retrospectives to find automation candidates
+- Deciding whether repeated work should become a skill, command, script, or MCP-backed integration
 
-For Codex specifically:
+## Tool Modes
 
-- use this skill for explicit/manual capture and analysis
-- do not assume Claude/Cursor-style hook automation exists
-- treat the optional external observer as a background analysis helper, not as
-  full automatic capture parity
-- install the observer separately when wanted; it is not part of the Codex baseline
+This skill supports different tool modes. The instinct model is shared, but capture and analysis differ by tool.
+
+### Codex
+
+Codex is manual-first in this repo.
+
+- project-local state lives under `.codex/homunculus/`
+- explicit/manual capture is the baseline
+- explicit/manual analysis is the baseline
+- weekly retrospectives are part of the baseline
+- the optional external observer only automates background analysis after observations already exist
+- Codex does not currently get hook-style automatic capture in this repo
+
+Use `continuous-learning-manual` as the Codex-facing contract.
+
+### Claude Code and Cursor
+
+Claude Code and Cursor are the hook-capable modes.
+
+- they can capture observations via tool hooks
+- they can use the optional observer with the tool's native CLI
+- hook setup is specific to those tools and is not the general model for Codex
+
+### Optional Observer
+
+The observer is an enhancement layer, not the baseline.
+
+- for Claude Code and Cursor, it processes hook-captured observations
+- for Codex, it is analysis-only and remains optional
+- it does not create automatic capture parity where native hook surfaces do not exist
 
 ## What's New in v2.1
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`<data>/homunculus/`) | Project-scoped (projects/<hash>/) |
+| Storage | Global (`<data>/homunculus/`) | Project-scoped (`projects/<hash>/`) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
-| Promotion | N/A | Project → global when seen in 2+ projects |
+| Promotion | N/A | Project -> global when seen in 2+ projects |
 | Commands | 4 (status/evolve/export/import) | 6 (+promote/projects) |
 | Cross-project | Contamination risk | Isolated by default |
 
-## What's New in v2 (vs v1)
+## What's New In v2
 
-| Feature | v1 | v2 |
-|---------|----|----|
-| Observation | Stop hook (session end) | PreToolUse/PostToolUse (100% reliable) |
-| Analysis | Main context | Background observer using the active tool's cheaper/faster model tier when configured |
-| Granularity | Full skills | Atomic "instincts" |
-| Confidence | None | 0.3-0.9 weighted |
-| Evolution | Direct to skill | Instincts -> cluster -> skill/command/agent |
-| Sharing | None | Export/import instincts |
+v2 introduced:
+
+- instinct-sized learning units instead of only full learned assets
+- confidence-weighted evidence
+- observer-assisted analysis where the active tool supports it
+- project-aware storage and evolution paths
+
+The exact observation path is tool-specific:
+
+- Claude Code / Cursor: hook-capable observation
+- Codex: explicit/manual capture by default
 
 ## The Instinct Model
 
@@ -78,96 +103,99 @@ Use functional patterns over classes when appropriate.
 - User corrected class-based approach to functional on 2025-01-15
 ```
 
-**Properties:**
-- **Atomic** -- one trigger, one action
-- **Confidence-weighted** -- 0.3 = tentative, 0.9 = near certain
-- **Domain-tagged** -- code-style, testing, git, debugging, workflow, etc.
-- **Evidence-backed** -- tracks what observations created it
-- **Scope-aware** -- `project` (default) or `global`
+Properties:
 
-## How It Works
+- atomic: one trigger, one action
+- confidence-weighted: `0.3` = tentative, `0.9` = near certain
+- domain-tagged: code-style, testing, git, debugging, workflow, etc.
+- evidence-backed: tracks what observations created it
+- scope-aware: `project` or `global`
 
-```
-Session Activity (in a git repo)
+## Shared Learning Flow
+
+The storage and instinct model are shared even though capture differs by tool.
+
+```text
+Session activity
       |
-      | Hooks capture prompts + tool use (100% reliable)
-      | + detect project context (git remote / repo path)
+      | Capture path depends on tool:
+      | - Codex: explicit/manual capture
+      | - Claude/Cursor: hook-capable capture
       v
-+---------------------------------------------+
-|  projects/<project-hash>/observations.jsonl  |
-|   (prompts, tool calls, outcomes, project)   |
-+---------------------------------------------+
+projects/<project-hash>/observations.jsonl
       |
-      | Observer agent reads (background, cheap model tier)
+      | optional observer or explicit analysis
       v
-+---------------------------------------------+
-|          PATTERN DETECTION                   |
-|   * User corrections -> instinct             |
-|   * Error resolutions -> instinct            |
-|   * Repeated workflows -> instinct           |
-|   * Scope decision: project or global?       |
-+---------------------------------------------+
+pattern detection
       |
-      | Creates/updates
+      | creates / updates
       v
-+---------------------------------------------+
-|  projects/<project-hash>/instincts/personal/ |
-|   * prefer-functional.yaml (0.7) [project]   |
-|   * use-react-hooks.yaml (0.9) [project]     |
-+---------------------------------------------+
-|  instincts/personal/  (GLOBAL)               |
-|   * always-validate-input.yaml (0.85) [global]|
-|   * grep-before-edit.yaml (0.6) [global]     |
-+---------------------------------------------+
+projects/<project-hash>/instincts/personal/
+instincts/personal/ (global)
       |
-      | /evolve clusters + /promote
+      | evolve / promote
       v
-+---------------------------------------------+
-|  projects/<hash>/evolved/ (project-scoped)   |
-|  evolved/ (global)                           |
-|   * commands/new-feature.md                  |
-|   * skills/testing-workflow.md               |
-|   * agents/refactor-specialist.md            |
-+---------------------------------------------+
+projects/<hash>/evolved/
+evolved/ (global)
 ```
 
 ## Project Detection
 
-The system automatically detects your current project:
+The system detects project context in this order:
 
-1. **`CLAUDE_PROJECT_DIR` env var** (highest priority)
-2. **`git remote get-url origin`** -- hashed to create a portable project ID (same repo on different machines gets the same ID)
-3. **`git rev-parse --show-toplevel`** -- fallback using repo path (machine-specific)
-4. **Global fallback** -- if no project is detected, instincts go to global scope
+1. explicit project/config environment variables
+2. git remote URL when available
+3. repo path / repo markers
+4. global fallback when no project can be identified
 
-Each project gets a 12-character hash ID (e.g., `a1b2c3d4e5f6`). A registry file at `<data>/homunculus/projects.json` maps IDs to human-readable names.
+Each project gets a 12-character hash ID. A registry file at `<data>/homunculus/projects.json` maps IDs to human-readable names.
 
 ## Quick Start
 
-### Codex model in this repo
+### Codex Explicit Workflow
 
-Codex is intentionally different from Claude Code and Cursor:
+Codex does not rely on Claude/Cursor hook capture in this repo.
 
-- project-local storage under `.codex/homunculus/` is supported
-- explicit/manual capture is the baseline
-- explicit/manual analysis is the baseline
-- the optional external observer only automates background analysis after
-  observations already exist
-- Codex does not currently get hook-style automatic observation capture in this
-  repo
+Use the explicit project-local workflow:
 
-That means:
+```bash
+node .codex/skills/continuous-learning-manual/scripts/codex-learn.js status
+```
 
-- `continuous-learning-manual` is the primary Codex path
-- the external observer is an enhancement layer for convenience and restricted
-  shell environments
-- `continuous-learning-automatic` is not the Codex-facing skill contract
+Then capture a concise session summary:
 
-### 1. Enable Observation Hooks For Claude Code Or Cursor
+```bash
+node .codex/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
+```
 
-Add to your config directory settings file (for Claude Code this is `~/.claude/settings.json`).
+Run an explicit analysis pass:
 
-**If installed as a plugin** (recommended):
+```bash
+node .codex/skills/continuous-learning-manual/scripts/codex-learn.js analyze
+```
+
+Run a weekly retrospective for one ISO week:
+
+```bash
+node .codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
+```
+
+This writes Codex project learning state under `.codex/homunculus/...`.
+
+Codex baseline:
+
+- sparse, explicit capture
+- explicit/manual analysis
+- explicit weekly retrospectives
+- optional external observer for background analysis only
+
+### Claude Code / Cursor Hook Setup
+
+This section applies only to Claude Code and Cursor.
+
+Add hook wiring to the relevant tool config. For Claude Code this is typically `~/.claude/settings.json`.
+
+If installed as a plugin:
 
 ```json
 {
@@ -190,7 +218,7 @@ Add to your config directory settings file (for Claude Code this is `~/.claude/s
 }
 ```
 
-**If installed manually** to `<config>/skills` where `<config>` is your MDT config directory (for example `~/.claude` or `~/.cursor`):
+If installed manually to `<config>/skills` where `<config>` is the tool config dir:
 
 ```json
 {
@@ -213,42 +241,26 @@ Add to your config directory settings file (for Claude Code this is `~/.claude/s
 }
 ```
 
-### 2. Initialize Directory Structure
+## Commands And Workflows
 
-The system creates directories automatically on first use, but you can also create them manually:
+The instinct workflows are:
 
-```bash
-# Global directories
-mkdir -p <data>/homunculus/{instincts/{personal,inherited},evolved/{agents,skills,commands},projects}
+- `status`
+- `evolve`
+- `export`
+- `import`
+- `promote`
+- `projects`
+- `weekly`
 
-# Project directories are auto-created when the hook first runs in a git repo
-```
+Tool surface differs:
 
-### 3. Use the Instinct Commands
-
-```bash
-/instinct-status     # Show learned instincts (project + global)
-/evolve              # Cluster related instincts into skills/commands
-/instinct-export     # Export instincts to file
-/instinct-import     # Import instincts from others
-/promote             # Promote project instincts to global scope
-/projects            # List all known projects and their instinct counts
-```
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/instinct-status` | Show all instincts (project-scoped + global) with confidence |
-| `/evolve` | Cluster related instincts into skills/commands, suggest promotions |
-| `/instinct-export` | Export instincts (filterable by scope/domain) |
-| `/instinct-import <file>` | Import instincts with scope control |
-| `/promote [id]` | Promote project instincts to global scope |
-| `/projects` | List all known projects and their instinct counts |
+- Codex: explicit script/workflow entrypoints
+- Claude/Cursor: tool commands plus hook-captured observations where supported
 
 ## Configuration
 
-Edit `config.json` to control the background observer:
+Edit `config.json` to control the optional observer:
 
 ```json
 {
@@ -275,121 +287,89 @@ Edit `config.json` to control the background observer:
 | `observer.enabled` | `false` | Enable the background observer agent |
 | `observer.run_interval_minutes` | `5` | How often the observer analyzes observations |
 | `observer.min_observations_to_analyze` | `20` | Minimum observations before analysis runs |
-| `observer.tool` | `null` | Force a specific native observer runner (`claude` or `cursor`); otherwise infer from environment/config |
+| `observer.tool` | `null` | Force a specific native observer runner where supported |
 | `observer.models.claude` | `haiku` | Claude observer model preference |
-| `observer.models.cursor` | `auto` | Cursor observer model preference; `auto` is the default so Cursor can choose the best available model tier, but you can pin a cheaper/faster model if you want stricter spend control |
-| `observer.commands.*` | tool default | Override the native CLI command used for each tool (`claude`, `agent`, `cursor-agent`, etc.) |
+| `observer.models.cursor` | `auto` | Cursor observer model preference |
+| `observer.commands.*` | tool default | Override the native CLI command for supported observer runners |
 
-All scripts are Node.js (`.js`); no shell or PowerShell variants. Same commands work on Windows, macOS, and Linux.
+Notes:
 
-The observer must use the active tool's native CLI. Cursor setups must not depend on the `claude` binary, Claude setups must not depend on Cursor, and Codex observer support is an explicit opt-in instead of a baseline install.
+- all scripts are Node.js `.js`
+- Claude setups must not depend on Cursor
+- Cursor setups must not depend on Claude
+- Codex observer support is a separate opt-in layer, not the baseline
 
-Codex currently uses an explicit workflow instead of hooks. In a Codex-installed
-repo, the main entrypoint is:
+## Weekly Retrospectives
 
-```bash
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js status
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js analyze
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
-```
+Weekly retrospectives are intentionally low-noise.
 
-The weekly retrospective is intentionally manual-first. It reads the current
-project's `observations.jsonl` plus matching archived batches for one ISO week
-and writes a structured summary under:
+For Codex they are part of the recommended baseline:
 
 ```text
 .codex/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
 ```
 
-Its goal is not to log more activity. It should stay sparse and highlight:
+The goal is not to log more activity. The goal is to highlight:
 
-- repeated shell commands that deserve a dedicated script or custom command
-- repeated external CLI usage that may deserve an MCP integration
+- repeated shell commands that should become scripts or custom commands
+- repeated external CLI usage that may justify MCP integrations
 - repeated multi-step workflows that should be documented or automated
-
-For Codex, this is the recommended shape:
-
-- sparse, explicit capture
-- explicit weekly retrospectives
-- optional external observer for background analysis only
-- no fake hook parity claims
-
-Other behavior (observation capture, instinct thresholds, project scoping, promotion criteria) is configured via code defaults in `instinct-cli.js` and the observe hook script.
+- repeated file hotspots that suggest missing helpers
 
 ## File Structure
 
-```
+```text
 <data>/homunculus/
-+-- identity.json           # Your profile, technical level
-+-- projects.json           # Registry: project hash -> name/path/remote
-+-- observations.jsonl      # Global observations (fallback)
++-- identity.json
++-- projects.json
++-- observations.jsonl
 +-- instincts/
-|   +-- personal/           # Global auto-learned instincts
-|   +-- inherited/          # Global imported instincts
+|   +-- personal/
+|   +-- inherited/
 +-- evolved/
-|   +-- agents/             # Global generated agents
-|   +-- skills/             # Global generated skills
-|   +-- commands/           # Global generated commands
+|   +-- agents/
+|   +-- skills/
+|   +-- commands/
 +-- projects/
-    +-- a1b2c3d4e5f6/       # Project hash (from git remote URL)
-    |   +-- observations.jsonl
-    |   +-- observations.archive/
-    |   +-- instincts/
-    |   |   +-- personal/   # Project-specific auto-learned
-    |   |   +-- inherited/  # Project-specific imported
-    |   +-- evolved/
-    |       +-- skills/
-    |       +-- commands/
-    |       +-- agents/
-    +-- f6e5d4c3b2a1/       # Another project
-        +-- ...
+    +-- <project-hash>/
+        +-- observations.jsonl
+        +-- observations.archive/
+        +-- instincts/
+        |   +-- personal/
+        |   +-- inherited/
+        +-- evolved/
+            +-- skills/
+            +-- commands/
+            +-- agents/
 ```
 
 ## Scope Decision Guide
 
 | Pattern Type | Scope | Examples |
 |-------------|-------|---------|
-| Language/framework conventions | **project** | "Use React hooks", "Follow Django REST patterns" |
-| File structure preferences | **project** | "Tests in `__tests__`/", "Components in src/components/" |
-| Code style | **project** | "Use functional style", "Prefer dataclasses" |
-| Error handling strategies | **project** | "Use Result type for errors" |
-| Security practices | **global** | "Validate user input", "Sanitize SQL" |
-| General best practices | **global** | "Write tests first", "Always handle errors" |
-| Tool workflow preferences | **global** | "Grep before Edit", "Read before Write" |
-| Git practices | **global** | "Conventional commits", "Small focused commits" |
+| Language/framework conventions | project | "Use React hooks", "Follow Django REST patterns" |
+| File structure preferences | project | "Tests in `__tests__/`", "Components in src/components/" |
+| Code style | project | "Use functional style", "Prefer dataclasses" |
+| Error handling strategies | project | "Use Result type for errors" |
+| Security practices | global | "Validate user input", "Sanitize SQL" |
+| General best practices | global | "Write tests first", "Always handle errors" |
+| Tool workflow preferences | global | "Grep before Edit", "Read before Write" |
+| Git practices | global | "Conventional commits", "Small focused commits" |
 
-## Instinct Promotion (Project -> Global)
+## Instinct Promotion
 
-When the same instinct appears in multiple projects with high confidence, it's a candidate for promotion to global scope.
+Project instincts can be promoted to global scope when the same pattern is seen across multiple projects with strong confidence.
 
-**Auto-promotion criteria:**
-- Same instinct ID in 2+ projects
-- Average confidence >= 0.8
-
-**How to promote:**
+Example:
 
 ```bash
-# Promote a specific instinct
-node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" promote prefer-explicit-errors
-
-# Auto-promote all qualifying instincts
 node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" promote
-
-# Preview without changes
 node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" promote --dry-run
 ```
 
-For manual installs, replace `<config>` with your MDT config directory:
-```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" promote
-```
-
-The `/evolve` command also suggests promotion candidates.
+For manual installs, replace `<config>` with your MDT config directory.
 
 ## Confidence Scoring
-
-Confidence evolves over time:
 
 | Score | Meaning | Behavior |
 |-------|---------|----------|
@@ -398,51 +378,35 @@ Confidence evolves over time:
 | 0.7 | Strong | Auto-approved for application |
 | 0.9 | Near-certain | Core behavior |
 
-**Confidence increases** when:
-- Pattern is repeatedly observed
-- User doesn't correct the suggested behavior
-- Similar instincts from other sources agree
+Confidence increases with repeated consistent evidence and decreases with corrections, contradiction, or lack of reinforcement.
 
-**Confidence decreases** when:
-- User explicitly corrects the behavior
-- Pattern isn't observed for extended periods
-- Contradicting evidence appears
+## Hook-Capable vs Manual Capture
 
-## Why Hooks vs Skills for Observation?
+Claude Code and Cursor can use hooks for deterministic observation capture.
 
-This hook section applies to Claude Code and Cursor. Codex is intentionally
-different: it uses explicit/manual capture and analysis as the baseline, plus
-an optional external observer for background analysis only.
+Codex is intentionally different:
 
-> "v1 relied on skills to observe. Skills are probabilistic -- they fire ~50-80% of the time based on Claude's judgment."
-
-For tools that support hooks, hooks fire **100% of the time**, deterministically. This means:
-- Every tool call is observed
-- No patterns are missed
-- Learning is comprehensive
+- no hook-style automatic capture claim
+- manual capture and manual analysis are the baseline
+- optional observer is analysis-only for Codex
 
 ## Backward Compatibility
 
-v2.1 is fully compatible with v2.0 and v1:
-- Existing global instincts in `<data>/homunculus/instincts/` still work as global instincts
-- Existing learned skills in `<config>/skills/learned/` still work
-- Stop hook still runs (but now also feeds into v2)
-- Gradual migration: run both in parallel
+v2.1 remains compatible with existing instinct storage and evolved assets. Legacy hook-oriented flows remain relevant for Claude Code and Cursor, but they are not the Codex baseline in this repo.
 
 ## Privacy
 
-- Observations stay **local** on your machine
-- Project-scoped instincts are isolated per project
-- Only **instincts** (patterns) can be exported — not raw observations
-- No actual code or conversation content is shared
-- You control what gets exported and promoted
+- observations stay local on your machine
+- project-scoped instincts are isolated by project
+- only instinct patterns, not raw observations, should be exported
+- you control export, import, and promotion
 
 ## Related
 
-- [Skill Creator](https://skill-creator.app) - Generate instincts from repo history
-- Homunculus - Community project that inspired the v2 instinct-based architecture (atomic observations, confidence scoring, instinct evolution pipeline)
-- [The Longform Guide](https://x.com/affaanmustafa/status/2014040193557471352) - Continuous learning section
+- [Skill Creator](https://skill-creator.app)
+- Homunculus
+- [The Longform Guide](https://x.com/affaanmustafa/status/2014040193557471352)
 
 ---
 
-*Instinct-based learning: teaching Claude your patterns, one project at a time.*
+Instinct-based learning: teach the tool your patterns, one project at a time.

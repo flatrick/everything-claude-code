@@ -3,7 +3,8 @@
 > ⚠️ This README is specific to OpenCode usage.  
 > If you installed MDT via npm, refer to the root README instead.
 
-ModelDev Toolkit plugin for OpenCode - agents, commands, hooks, and skills.
+ModelDev Toolkit plugin for OpenCode with OpenCode-specific commands, prompts,
+plugins, and instructions.
 
 ## Installation
 
@@ -111,19 +112,17 @@ opencode
 | check-coverage | Analyze test coverage |
 | security-audit | Security vulnerability scan |
 
-## Hook Event Mapping
+## Plugin Events
 
-OpenCode's plugin system maps to Claude Code hooks:
+OpenCode's plugin system uses native events such as:
 
-| Claude Code | OpenCode |
-|-------------|----------|
-| PreToolUse | `tool.execute.before` |
-| PostToolUse | `tool.execute.after` |
-| Stop | `session.idle` |
-| SessionStart | `session.created` |
-| SessionEnd | `session.deleted` |
+- `tool.execute.before`
+- `tool.execute.after`
+- `session.idle`
+- `session.created`
+- `session.deleted`
 
-OpenCode has 20+ additional events not available in Claude Code.
+This template uses those native OpenCode events directly.
 
 ## Skills
 

@@ -16,7 +16,8 @@ function getValidatorFunction(validatorName) {
     'validate-runtime-ignores': mod.validateRuntimeIgnores,
     'validate-install-packages': mod.validateInstallPackages,
     'validate-markdown-links': mod.validateMarkdownLinks,
-    'validate-markdown-path-refs': mod.validateMarkdownPathRefs
+    'validate-markdown-path-refs': mod.validateMarkdownPathRefs,
+    'validate-template-doc-boundaries': mod.validateTemplateDocBoundaries
   };
   if (!map[validatorName]) {
     throw new Error(`Unsupported validator: ${validatorName}`);
@@ -57,7 +58,8 @@ function runValidatorWithDir(validatorName, dirConstant, overridePath) {
     CURSOR_SKILLS_DIR: 'cursorSkillsDir',
     CURSOR_COMMANDS_DIR: 'cursorCommandsDir',
     CODEX_RULES_DIR: 'codexRulesDir',
-    CODEX_SKILLS_DIR: 'codexSkillsDir'
+    CODEX_SKILLS_DIR: 'codexSkillsDir',
+    REPO_ROOT: 'repoRoot'
   };
   const key = optionMap[dirConstant];
   if (!key) throw new Error(`Unsupported dir constant: ${dirConstant}`);
@@ -77,7 +79,8 @@ function runValidatorWithDirs(validatorName, overrides) {
     CURSOR_SKILLS_DIR: 'cursorSkillsDir',
     CURSOR_COMMANDS_DIR: 'cursorCommandsDir',
     CODEX_RULES_DIR: 'codexRulesDir',
-    CODEX_SKILLS_DIR: 'codexSkillsDir'
+    CODEX_SKILLS_DIR: 'codexSkillsDir',
+    REPO_ROOT: 'repoRoot'
   };
   const options = {};
   for (const [constant, overridePath] of Object.entries(overrides)) {

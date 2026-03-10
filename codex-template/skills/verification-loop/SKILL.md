@@ -1,12 +1,12 @@
 ---
 name: verification-loop
-description: "A comprehensive verification system for Claude Code sessions."
+description: "A comprehensive verification system for Codex sessions."
 
 ---
 
 # Verification Loop Skill
 
-A comprehensive verification system for Claude Code sessions.
+A comprehensive verification system for Codex sessions.
 
 ## When to Use
 
@@ -117,10 +117,10 @@ Set a mental checkpoint:
 - After finishing a component
 - Before moving to next task
 
-Run: /verify
+Run the verification workflow again after each major change.
 ```
 
-## Integration with Hooks
+## Integration
 
-This skill complements PostToolUse hooks but provides deeper verification.
-Hooks catch issues immediately; this skill provides comprehensive review.
+This skill complements Codex's explicit verification workflow and provides a
+deeper review pass before completion or commit.

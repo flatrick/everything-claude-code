@@ -1,6 +1,6 @@
 # ModelDev Toolkit - OpenCode Instructions
 
-This document consolidates the core rules and guidelines from the Claude Code configuration for use with OpenCode.
+This document consolidates the core MDT rules and guidelines for use with OpenCode.
 
 ## Security Guidelines (CRITICAL)
 
@@ -299,7 +299,7 @@ interface Repository<T> {
 
 ## OpenCode-Specific Notes
 
-Since OpenCode does not support hooks, the following actions that were automated in Claude Code must be done manually:
+Use OpenCode's own workflow surfaces for these manual checks:
 
 ### After Writing/Editing Code
 - Run `prettier --write <file>` to format JS/TS files

@@ -5,7 +5,7 @@ agent: build
 
 # Skill Create Command
 
-Analyze git history to generate Claude Code skills: $ARGUMENTS
+Analyze git history to generate MDT skills for this OpenCode workspace: $ARGUMENTS
 
 ## Your Task
 
