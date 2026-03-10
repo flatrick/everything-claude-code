@@ -57,6 +57,12 @@ node scripts/install-mdt.js --target codex typescript continuous-learning
 node scripts/install-mdt.js --target codex --project-dir ../scratch-repo typescript continuous-learning
 ```
 
+Codex note:
+
+- `~/.codex/config.toml` is treated as user-owned
+- if it already exists, the installer preserves it and writes `~/.codex/config.mdt.toml` as an MDT reference file
+- Codex-specific MDT guidance lives primarily in `~/.codex/AGENTS.md`
+
 Gemini:
 
 ```bash

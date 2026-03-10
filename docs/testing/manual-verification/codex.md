@@ -41,6 +41,8 @@ node scripts/install-mdt.js --target codex --project-dir ../scratch-repo typescr
 Then confirm:
 
 - `~/.codex/config.toml` exists
+- if `~/.codex/config.toml` already existed before install, confirm the installer
+  preserved it and wrote `~/.codex/config.mdt.toml` instead of overwriting it
 - `~/.codex/AGENTS.md` exists
 - `.agents/skills/` contains the selected Codex skills
 - `.agents/scripts/lib/` exists for MDT runtime helpers

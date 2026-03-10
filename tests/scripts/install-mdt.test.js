@@ -535,6 +535,66 @@ function runTests() {
           assert.strictEqual(learnStatus.status, 0, `codex learn status should succeed\nstdout:\n${learnStatus.stdout}\nstderr:\n${learnStatus.stderr}`);
           assert.ok(learnStatus.stdout.includes('Tool: codex'));
           assert.ok(learnStatus.stdout.includes(path.join(tmpProject, '.codex', 'homunculus', 'projects')));
+
+          const instinctStatus = spawnSync(
+            'node',
+            [path.join(projectAgentsRoot, 'skills', 'continuous-learning-manual', 'scripts', 'instinct-cli.js'), 'status'],
+            {
+              encoding: 'utf8',
+              cwd: tmpProject,
+              env: {
+                ...process.env,
+                HOME: tmpHome,
+                USERPROFILE: tmpHome
+              },
+              stdio: ['pipe', 'pipe', 'pipe']
+            }
+          );
+          assert.strictEqual(instinctStatus.status, 0, `instinct status should succeed\nstdout:\n${instinctStatus.stdout}\nstderr:\n${instinctStatus.stderr}`);
+          assert.ok(instinctStatus.stdout.includes(path.join(tmpProject, '.codex', 'homunculus')));
+          assert.ok(!instinctStatus.stdout.includes(path.join(tmpHome, '.cursor', 'homunculus')));
+        } finally {
+          cleanupTestDir(tmpHome);
+          cleanupTestDir(tmpProject);
+        }
+      }
+    },
+    {
+      name: 'codex install preserves existing user config and writes MDT reference config',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-codex-existing-home-');
+        const tmpProject = createTestDir('mdt-install-codex-existing-proj-');
+
+        try {
+          const codexRoot = path.join(tmpHome, '.codex');
+          fs.mkdirSync(codexRoot, { recursive: true });
+          const existingConfig = [
+            "[projects.'\\\\?\\C:\\\\src\\\\github\\\\example']",
+            'trust_level = "trusted"',
+            '',
+            '[windows]',
+            'sandbox = "elevated"'
+          ].join('\n');
+          fs.writeFileSync(path.join(codexRoot, 'config.toml'), existingConfig, 'utf8');
+
+          const result = runInstaller(['--target', 'codex', 'typescript'], {
+            cwd: tmpHome,
+            projectDir: tmpProject,
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome
+            }
+          });
+          assertSuccess(result, 'codex install with existing config');
+
+          assert.strictEqual(
+            fs.readFileSync(path.join(codexRoot, 'config.toml'), 'utf8'),
+            existingConfig,
+            'existing user config should be preserved'
+          );
+          const referenceConfig = fs.readFileSync(path.join(codexRoot, 'config.mdt.toml'), 'utf8');
+          assert.ok(referenceConfig.includes('sandbox_mode = "workspace-write"'));
+          assert.ok(referenceConfig.includes('[mcp_servers.github]'));
         } finally {
           cleanupTestDir(tmpHome);
           cleanupTestDir(tmpProject);

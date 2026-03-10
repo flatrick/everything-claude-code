@@ -48,6 +48,14 @@ The install path now has two layers:
 - user layer: `~/.codex/` for config and Codex-specific global guidance
 - project layer: `.agents/skills/` plus `.agents/scripts/` materialized from `codex-template/` and shared runtime scripts
 
+Codex config policy:
+
+- treat `~/.codex/config.toml` as user-owned
+- the installer may create it when missing
+- if it already exists, MDT preserves it and writes `~/.codex/config.mdt.toml`
+  as a reference file instead of overwriting local Codex settings
+- repo guidance belongs in `AGENTS.md`, not in `config.toml`
+
 For Codex, `codex-template/` is the install-source tree. `.agents/skills/` is the
 materialized project-facing surface after install.
 

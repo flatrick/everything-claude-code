@@ -1000,10 +1000,14 @@ function installCodex(packageNames, projectDir) {
   if (fs.existsSync(configSrc)) {
     const configDest = path.join(destDir, 'config.toml');
     if (fs.existsSync(configDest)) {
-      console.log('Note: ' + configDest + ' already exists. It will be overwritten.');
+      const referenceDest = path.join(destDir, 'config.mdt.toml');
+      fs.copyFileSync(configSrc, referenceDest);
+      console.log('Preserving existing Codex config -> ' + configDest);
+      console.log('Installing MDT Codex config reference -> ' + referenceDest);
+    } else {
+      fs.copyFileSync(configSrc, configDest);
+      console.log('Installing Codex config -> ' + configDest);
     }
-    fs.copyFileSync(configSrc, configDest);
-    console.log('Installing Codex config -> ' + configDest);
   }
 
   const agentsMdSrc = path.join(CODEX_SRC, 'AGENTS.md');
@@ -1019,8 +1023,8 @@ function installCodex(packageNames, projectDir) {
 
   if (process.platform === 'win32') {
     console.log('');
-    console.log('NOTE: config.toml may reference macOS-only tools (e.g. terminal-notifier).');
-    console.log('      Adjust or remove the [notify] section on Windows.');
+    console.log('NOTE: Existing ~/.codex/config.toml is preserved when present.');
+    console.log('      MDT writes config.mdt.toml as a reference file instead of overwriting user Codex settings.');
     console.log('');
   }
   console.log('Done. Codex configs installed to ' + destDir + '/');

@@ -39,9 +39,7 @@ function createFixtureRoot() {
     rootDir,
     path.join('codex-template', 'config.toml'),
     [
-      'instructions = """',
-      'Test-Driven Development (TDD)',
-      '"""',
+      'approval_policy = "on-request"',
       'sandbox_mode = "workspace-write"',
       '[mcp_servers.github]',
       '[mcp_servers.sequential-thinking]'
@@ -75,10 +73,7 @@ function createInstalledFixtureRoot() {
     fakeHome,
     path.join('.codex', 'config.toml'),
     [
-      'instructions = """',
-      'Test-Driven Development (TDD)',
-      'Security-First',
-      '"""',
+      'approval_policy = "on-request"',
       'sandbox_mode = "workspace-write"',
       '[mcp_servers.github]',
       '[mcp_servers.sequential-thinking]'
@@ -147,7 +142,7 @@ function runTests() {
       writeFile(
         rootDir,
         path.join('codex-template', 'config.toml'),
-        ['instructions = """', 'Test-Driven Development (TDD)', '"""'].join('\n')
+        ['approval_policy = "on-request"'].join('\n')
       );
 
       const output = [];
