@@ -110,7 +110,6 @@ Use these as the current source of truth:
 - `scripts/` — Node.js only (install-mdt.js, hooks, lib, detect-env, sync-hook-mirrors.js)
 - `cursor-template/` — Cursor source templates (rules, hooks, skills, and config files rendered into `.cursor/` on install)
 - `codex-template/` — Codex source templates (`config.toml`, `AGENTS.md`, `skills/`) rendered into either `~/.codex/` with `--global` or the target repo with `--project-dir`
-- `opencode-template/` — OpenCode source templates (commands, prompts, plugins, tools, config)
 - `tests/` — Test suite
 
 Full layout and detailed tool behavior: [docs/](docs/), [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).
@@ -122,7 +121,6 @@ Full layout and detailed tool behavior: [docs/](docs/), [CLAUDE.md](CLAUDE.md), 
 - Cursor details: [docs/tools/cursor.md](docs/tools/cursor.md)
 - Codex details: [docs/tools/codex.md](docs/tools/codex.md)
 - Claude Code details: [docs/tools/claude-code.md](docs/tools/claude-code.md)
-- OpenCode details: [docs/tools/opencode.md](docs/tools/opencode.md)
 
 ---
 

@@ -34,22 +34,6 @@
         { "surfaceType": "skill", "name": "security-review", "path": "codex-template/skills/security-review/SKILL.md", "role": "installed-skill" }
       ],
       "requiredFiles": ["codex-template/config.toml", "codex-template/AGENTS.md", "codex-template/skills/security-review/SKILL.md"]
-    },
-    "opencode": {
-      "status": "official",
-      "verificationMode": "repo-adapter",
-      "artifactMappings": [
-        { "surfaceType": "config", "name": "opencode-config", "path": "opencode-template/opencode.json", "role": "tool-config" },
-        { "surfaceType": "command", "name": "security", "path": "opencode-template/commands/security.md", "role": "primary-workflow" },
-        { "surfaceType": "agent-prompt", "name": "security-reviewer", "path": "opencode-template/prompts/agents/security-reviewer.txt", "role": "specialized-reviewer" },
-        { "surfaceType": "tool", "name": "security-audit", "path": "opencode-template/tools/security-audit.ts", "role": "verification-runner" }
-      ],
-      "requiredFiles": [
-        "opencode-template/opencode.json",
-        "opencode-template/commands/security.md",
-        "opencode-template/prompts/agents/security-reviewer.txt",
-        "opencode-template/tools/security-audit.ts"
-      ]
     }
   }
 }

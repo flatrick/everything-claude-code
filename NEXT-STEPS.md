@@ -55,7 +55,7 @@ Proposed direction:
 - keep source assets in `rules/`, `skills/`, `commands/`, `hooks/`, and per-tool template dirs
 - add package manifests under `packages/`
 - make `scripts/install-mdt.js` resolve requested install scopes from package manifests instead of inferring behavior from `rules/`
-- allow tool-specific package overrides where Cursor/Claude/Codex/OpenCode need different assets
+- allow tool-specific package overrides where Cursor/Claude/Codex need different assets
 
 What this should solve:
 
@@ -299,12 +299,20 @@ release notes covering:
 - Claude workflow smoke coverage
 - package-driven install selection and Cursor skills/commands composition
 
-### 11. Add OpenCode local smoke once installed
+### 11. Revisit OpenCode after v1.0.0 + `.mjs` migration
 
-OpenCode is structurally documented but not locally verified. Once installed:
+OpenCode is intentionally out of the active support surface for now.
 
-- run `node scripts/smoke-tool-setups.js`
-- add an OpenCode-specific workflow smoke if the adapter is going to stay first-class
+Do not spend stabilization time on OpenCode before:
+
+- `v1.0.0` is cut
+- the planned `.mjs` migration is complete
+
+If support is resumed later:
+
+- rebuild the adapter from current vendor reality
+- add fresh local smoke coverage
+- reintroduce it through packages, workflow contracts, and tool docs together
 
 ---
 

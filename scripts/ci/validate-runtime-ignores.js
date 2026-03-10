@@ -8,8 +8,7 @@ const REPO_ROOT = path.join(__dirname, '../..');
 const REQUIRED_RUNTIME_IGNORES = Object.freeze([
   '.claude/',
   '.cursor/',
-  '.codex/',
-  '.opencode/'
+  '.codex/'
 ]);
 
 function parseIgnoreEntries(content) {

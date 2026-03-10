@@ -207,7 +207,6 @@ Not yet justified:
 
 - `tools.cursor.commands`
 - `tools.codex.rules`
-- `tools.opencode.*`
 
 Those should wait until the repo has a real install surface and installer path
 for them.

@@ -1,6 +1,6 @@
 ---
 name: tool-setup-verifier
-description: Verify MDT's shipped Claude, Cursor, Codex, and OpenCode setups against the local workflow contract. Use when auditing tool support, checking whether setup files still exist, validating workflow coverage, or producing a per-tool readiness report without relying on GitHub Actions or live model calls.
+description: Verify MDT's shipped Claude, Cursor, and Codex setups against the local workflow contract. Use when auditing tool support, checking whether setup files still exist, validating workflow coverage, or producing a per-tool readiness report without relying on GitHub Actions or live model calls.
 ---
 
 # Tool Setup Verifier

@@ -106,16 +106,6 @@ Use this only for trusted local verification inside this repository.
 This keeps the relaxation scoped to the current Codex launch instead of
 changing `~/.codex/config.toml`.
 
-### OpenCode
-
-```bash
-opencode --version
-opencode --help
-```
-
-If `opencode` is not installed:
-- inspect `opencode-template/opencode.json`
-- inspect `opencode-template/plugins/`
 - keep status as `not-locally-verified`
 
 ## Repo Adapter Checks
@@ -125,7 +115,6 @@ Use these files to confirm what MDT actually ships:
 - Claude: `claude-template/hooks.json`, `commands/`, `agents/`, `skills/`
 - Cursor: `cursor-template/rules/`, `cursor-template/hooks.json`, `cursor-template/hooks/`
 - Codex: `codex-template/config.toml`, `codex-template/AGENTS.md`
-- OpenCode: `opencode-template/opencode.json`, `opencode-template/plugins/`, `opencode-template/commands/`, `opencode-template/prompts/agents/`
 
 ## Minimum Evidence Required Per Claim
 
@@ -151,4 +140,3 @@ Every page in `docs/tools/` should keep:
 - Cursor installed: yes
 - Cursor terminal agent installed: yes
 - Codex installed: yes
-- OpenCode installed: no

@@ -1,6 +1,6 @@
 # MDT Tool Docs Pack
 
-This directory is the authoritative reference for how MDT maps onto Claude Code, Cursor, Codex, and OpenCode.
+This directory is the authoritative reference for how MDT maps onto Claude Code, Cursor, and Codex.
 
 It exists to prevent repeated web searches and prevent agents from guessing based on Claude-specific assumptions.
 
@@ -18,7 +18,6 @@ It exists to prevent repeated web searches and prevent agents from guessing base
 - [claude-code.md](./claude-code.md) - Claude Code reference target
 - [cursor.md](./cursor.md) - Cursor IDE plus terminal agent
 - [codex.md](./codex.md) - OpenAI Codex CLI
-- [opencode.md](./opencode.md) - OpenCode config/plugin target
 - [local-verification.md](./local-verification.md) - repeatable audit procedure
 
 ## Read Order
@@ -37,7 +36,6 @@ Local tools seen on this machine:
 - Cursor IDE `2.6.13`
 - Cursor terminal agent present as `agent` on this machine, with `cursor-agent` also installed
 - Codex CLI `0.111.0`
-- OpenCode not installed locally
 
 ## Important Rule
 

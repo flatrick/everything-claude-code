@@ -55,7 +55,7 @@ That makes it hard to answer a basic question: “what does `typescript` install
 
 ### 2. Tool differences are scattered
 
-Cursor, Claude, Codex, and Gemini/OpenCode all have different install surfaces,
+Cursor, Claude, Codex, and Gemini all have different install surfaces,
 but those differences are mostly encoded in installer conditionals instead of in
 data.
 
@@ -151,8 +151,7 @@ Initial suggested shape:
       ],
       "commands": []
     },
-    "codex": {},
-    "opencode": {}
+    "codex": {}
   }
 }
 ```
@@ -171,8 +170,8 @@ Source assets stay where they belong:
 - `skills/` remains the source for shared skill content
 - `commands/` remains the source for shared command content
 - `hooks/` and `scripts/` remain the source for shared hook/runtime logic
-- `claude-template/`, `cursor-template/`, `codex-template/`, and
-  `opencode-template/` remain the source for per-tool template assets
+- `claude-template/`, `cursor-template/`, and `codex-template/` remain the
+  source for per-tool template assets
 
 `packages/` should only decide what gets installed together.
 

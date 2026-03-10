@@ -1,5 +1,5 @@
 {
-  "toolOrder": ["claude", "cursor", "codex", "opencode"],
+  "toolOrder": ["claude", "cursor", "codex"],
   "smokeProbes": {
     "claude": [
       { "command": "claude", "args": ["--version"] },
@@ -12,10 +12,6 @@
     "codex": [
       { "command": "codex", "args": ["--version"] },
       { "command": "codex", "args": ["--help"] }
-    ],
-    "opencode": [
-      { "command": "opencode", "args": ["--version"] },
-      { "command": "opencode", "args": ["--help"] }
     ]
   }
 }

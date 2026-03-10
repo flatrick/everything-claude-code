@@ -5,7 +5,7 @@ description: Keep MDT's tool capability docs under docs/tools/ correct, sourced,
 
 # Tool Doc Maintainer
 
-Use this skill when updating MDT's cross-tool documentation for Claude Code, Cursor, Codex, or OpenCode.
+Use this skill when updating MDT's cross-tool documentation for Claude Code, Cursor, or Codex.
 
 ## When to Use
 
@@ -56,7 +56,7 @@ Use the shell already available in the environment. Do not assume Windows or Pow
 PowerShell example:
 
 ```powershell
-$tools = 'claude','cursor','codex','opencode'
+$tools = 'claude','cursor','codex'
 foreach ($t in $tools) {
   $cmd = Get-Command $t -ErrorAction SilentlyContinue
   if ($cmd) { "$t => $($cmd.Source)" } else { "$t => MISSING" }
@@ -66,7 +66,7 @@ foreach ($t in $tools) {
 POSIX shell example:
 
 ```bash
-for t in claude cursor codex opencode; do
+for t in claude cursor codex; do
   if command -v "$t" >/dev/null 2>&1; then
     printf '%s => %s\n' "$t" "$(command -v "$t")"
   else
@@ -98,8 +98,6 @@ codex --help
 codex exec --help
 codex features list
 
-opencode --version
-opencode --help
 ```
 
 Record the exact version you saw.
@@ -111,7 +109,6 @@ Inspect the relevant repo files before making claims:
 - Claude: `claude-template/hooks.json`, `commands/`, `agents/`, `skills/`
 - Cursor: `cursor-template/rules/`, `cursor-template/hooks.json`, `cursor-template/hooks/`
 - Codex: `codex-template/config.toml`, `codex-template/AGENTS.md`
-- OpenCode: `opencode-template/opencode.json`, `opencode-template/plugins/`, `opencode-template/commands/`
 
 This tells you what MDT is doing, not what the vendor guarantees.
 

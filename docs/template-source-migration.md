@@ -11,15 +11,15 @@ The migration separated:
 - per-tool adapter/template source
 - generated or machine-local runtime directories
 
-The goal is to stop treating repo-root runtime-style directories like `.cursor/`, `.codex/`, `.opencode/`, and `.claude/` as canonical tracked source.
+The goal is to stop treating repo-root runtime-style directories like `.cursor/`, `.codex/`, and `.claude/` as canonical tracked source.
 
 ## Current State
 
 The migration is complete.
 
-- `claude-template/`, `cursor-template/`, `codex-template/`, and
-  `opencode-template/` are the canonical per-tool template dirs.
-- `.claude/`, `.cursor/`, `.codex/`, and `.opencode/` are runtime/install dirs,
+- `claude-template/`, `cursor-template/`, and `codex-template/` are the
+  canonical per-tool template dirs.
+- `.claude/`, `.cursor/`, and `.codex/` are runtime/install dirs,
   not canonical repo source.
 - `claude-template/hooks.json` is the canonical Claude hook config source.
 - `hooks/hooks.json` remains the synced Claude-facing mirror.

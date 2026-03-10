@@ -36,7 +36,7 @@ function runTests() {
   if (test('loads workflow contracts from machine-readable files', () => {
     assert.ok(Array.isArray(TOOL_WORKFLOW_CONTRACT.workflows));
     assert.ok(TOOL_WORKFLOW_CONTRACT.workflows.length >= 7);
-    assert.deepStrictEqual(TOOL_ORDER, ['claude', 'cursor', 'codex', 'opencode']);
+    assert.deepStrictEqual(TOOL_ORDER, ['claude', 'cursor', 'codex']);
 
     const smokeWorkflow = TOOL_WORKFLOW_CONTRACT.workflows.find(workflow => workflow.id === 'smoke');
     assert.ok(smokeWorkflow, 'Expected smoke workflow');

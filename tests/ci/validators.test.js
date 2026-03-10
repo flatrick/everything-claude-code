@@ -347,7 +347,6 @@ function runTests() {
     const result = runValidatorWithDir('validate-runtime-ignores', 'GITIGNORE_FILE', gitignoreFile);
     assert.strictEqual(result.code, 1, 'Should fail when runtime ignore entries are missing');
     assert.ok(result.stderr.includes('.codex/'), 'Should report missing .codex/');
-    assert.ok(result.stderr.includes('.opencode/'), 'Should report missing .opencode/');
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 
@@ -356,7 +355,7 @@ function runTests() {
     const gitignoreFile = path.join(testDir, '.gitignore');
     fs.writeFileSync(
       gitignoreFile,
-      '# Runtime dirs\n\n.claude/\n.cursor/\n.codex/\n.opencode/\n'
+      '# Runtime dirs\n\n.claude/\n.cursor/\n.codex/\n'
     );
 
     const result = runValidatorWithDir('validate-runtime-ignores', 'GITIGNORE_FILE', gitignoreFile);
@@ -367,7 +366,7 @@ function runTests() {
   if (test('accepts rooted runtime ignore entries', () => {
     const testDir = createTestDir();
     const gitignoreFile = path.join(testDir, '.gitignore');
-    fs.writeFileSync(gitignoreFile, '/.claude/\n/.cursor/\n/.codex/\n/.opencode/\n');
+    fs.writeFileSync(gitignoreFile, '/.claude/\n/.cursor/\n/.codex/\n');
 
     const result = runValidatorWithDir('validate-runtime-ignores', 'GITIGNORE_FILE', gitignoreFile);
     assert.strictEqual(result.code, 0, 'Should accept rooted runtime ignore entries');
@@ -379,7 +378,7 @@ function runTests() {
     const gitignoreFile = path.join(testDir, '.gitignore');
     fs.writeFileSync(
       gitignoreFile,
-      '.claude/\n.cursor/\n.codex/\n.opencode/\n!.codex/AGENTS.md\n'
+      '.claude/\n.cursor/\n.codex/\n!.codex/AGENTS.md\n'
     );
 
     const result = runValidatorWithDir('validate-runtime-ignores', 'GITIGNORE_FILE', gitignoreFile);
@@ -419,17 +418,6 @@ function runTests() {
     const result = runValidatorWithDir('validate-template-doc-boundaries', 'REPO_ROOT', testDir);
     assert.strictEqual(result.code, 1, 'Should fail on other-tool reference in template doc');
     assert.ok(result.stderr.includes('Cursor'), 'Should report the other tool reference');
-    cleanupTestDir(testDir);
-  })) passed++; else failed++;
-
-  if (test('allows explicitly allowlisted migration docs', () => {
-    const testDir = createTestDir();
-    const migrationDir = path.join(testDir, 'opencode-template');
-    fs.mkdirSync(migrationDir, { recursive: true });
-    fs.writeFileSync(path.join(migrationDir, 'MIGRATION.md'), '# Migration\n\nClaude Code to OpenCode.');
-
-    const result = runValidatorWithDir('validate-template-doc-boundaries', 'REPO_ROOT', testDir);
-    assert.strictEqual(result.code, 0, 'Should allow allowlisted migration docs');
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 

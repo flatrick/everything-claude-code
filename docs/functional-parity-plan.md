@@ -1,14 +1,13 @@
 # Functional Parity Plan
 
-This document captures the analysis of where MDT's four supported tools differ
+This document captures the analysis of where MDT's currently supported tools differ
 in what they can achieve, what can be brought to functional parity, and what
 requires external processes or manual steps due to vendor limitations.
 
 Audit base: the [capability matrix](tools/capability-matrix.md),
 [workflow matrix](tools/workflow-matrix.md), per-tool pages under
 [docs/tools/](tools/), and the actual template contents under
-`claude-template/`, `cursor-template/`, `codex-template/`, and
-`opencode-template/`.
+`claude-template/`, `cursor-template/`, and `codex-template/`.
 
 ---
 
@@ -19,29 +18,29 @@ ways due to differences in their native surface areas.
 
 ### Capability Comparison
 
-| Capability | Claude Code | Cursor | Codex | OpenCode |
-|---|---|---|---|---|
-| Project guidance | `CLAUDE.md` + settings | `.cursor/rules/` + `AGENTS.md` | `AGENTS.md` + `.rules` | `instructions` in config |
-| Rules (file-based) | `~/.claude/rules/` (user+project) | `.cursor/rules/` (project only; user=DB) | `.rules` files in config layers | `instructions` entries |
-| Skills | native `SKILL.md` | native `SKILL.md` | native `.codex/skills/` | via `instructions` pointing at `SKILL.md` |
-| Slash commands | native markdown commands | native custom commands | built-in session commands only | native `command` entries |
-| Subagents | native | custom modes + background agents | `AGENTS.md`; multi-agent=experimental | native `agent` config |
-| Event hooks | native (6 lifecycle types) | **experimental** (MDT adapter) | **unsupported** | native plugins/tools |
-| MCP | native | native | native via `config.toml` | native |
-| Continuous learning | hook-driven auto-observe | hook-driven auto-observe (experimental) | **manual CLI only** | plugin-based |
-| Session persistence | hook-driven | hook-driven (experimental) | **unsupported** | plugin-driven |
-| Cost tracking | hook-driven | hook-driven (experimental) | **unsupported** | plugin-driven |
+| Capability | Claude Code | Cursor | Codex |
+|---|---|---|---|
+| Project guidance | `CLAUDE.md` + settings | `.cursor/rules/` + `AGENTS.md` | `AGENTS.md` + `.rules` |
+| Rules (file-based) | `~/.claude/rules/` (user+project) | `.cursor/rules/` (project only; user=DB) | `.rules` files in config layers |
+| Skills | native `SKILL.md` | native `SKILL.md` | native `.codex/skills/` |
+| Slash commands | native markdown commands | native custom commands | built-in session commands only |
+| Subagents | native | custom modes + background agents | `AGENTS.md`; multi-agent=experimental |
+| Event hooks | native (6 lifecycle types) | **experimental** (MDT adapter) | **unsupported** |
+| MCP | native | native | native via `config.toml` |
+| Continuous learning | hook-driven auto-observe | hook-driven auto-observe (experimental) | **manual CLI only** |
+| Session persistence | hook-driven | hook-driven (experimental) | **unsupported** |
+| Cost tracking | hook-driven | hook-driven (experimental) | **unsupported** |
 
 ### What Each Template Actually Ships
 
-| Asset Type | claude-template | cursor-template | codex-template | opencode-template |
-|---|---|---|---|---|
-| Hook definitions | 1 file (hooks.json) | 17 files (hooks.json + scripts) | 0 | plugin-based (mdt-hooks.ts) |
-| Rules | 0 (installed from `rules/`) | 19 files | 1 (README only) | 0 (INSTRUCTIONS.md) |
-| Commands | 0 (installed from `commands/`) | 8 files | 0 (uses skills) | 27 files |
-| Skills | 0 (installed from `skills/`) | 1 (frontend-slides) | 24 full skills | 0 (uses tools/) |
-| Agents | 0 (installed from `agents/`) | 0 (referenced in rules) | AGENTS.md | 10 prompt files |
-| Tools/Scripts | 0 | 0 | scripts in skills | 7 TypeScript tools |
+| Asset Type | claude-template | cursor-template | codex-template |
+|---|---|---|---|
+| Hook definitions | 1 file (hooks.json) | 17 files (hooks.json + scripts) | 0 |
+| Rules | 0 (installed from `rules/`) | 19 files | 1 (README only) |
+| Commands | 0 (installed from `commands/`) | 8 files | 0 (uses skills) |
+| Skills | 0 (installed from `skills/`) | 1 (frontend-slides) | 24 full skills |
+| Agents | 0 (installed from `agents/`) | 0 (referenced in rules) | AGENTS.md |
+| Tools/Scripts | 0 | 0 | scripts in skills |
 
 Note: Claude, Cursor, and Codex all receive additional content via
 `install-mdt.js` package-driven installs. The numbers above reflect the
@@ -77,18 +76,6 @@ packages are applied.
 | **Rules**: minimal (README only in template) | No actual rule files installed | Yes | Add package-selected rules to `codex-template/rules/` |
 | **Multi-agent**: experimental feature flag | Cannot reliably delegate to subagents | Not yet | Wait for Codex to stabilize multi-agent |
 
-### OpenCode Gaps (vs Claude Code)
-
-| Gap | Impact | Fixable? | How |
-|---|---|---|---|
-| **Not locally verified** | All claims are from docs, not tested | Blocking | Install OpenCode and verify |
-| **No skills directory** | Different model (tools + instructions) | By design | Map skills to OpenCode native instructions/tools |
-| **No rule files** | Uses INSTRUCTIONS.md instead | By design | Already mapped |
-| **Contradictory docs** | `MIGRATION.md` conflicts with agent prompts about hook support | Confusing for future contributors | Reconcile the files |
-| **No package-driven install** | Not an `install-mdt.js` target | Yes | Add OpenCode target to installer |
-
----
-
 ## Why Some Gaps Cannot Be Closed
 
 ### Codex: No Hooks (Fundamental Vendor Limitation)
@@ -115,13 +102,6 @@ watcher (higher fidelity, requires a second terminal).
 Cursor stores user-level rules in a database, not files. MDT can only install
 project-level rules to `.cursor/rules/`. This cannot be changed without Cursor
 exposing a file-based user-rule surface.
-
-### OpenCode: Not Installed (Verification Blocker)
-
-Until OpenCode is installed locally, all claims remain `not-locally-verified`.
-No code changes should target OpenCode's native behavior until this is resolved.
-
----
 
 ## Implementation Plan
 
@@ -242,7 +222,6 @@ Ensure each tool has a working smoke path:
 | Claude | `/smoke` command | Missing deeper workflow smoke (plan, tdd, verify, security) |
 | Cursor | `/smoke` command | Works but depends on experimental hooks for full check |
 | Codex | `tool-setup-verifier` skill + local scripts | Working |
-| OpenCode | None | Needs install + smoke script |
 
 **Effort**: Small
 
@@ -262,21 +241,8 @@ Ensure every MDT doc that mentions Cursor hooks clearly states:
 | Claude | Hook-driven auto-track | Reference implementation |
 | Cursor | Hook-driven (experimental) | Add manual fallback |
 | Codex | None | **Manual**: Check Codex billing dashboard. No in-tool hook possible. Document as known limitation. |
-| OpenCode | Plugin-based | Verify once installed |
 
 **Effort**: Small (documentation) to Medium (Cursor fallback)
-
-### Phase 4: OpenCode Verification (P3)
-
-1. Install OpenCode locally
-2. Run smoke tests (`node scripts/smoke-tool-setups.js`)
-3. Reconcile contradictory docs (`MIGRATION.md` vs agent prompts about hooks)
-4. Add OpenCode as `install-mdt.js` target
-5. Add OpenCode-specific workflow smoke
-
-**Effort**: Medium
-
----
 
 ## Priority Summary
 
@@ -291,7 +257,6 @@ Ensure every MDT doc that mentions Cursor hooks clearly states:
 | P2 | 2d. Unified smoke surface | Small | Verification confidence |
 | P2 | 2e. Document hook experimental status | Small | Clarity for users |
 | P2 | Phase 3. Cost tracking parity | Small-Medium | Observability |
-| P3 | Phase 4. OpenCode verification | Medium | New tool support |
 
 ---
 
@@ -302,5 +267,4 @@ Ensure every MDT doc that mentions Cursor hooks clearly states:
 - [V1 Target State](V1-TARGET-STATE.md) — intended end state
 - [NEXT-STEPS.md](../NEXT-STEPS.md) — active roadmap
 - Per-tool pages: [Claude Code](tools/claude-code.md),
-  [Cursor](tools/cursor.md), [Codex](tools/codex.md),
-  [OpenCode](tools/opencode.md)
+  [Cursor](tools/cursor.md), [Codex](tools/codex.md)

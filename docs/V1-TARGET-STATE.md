@@ -84,13 +84,6 @@ Desired state:
 - project-local Codex install and runtime state under `.codex/` is explicit and documented
 - continuous-learning works natively for Codex without Claude or Cursor dependencies
 
-### OpenCode
-
-Desired state:
-
-- documented honestly as long as local verification gaps remain
-- promoted only when the local install and smoke path are real
-
 ## Capability Package Target State
 
 Capability packages should be treated as first-class install bundles, not informal labels.

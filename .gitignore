@@ -72,8 +72,6 @@ verify-tool-setups.js.txt
 # Local Codex config installation
 .codex/
 
-# Local OpenCode config installation
-.opencode/
 
 # Local Codex agent install surface (generated, not committed)
 .agents/

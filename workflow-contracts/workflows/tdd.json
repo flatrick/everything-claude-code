@@ -36,20 +36,6 @@
         { "surfaceType": "skill", "name": "tdd-workflow", "path": "codex-template/skills/tdd-workflow/SKILL.md", "role": "installed-skill" }
       ],
       "requiredFiles": ["codex-template/config.toml", "codex-template/AGENTS.md", "codex-template/skills/tdd-workflow/SKILL.md"]
-    },
-    "opencode": {
-      "status": "official",
-      "verificationMode": "repo-adapter",
-      "artifactMappings": [
-        { "surfaceType": "config", "name": "opencode-config", "path": "opencode-template/opencode.json", "role": "tool-config" },
-        { "surfaceType": "command", "name": "tdd", "path": "opencode-template/commands/tdd.md", "role": "primary-workflow" },
-        { "surfaceType": "agent-prompt", "name": "tdd-guide", "path": "opencode-template/prompts/agents/tdd-guide.txt", "role": "specialized-tdd" }
-      ],
-      "requiredFiles": [
-        "opencode-template/opencode.json",
-        "opencode-template/commands/tdd.md",
-        "opencode-template/prompts/agents/tdd-guide.txt"
-      ]
     }
   }
 }

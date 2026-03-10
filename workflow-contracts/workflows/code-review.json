@@ -34,20 +34,6 @@
         { "surfaceType": "config", "name": "codex-config", "path": "codex-template/config.toml", "role": "codex-runtime-config" }
       ],
       "requiredFiles": ["codex-template/config.toml", "codex-template/AGENTS.md"]
-    },
-    "opencode": {
-      "status": "official",
-      "verificationMode": "repo-adapter",
-      "artifactMappings": [
-        { "surfaceType": "config", "name": "opencode-config", "path": "opencode-template/opencode.json", "role": "tool-config" },
-        { "surfaceType": "command", "name": "code-review", "path": "opencode-template/commands/code-review.md", "role": "primary-workflow" },
-        { "surfaceType": "agent-prompt", "name": "code-reviewer", "path": "opencode-template/prompts/agents/code-reviewer.txt", "role": "specialized-reviewer" }
-      ],
-      "requiredFiles": [
-        "opencode-template/opencode.json",
-        "opencode-template/commands/code-review.md",
-        "opencode-template/prompts/agents/code-reviewer.txt"
-      ]
     }
   }
 }

@@ -12,12 +12,9 @@ const TOOL_PATTERNS = {
   claude: /\bClaude Code\b|\bClaude\b/g,
   cursor: /\bCursor\b/g,
   codex: /\bCodex\b/g,
-  opencode: /\bOpenCode\b/g,
   gemini: /\bGemini\b/g
 };
-const ALLOWLIST = new Set([
-  'opencode-template/MIGRATION.md'
-]);
+const ALLOWLIST = new Set();
 
 function normalizeSlashes(value) {
   return value.replace(/\\/g, '/');
