@@ -30,6 +30,7 @@ function runTests() {
 
   const repoRoot = path.join(__dirname, '..', '..');
   const scripts = [
+    'scripts/codex-observer.js',
     'scripts/hooks/evaluate-session.js',
     'skills/strategic-compact/suggest-compact.js',
     'skills/continuous-learning-manual/scripts/detect-project.js',

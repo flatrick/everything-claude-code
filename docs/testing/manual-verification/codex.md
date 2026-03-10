@@ -92,21 +92,28 @@ Expected:
 
 ## Optional External Observer
 
-For Codex specifically, an optional external Node observer is an acceptable
-future design.
+Codex now has an optional external observer for running background analysis from
+a normal terminal outside the active Codex shell:
 
-Use that direction when:
+```bash
+node .agents/scripts/codex-observer.js status
+node .agents/scripts/codex-observer.js once
+node .agents/scripts/codex-observer.js watch --interval-seconds 15
+```
+
+Use it when:
 
 - project-scoped storage works
 - explicit `capture` and `weekly` flows work
 - but background `analyze` is blocked by the active Codex shell environment
 
-The intended shape is:
+Expected:
 
-- Codex sessions keep writing explicit local learning artifacts
-- a separate Node process watches project `.codex/homunculus/`
-- that process runs heavier analysis outside the restricted Codex session
-- the explicit/manual flow remains the baseline even if the external observer is added later
+- `status` reports project `.codex/homunculus/projects/<id>/...` storage
+- `once` triggers analysis when the observation threshold is met
+- `watch` polls the same project-local observations file and runs analysis after
+  new observations accumulate
+- the explicit/manual flow remains the baseline even if the external observer is running
 
 ## Likely Deeper Checks
 

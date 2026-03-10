@@ -120,6 +120,7 @@ const testFiles = [
   'scripts/claw.test.js',
   'scripts/check-dependencies.test.js',
   'scripts/hook-platforms.test.js',
+  'scripts/codex-observer.test.js',
   'scripts/continuous-learning-observer.test.js',
   'scripts/detect-project.test.js',
   'scripts/continuous-learning-retrospective.test.js',

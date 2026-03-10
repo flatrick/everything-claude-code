@@ -973,7 +973,7 @@ function installCodexRuntimeScripts(projectAgentsDir) {
 
 function installCodexWorkflowScripts(projectAgentsDir) {
   const scriptsDest = path.join(projectAgentsDir, 'scripts');
-  const workflowScripts = ['smoke-tool-setups.js', 'smoke-codex-workflows.js'];
+  const workflowScripts = ['codex-observer.js', 'smoke-tool-setups.js', 'smoke-codex-workflows.js'];
   if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, workflowScripts, 'Codex workflow script') > 0) {
     console.log('Installing Codex workflow scripts -> ' + scriptsDest + '/');
   }

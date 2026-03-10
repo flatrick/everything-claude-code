@@ -143,13 +143,20 @@ Important operational note:
   spawn (`EPERM`/`EACCES`), `analyze` may still be unable to launch the native
   Codex CLI from inside that session
 
-Planned Codex-specific direction:
+Codex also has an optional external observer entrypoint for the cases where the
+active Codex shell cannot spawn `codex exec`:
 
-- keep the explicit/manual `status`, `capture`, `analyze`, and `weekly` flows
-- allow an optional externally running Node observer for Codex
-- let that external observer watch `.codex/homunculus/` and run analysis in a
-  normal shell environment where `codex exec` is allowed
-- do not make Cursor/Claude depend on that external process
+```bash
+node .agents/scripts/codex-observer.js status
+node .agents/scripts/codex-observer.js once
+node .agents/scripts/codex-observer.js watch --interval-seconds 15
+```
+
+That observer:
+- keeps the explicit/manual `status`, `capture`, `analyze`, and `weekly` flows as the baseline
+- watches project `.codex/homunculus/projects/<id>/observations.jsonl`
+- runs analysis in a normal shell environment where `codex exec` is allowed
+- does not change Cursor or Claude behavior
 
 ### Built-in slash commands
 

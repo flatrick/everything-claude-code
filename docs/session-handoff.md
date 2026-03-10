@@ -36,6 +36,19 @@ It is safe to delete once the work is complete.
    - Codex skips `continuous-learning-automatic` with a warning (intentional — hooks not supported)
    - ~50 references updated across commands, hooks configs, docs, tests, installed copies
 
+### Phase 2 work (completed this session)
+
+1. **Phase 2a: Codex external observer** — Added `scripts/codex-observer.js`
+   with:
+   - `status` — inspect project-local Codex observation state
+   - `once` — run one analysis pass outside the active Codex shell
+   - `watch` / `--watch` — poll `.codex/homunculus/projects/<id>/observations.jsonl`
+     and trigger analysis when the configured threshold is met
+   - Reuses the existing `continuous-learning-manual` analyzer path with
+     `MDT_OBSERVER_TOOL=codex`
+   - Installed into `<project>/.agents/scripts/codex-observer.js`
+   - Covered by `tests/scripts/codex-observer.test.js`
+
 ### How the skill install layers work (important context)
 
 The installer supports three skill source layers:
@@ -54,10 +67,7 @@ Codex prints a warning and skips it. This is correct behavior for hook-only skil
 
 See `docs/functional-parity-plan.md` for the full plan. Outstanding items:
 
-### Phase 2 (not yet started)
-
-- **Phase 2a: Codex external observer** — `scripts/codex-observer.js` for polling-based
-  observation without hooks. Lets Codex record session context for learning.
+### Phase 2 (remaining)
 
 - **Phase 2b: Cursor continuous-learning CLI fallback** — `scripts/cursor-learn.js` for
   triggering learning from a terminal since Cursor can't invoke Node scripts directly.
@@ -94,6 +104,8 @@ This will:
   tool-setup-verifier, continuous-learning-manual
 - Print a warning about continuous-learning-automatic being skipped (expected, not an error)
 - Install runtime scripts into `<project>/.agents/scripts/`
+- Install `codex-observer.js`, `smoke-tool-setups.js`, and `smoke-codex-workflows.js`
+  into `<project>/.agents/scripts/`
 
 ---
 
