@@ -163,7 +163,7 @@ That means:
   shell environments
 - `continuous-learning-automatic` is not the Codex-facing skill contract
 
-### 1. Enable Observation Hooks
+### 1. Enable Observation Hooks For Claude Code Or Cursor
 
 Add to your config directory settings file (for Claude Code this is `~/.claude/settings.json`).
 
@@ -410,9 +410,13 @@ Confidence evolves over time:
 
 ## Why Hooks vs Skills for Observation?
 
+This hook section applies to Claude Code and Cursor. Codex is intentionally
+different: it uses explicit/manual capture and analysis as the baseline, plus
+an optional external observer for background analysis only.
+
 > "v1 relied on skills to observe. Skills are probabilistic -- they fire ~50-80% of the time based on Claude's judgment."
 
-Hooks fire **100% of the time**, deterministically. This means:
+For tools that support hooks, hooks fire **100% of the time**, deterministically. This means:
 - Every tool call is observed
 - No patterns are missed
 - Learning is comprehensive
