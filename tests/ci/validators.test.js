@@ -421,6 +421,36 @@ function runTests() {
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 
+  if (test('fails when codex continuous-learning template uses abstract data placeholders', () => {
+    const testDir = createTestDir();
+    const codexDir = path.join(testDir, 'codex-template', 'skills', 'continuous-learning-manual');
+    fs.mkdirSync(codexDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(codexDir, 'SKILL.md'),
+      '# Continuous Learning\n\nStore data in `<data>/homunculus/`.\n'
+    );
+
+    const result = runValidatorWithDir('validate-template-doc-boundaries', 'REPO_ROOT', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail on abstract data placeholder in codex template');
+    assert.ok(result.stderr.includes('<data>/homunculus/'), 'Should report forbidden placeholder');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('fails when codex continuous-learning template uses MDT_ROOT-first examples', () => {
+    const testDir = createTestDir();
+    const codexDir = path.join(testDir, 'codex-template', 'skills', 'continuous-learning-manual');
+    fs.mkdirSync(codexDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(codexDir, 'SKILL.md'),
+      '# Continuous Learning\n\nRun `node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" status`.\n'
+    );
+
+    const result = runValidatorWithDir('validate-template-doc-boundaries', 'REPO_ROOT', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail on MDT_ROOT-first example in codex template');
+    assert.ok(result.stderr.includes('${MDT_ROOT}'), 'Should report forbidden MDT_ROOT example');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
   if (test('fails when a required package is missing', () => {
     const packagesDir = createTestDir();
     const rulesDir = createTestDir();

@@ -15,6 +15,8 @@ const TOOL_PATTERNS = {
   gemini: /\bGemini\b/g
 };
 const ALLOWLIST = new Set();
+const CODEX_CONTINUOUS_LEARNING_DOC =
+  'codex-template/skills/continuous-learning-manual/SKILL.md';
 
 function normalizeSlashes(value) {
   return value.replace(/\\/g, '/');
@@ -85,6 +87,25 @@ function validateTemplateDocBoundaries(options = {}) {
           `ERROR: ${relativePath}:${line} - ${owningTool}-template document references other tool "${match[0]}"`
         );
         hasErrors = true;
+      }
+    }
+
+    if (relativePath === CODEX_CONTINUOUS_LEARNING_DOC) {
+      const forbiddenPatterns = [
+        { pattern: /<data>\/homunculus\//g, label: '<data>/homunculus/' },
+        { pattern: /\$\{MDT_ROOT\}/g, label: '${MDT_ROOT}' }
+      ];
+
+      for (const { pattern, label } of forbiddenPatterns) {
+        pattern.lastIndex = 0;
+        let match;
+        while ((match = pattern.exec(content)) !== null) {
+          const line = lineNumberForIndex(content, match.index);
+          io.error(
+            `ERROR: ${relativePath}:${line} - codex-template continuous-learning-manual must use concrete Codex paths, not '${label}'`
+          );
+          hasErrors = true;
+        }
       }
     }
   }
