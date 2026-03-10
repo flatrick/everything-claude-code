@@ -5,20 +5,20 @@ agent: build
 
 # Instinct Status Command
 
-Show instinct status from continuous-learning-v2: $ARGUMENTS
+Show instinct status from continuous-learning-manual: $ARGUMENTS
 
 ## Your Task
 
 Run:
 
 ```bash
-node "${MDT_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" status
+node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" status
 ```
 
 For manual installs, replace `<config>` with your MDT config directory:
 
 ```bash
-node "<config>/skills/continuous-learning-v2/scripts/instinct-cli.js" status
+node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" status
 ```
 
 ## Behavior Notes

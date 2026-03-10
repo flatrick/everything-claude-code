@@ -127,7 +127,7 @@ For each selected category, print the full list of skills below and ask the user
 
 | Skill | Description |
 |-------|-------------|
-| `continuous-learning-v2` | Instinct-based learning with confidence scoring, evolves into skills/commands/agents |
+| `continuous-learning-manual` | Instinct-based learning with confidence scoring, evolves into skills/commands/agents |
 | `eval-harness` | Formal evaluation framework for eval-driven development (EDD) |
 | `iterative-retrieval` | Progressive context refinement for subagent context problem |
 | `security-review` | Security checklist: auth, input, secrets, API, payment features |
@@ -148,7 +148,7 @@ For each selected skill, copy the entire skill directory:
 cp -r $MDT_ROOT/skills/<skill-name> $TARGET/skills/
 ```
 
-Note: `continuous-learning-v2` has extra files (config.json, hooks, scripts, agents) — ensure the entire directory is copied, not just SKILL.md.
+Note: `continuous-learning-manual` has extra files (config.json, hooks, scripts, agents) — ensure the entire directory is copied, not just SKILL.md.
 
 ---
 
@@ -212,7 +212,7 @@ grep -rn "skills/" $TARGET/skills/
 Some skills reference others. Verify these dependencies:
 - `django-tdd` may reference `django-patterns`
 - `springboot-tdd` may reference `springboot-patterns`
-- `continuous-learning-v2` references `<data>/homunculus/`
+- `continuous-learning-manual` references `<data>/homunculus/`
 - `python-testing` may reference `python-patterns`
 - Language-specific rules reference `common/` counterparts
 
@@ -307,4 +307,4 @@ Then print a summary report:
 
 ### "Path reference errors after project-level install"
 - Some skills may still assume legacy `~/.claude/` paths. Run Step 4 verification to find and fix these.
-- For `continuous-learning-v2`, the `<data>/homunculus/` directory is always user-level — this is expected and not an error.
+- For `continuous-learning-manual`, the `<data>/homunculus/` directory is always user-level — this is expected and not an error.

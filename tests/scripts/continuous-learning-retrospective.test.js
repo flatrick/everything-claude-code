@@ -6,7 +6,7 @@ const {
   generateWeeklyRetrospective,
   getIsoWeekWindow,
   parseWeekSpec
-} = require('../../skills/continuous-learning-v2/scripts/retrospect-week.js');
+} = require('../../skills/continuous-learning-manual/scripts/retrospect-week.js');
 
 function appendObservation(filePath, observation) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });

@@ -84,7 +84,7 @@ Status:
 Status: **done** — Cursor continuous-learning wiring now uses native Cursor
 payloads and storage.
 
-`skills/continuous-learning-v2/hooks/observe.js` is now called from
+`skills/continuous-learning-manual/hooks/observe.js` is now called from
 `hooks/cursor/scripts/after-file-edit.js` and
 `hooks/cursor/scripts/after-shell-execution.js` via the Cursor hook adapter.
 The adapter:
@@ -258,7 +258,7 @@ Important constraints:
 Current state:
 
 1. Codex now has an explicit weekly retrospective entrypoint:
-   `node .agents/skills/continuous-learning-v2/scripts/codex-learn.js weekly --week YYYY-Www`
+   `node .agents/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week YYYY-Www`
 2. the retrospective reads current `observations.jsonl` plus matching
    `observations.archive/*.jsonl` for one ISO week
 3. it writes one structured weekly summary under project storage:

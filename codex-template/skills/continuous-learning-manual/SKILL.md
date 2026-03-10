@@ -1,5 +1,5 @@
 ---
-name: continuous-learning-v2
+name: continuous-learning-manual
 description: Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents. v2.1 adds project-scoped instincts to prevent cross-project contamination.
 version: 2.1.0
 ---
@@ -20,7 +20,6 @@ An advanced learning system that turns MDT tool sessions into reusable knowledge
 - Evolving instincts into full skills, commands, or agents
 - Managing project-scoped vs global instincts
 - Promoting instincts from project to global scope
-- Running low-noise weekly retrospectives to find automation candidates
 
 ## What's New in v2.1
 
@@ -136,6 +135,29 @@ Each project gets a 12-character hash ID (e.g., `a1b2c3d4e5f6`). A registry file
 
 ## Quick Start
 
+### Codex explicit workflow
+
+Codex does not rely on Claude/Cursor hook capture in this repo.
+Use the explicit project-local workflow instead:
+
+```bash
+node .agents/skills/continuous-learning-automatic/scripts/codex-learn.js status
+```
+
+Then have Codex produce a concise session summary and capture it:
+
+```bash
+node .agents/skills/continuous-learning-automatic/scripts/codex-learn.js capture < summary.txt
+```
+
+Finally run one explicit analysis pass:
+
+```bash
+node .agents/skills/continuous-learning-automatic/scripts/codex-learn.js analyze
+```
+
+This writes Codex project learning state under `.codex/homunculus/...`.
+
 ### 1. Enable Observation Hooks
 
 Add to your config directory settings file (for Claude Code this is `~/.claude/settings.json`).
@@ -149,14 +171,14 @@ Add to your config directory settings file (for Claude Code this is `~/.claude/s
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "node \"${MDT_ROOT}/skills/continuous-learning-v2/hooks/observe.js\" pre"
+        "command": "node \"${MDT_ROOT}/skills/continuous-learning-automatic/hooks/observe.js\" pre"
       }]
     }],
     "PostToolUse": [{
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "node \"${MDT_ROOT}/skills/continuous-learning-v2/hooks/observe.js\" post"
+        "command": "node \"${MDT_ROOT}/skills/continuous-learning-automatic/hooks/observe.js\" post"
       }]
     }]
   }
@@ -172,14 +194,14 @@ Add to your config directory settings file (for Claude Code this is `~/.claude/s
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "node <config>/skills/continuous-learning-v2/hooks/observe.js pre"
+        "command": "node <config>/skills/continuous-learning-automatic/hooks/observe.js pre"
       }]
     }],
     "PostToolUse": [{
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "node <config>/skills/continuous-learning-v2/hooks/observe.js post"
+        "command": "node <config>/skills/continuous-learning-automatic/hooks/observe.js post"
       }]
     }]
   }
@@ -257,30 +279,6 @@ All scripts are Node.js (`.js`); no shell or PowerShell variants. Same commands 
 
 The observer must use the active tool's native CLI. Cursor setups must not depend on the `claude` binary, and Claude setups must not depend on Cursor.
 
-Codex currently uses an explicit workflow instead of hooks. In a Codex-installed
-repo, the main entrypoint is:
-
-```bash
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js status
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js capture < summary.txt
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js analyze
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js weekly --week 2026-W11
-```
-
-The weekly retrospective is intentionally manual-first. It reads the current
-project's `observations.jsonl` plus matching archived batches for one ISO week
-and writes a structured summary under:
-
-```text
-.codex/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
-```
-
-Its goal is not to log more activity. It should stay sparse and highlight:
-
-- repeated shell commands that deserve a dedicated script or custom command
-- repeated external CLI usage that may deserve an MCP integration
-- repeated multi-step workflows that should be documented or automated
-
 Other behavior (observation capture, instinct thresholds, project scoping, promotion criteria) is configured via code defaults in `instinct-cli.js` and the observe hook script.
 
 ## File Structure
@@ -337,18 +335,18 @@ When the same instinct appears in multiple projects with high confidence, it's a
 
 ```bash
 # Promote a specific instinct
-node "${MDT_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" promote prefer-explicit-errors
+node "${MDT_ROOT}/skills/continuous-learning-automatic/scripts/instinct-cli.js" promote prefer-explicit-errors
 
 # Auto-promote all qualifying instincts
-node "${MDT_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" promote
+node "${MDT_ROOT}/skills/continuous-learning-automatic/scripts/instinct-cli.js" promote
 
 # Preview without changes
-node "${MDT_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" promote --dry-run
+node "${MDT_ROOT}/skills/continuous-learning-automatic/scripts/instinct-cli.js" promote --dry-run
 ```
 
 For manual installs, replace `<config>` with your MDT config directory:
 ```bash
-node "<config>/skills/continuous-learning-v2/scripts/instinct-cli.js" promote
+node "<config>/skills/continuous-learning-automatic/scripts/instinct-cli.js" promote
 ```
 
 The `/evolve` command also suggests promotion candidates.

@@ -1,5 +1,5 @@
 /**
- * Tests for continuous-learning-v2 observer runner selection.
+ * Tests for continuous-learning-manual observer runner selection.
  */
 
 const assert = require('assert');
@@ -19,7 +19,7 @@ const {
   loadObserverConfig,
   resolveWindowsSpawnInvocation,
   shouldResolveWindowsSpawnCommand
-} = require('../../skills/continuous-learning-v2/agents/start-observer.js');
+} = require('../../skills/continuous-learning-manual/agents/start-observer.js');
 
 function runTests() {
   console.log('\n=== Testing continuous-learning observer ===\n');
@@ -59,7 +59,7 @@ function runTests() {
   if (test('inferInstalledConfigDir detects installed project-local Cursor config roots', () => {
     const tempDir = createTestDir('observer-installed-config-');
     try {
-      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-v2');
+      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-manual');
       fs.mkdirSync(skillDir, { recursive: true });
       assert.strictEqual(
         inferInstalledConfigDir(skillDir),
@@ -73,7 +73,7 @@ function runTests() {
   if (test('inferInstalledConfigDir detects installed project-local Codex config roots', () => {
     const tempDir = createTestDir('observer-installed-codex-config-');
     try {
-      const skillDir = path.join(tempDir, '.agents', 'skills', 'continuous-learning-v2');
+      const skillDir = path.join(tempDir, '.agents', 'skills', 'continuous-learning-manual');
       fs.mkdirSync(skillDir, { recursive: true });
       assert.strictEqual(
         inferInstalledConfigDir(skillDir),
@@ -87,7 +87,7 @@ function runTests() {
   if (test('buildObserverEnv anchors direct launches to installed Cursor config roots', () => {
     const tempDir = createTestDir('observer-env-');
     try {
-      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-v2');
+      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-manual');
       fs.mkdirSync(skillDir, { recursive: true });
       const env = buildObserverEnv({}, { skillDir });
       assert.strictEqual(env.CONFIG_DIR, path.join(tempDir, '.cursor'));
@@ -112,7 +112,7 @@ function runTests() {
     );
     const tempDir = createTestDir('observer-tool-infer-');
     try {
-      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-v2');
+      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-manual');
       fs.mkdirSync(skillDir, { recursive: true });
       assert.strictEqual(
         inferObserverTool(DEFAULT_CONFIG, buildObserverEnv({}, { skillDir })),

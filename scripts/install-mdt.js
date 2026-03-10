@@ -1183,7 +1183,7 @@ function installGemini(packageNames, globalScope, projectDir) {
 function main() {
   const { target, globalScope, listMode, dryRun, projectDir, packageNames } = parseArgs();
 
-  if (!globalScope && projectDir === null) {
+  if (!dryRun && !listMode && !globalScope && projectDir === null) {
     console.log('No install scope specified. Nothing was installed.');
     console.log('');
     console.log('Specify where to install using one of:');
@@ -1215,7 +1215,7 @@ function main() {
   }
   if (dryRun) {
     try {
-      const plan = buildInstallPlan({ target, globalScope, projectDir: resolvedProjectDir, packageNames });
+      const plan = buildInstallPlan({ target, globalScope, projectDir: resolvedProjectDir || process.cwd(), packageNames });
       plan.forEach((line) => console.log(line));
       process.exit(0);
     } catch (error) {

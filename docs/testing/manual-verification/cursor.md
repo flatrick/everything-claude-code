@@ -20,7 +20,7 @@ node -e "const fs=require('fs'); console.log(fs.existsSync('.cursor/hooks.json')
 Expected:
 - `.cursor/hooks.json` exists (experimental adapter, not a vendor-documented surface)
 - `.cursor/hooks/` exists
-- `.cursor/skills/continuous-learning-v2/` exists
+- `.cursor/skills/continuous-learning-manual/` exists
 
 ## Quick Smoke
 
@@ -63,7 +63,7 @@ node -e "const fs=require('fs');const path=require('path');const root=path.join(
 Check observer status from the repo root:
 
 ```bash
-node .cursor/skills/continuous-learning-v2/agents/start-observer.js status
+node .cursor/skills/continuous-learning-manual/agents/start-observer.js status
 ```
 
 Expected:
@@ -76,12 +76,12 @@ If you are testing an older install that predates the self-anchoring fix, use th
 $env:MDT_OBSERVER_TOOL='cursor'
 $env:CURSOR_AGENT='1'
 $env:CONFIG_DIR=(Resolve-Path .\.cursor).Path
-node .\.cursor\skills\continuous-learning-v2\agents\start-observer.js status
+node .\.cursor\skills\continuous-learning-manual\agents\start-observer.js status
 ```
 
 ### Observer Runtime
 
-1. Edit `.cursor/skills/continuous-learning-v2/config.json`
+1. Edit `.cursor/skills/continuous-learning-manual/config.json`
 2. Set:
 
 ```json
@@ -95,7 +95,7 @@ node .\.cursor\skills\continuous-learning-v2\agents\start-observer.js status
 3. Start the observer:
 
 ```bash
-node .cursor/skills/continuous-learning-v2/agents/start-observer.js start
+node .cursor/skills/continuous-learning-manual/agents/start-observer.js start
 ```
 
 Expected:
@@ -105,7 +105,7 @@ Expected:
 4. After enough observations accumulate, inspect:
 
 ```bash
-node .cursor/skills/continuous-learning-v2/agents/start-observer.js status
+node .cursor/skills/continuous-learning-manual/agents/start-observer.js status
 ```
 
 Expected:
@@ -116,7 +116,7 @@ Expected:
 5. Stop the observer when done:
 
 ```bash
-node .cursor/skills/continuous-learning-v2/agents/start-observer.js stop
+node .cursor/skills/continuous-learning-manual/agents/start-observer.js stop
 ```
 
 ## Session Lifecycle
@@ -145,7 +145,7 @@ If a future Cursor build stops loading `.cursor/hooks.json` or you install MDT
 with `MDT_SKIP_CURSOR_HOOKS=1` set in the environment:
 
 - Rules in `.cursor/rules/` continue to apply as project guidance.
-- Skills in `.cursor/skills/` (including `continuous-learning-v2` and the core
+- Skills in `.cursor/skills/` (including `continuous-learning-manual` and the core
   coding/testing/security patterns) remain available via `/` in Agent chat.
 - `AGENTS.md` at the project root still participates in Cursor’s agent system.
 - Cursor’s custom commands, memories, background agents, and MCP features

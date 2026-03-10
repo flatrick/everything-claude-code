@@ -115,10 +115,10 @@ For `continuous-learning`, Codex currently uses an explicit manual workflow
 instead of hooks:
 
 ```bash
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js status
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js capture < summary.txt
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js analyze
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js weekly --week 2026-W11
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js status
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js analyze
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
 That writes project-local learning state under `.codex/homunculus/`.

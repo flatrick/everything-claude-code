@@ -52,7 +52,7 @@ Codex currently uses an explicit workflow instead of hooks.
 1. Check status:
 
 ```bash
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js status
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js status
 ```
 
 Expected:
@@ -62,13 +62,13 @@ Expected:
 2. Capture a concise session summary:
 
 ```bash
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js capture < summary.txt
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
 ```
 
 3. Run one explicit analysis pass:
 
 ```bash
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js analyze
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js analyze
 ```
 
 Expected:
@@ -81,7 +81,7 @@ Expected:
 4. Generate one weekly retrospective:
 
 ```bash
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js weekly --week 2026-W11
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
 Expected:

@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${MDT_ROOT}/scripts/hooks/run-with-flags.js\" \"pre:observe\" \"skills/continuous-learning-v2/hooks/observe.js\" \"standard,strict\" pre",
+            "command": "node \"${MDT_ROOT}/scripts/hooks/run-with-flags.js\" \"pre:observe\" \"skills/continuous-learning-automatic/hooks/observe.js\" \"standard,strict\" pre",
             "async": true,
             "timeout": 10
           }
@@ -147,7 +147,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${MDT_ROOT}/scripts/hooks/run-with-flags.js\" \"post:observe\" \"skills/continuous-learning-v2/hooks/observe.js\" \"standard,strict\" post",
+            "command": "node \"${MDT_ROOT}/scripts/hooks/run-with-flags.js\" \"post:observe\" \"skills/continuous-learning-automatic/hooks/observe.js\" \"standard,strict\" post",
             "async": true,
             "timeout": 10
           }

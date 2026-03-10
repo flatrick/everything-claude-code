@@ -6,7 +6,7 @@ const {
   detectProject,
   findProjectRootFromFilesystem,
   inferInstalledConfigDir
-} = require('../../skills/continuous-learning-v2/scripts/detect-project.js');
+} = require('../../skills/continuous-learning-manual/scripts/detect-project.js');
 
 function withEnv(overrides, fn) {
   const previous = {};
@@ -41,7 +41,7 @@ function runTests() {
   if (test('inferInstalledConfigDir detects installed Codex config roots', () => {
     const tempDir = createTestDir('detect-project-installed-');
     try {
-      const scriptDir = path.join(tempDir, '.agents', 'skills', 'continuous-learning-v2', 'scripts');
+      const scriptDir = path.join(tempDir, '.agents', 'skills', 'continuous-learning-manual', 'scripts');
       fs.mkdirSync(scriptDir, { recursive: true });
       assert.strictEqual(inferInstalledConfigDir(scriptDir), path.join(tempDir, '.agents'));
     } finally {

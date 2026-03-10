@@ -11,13 +11,13 @@ command: true
 Run the instinct CLI using `MDT_ROOT` when available:
 
 ```bash
-node "${MDT_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.js" evolve [--generate]
+node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" evolve [--generate]
 ```
 
 For manual installs, replace `<config>` with your MDT config directory (for example `~/.claude` or `~/.cursor`):
 
 ```bash
-node "<config>/skills/continuous-learning-v2/scripts/instinct-cli.js" evolve [--generate]
+node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" evolve [--generate]
 ```
 
 Analyzes instincts and clusters related ones into higher-level structures:

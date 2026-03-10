@@ -4,7 +4,7 @@ const { buildHookEnv, getPluginRoot, hookEnabled, readStdin, runExistingHook } =
 
 function getObserveScriptPath(env = process.env) {
   const hookEnv = buildHookEnv(env);
-  return path.join(hookEnv.MDT_ROOT || getPluginRoot(), 'skills', 'continuous-learning-v2', 'hooks', 'observe.js');
+  return path.join(hookEnv.MDT_ROOT || getPluginRoot(), 'skills', 'continuous-learning-automatic', 'hooks', 'observe.js');
 }
 
 async function processCursorAfterShellExecution(raw, options = {}) {

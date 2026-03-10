@@ -34,43 +34,22 @@ Remaining follow-up:
 
 ## Split continuous-learning into manual and hook-driven skills
 
-**Status:** Open.
+**Status:** Completed.
 
-The current `continuous-learning-v2` skill conflates two distinct workflows that
-should be separate:
+`continuous-learning-v2` has been split and renamed:
 
-**1. `continuous-learning` (manual / operator-triggered)**
-- Operator explicitly asks the tool to review the current session and extract
-  useful patterns, repeated workflows, or automation candidates
-- No hooks required — works in any tool including Codex
-- Entry points: `codex-learn.js capture`, `/learn`, session-end prompts
-- Target: all tools (Claude, Cursor, Codex, OpenCode)
+- `skills/continuous-learning-manual/` — operator-triggered workflows: instinct
+  management, codex-learn.js, weekly retrospectives, evolve/promote/export/import
+- `skills/continuous-learning-automatic/` — hook-driven observation capture only:
+  `hooks/observe.js` + `detect-project.js`
+- `codex-template/skills/continuous-learning-manual/` — Codex copy (no hooks)
+- `packages/continuous-learning/package.json` lists both skills; Codex only
+  receives `continuous-learning-manual` (hooks unsupported)
+- All ~50 references updated across commands, hooks configs, docs, tests, and
+  installed copies under `.claude/` and `.cursor/`
 
-**2. `continuous-learning-hooks` (automatic / hook-driven)**
-- Observation fires automatically on file edit and shell execution via hooks
-- Higher fidelity but requires hook infrastructure (Claude, Cursor only)
-- Falls back to manual CLI if hooks are unavailable
-- Target: Claude Code, Cursor (hook-capable tools only)
-
-**Why do this together with the rename:**
-The skill directory and `SKILL.md` frontmatter are still named
-`continuous-learning-v2`. The package is already `continuous-learning`.
-A rename touches ~50 files. Doing the rename and the split at the same time
-avoids two large refactors.
-
-**Scope of work:**
-1. Create `skills/continuous-learning/` for the manual skill (rename + trim)
-2. Create `skills/continuous-learning-hooks/` for the hook-driven skill (extract)
-3. Update `packages/continuous-learning/package.json` to list both skills
-   with `requires.hooks` on the hook-driven one
-4. Update `codex-template/skills/`, `cursor-template/`, `claude-template/`
-   references
-5. Update `hooks/hooks.json` and Cursor hook scripts to reference the new path
-6. Update all ~50 other file references (commands, docs, tests, installed copies)
-7. Update installed copies under `.claude/`, `.cursor/` if present
-
-**Constraint:** Do not do the rename without the split — a rename-only pass just
-creates a second large refactor shortly after.
+Follow-up: update SKILL.md descriptions and Quick Start sections in both new
+skills to reflect their narrowed focus (currently still carry the full v2 content).
 
 ---
 

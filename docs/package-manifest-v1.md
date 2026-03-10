@@ -84,7 +84,7 @@ that surfaces automation opportunities.
 Two concrete examples already fit this model:
 
 - `continuous-learning`
-  - owns `skills/continuous-learning-v2`
+  - owns `skills/continuous-learning-manual`
   - owns the instinct-management commands such as `/instinct-status`, `/evolve`, `/instinct-export`, `/instinct-import`, `/promote`, and `/projects`
   - depends on hook wiring, runtime scripts, and writable session data storage
   - should prioritize detecting candidates for scripts, custom commands, and
@@ -243,7 +243,7 @@ For example, the current first-pass capability manifests can already declare:
 {
   "name": "continuous-learning",
   "kind": "capability",
-  "skills": ["continuous-learning-v2"],
+  "skills": ["continuous-learning-manual"],
   "commands": [
     "instinct-status.md",
     "evolve.md",

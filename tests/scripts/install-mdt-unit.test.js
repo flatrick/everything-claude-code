@@ -350,7 +350,7 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(tempDir, 'agents', 'planner.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'agents', 'python-reviewer.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'frontend-slides', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'continuous-learning-v2', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'continuous-learning-manual', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'rust-patterns', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'docs-health.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'plan.md')));
@@ -392,7 +392,9 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'coding-standards', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-setup-verifier', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'continuous-learning-v2', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'continuous-learning-manual', 'SKILL.md')));
+      // continuous-learning-automatic is hooks-only — no codex-template copy, so Codex skips it
+      assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'continuous-learning-automatic', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'python-patterns', 'SKILL.md')));
     });
   })) passed++; else failed++;

@@ -19,7 +19,7 @@ const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 function getScriptRoot() {
-  const dir = __dirname; // .../skills/continuous-learning-v2/scripts
+  const dir = __dirname; // .../skills/continuous-learning-manual/scripts
   return path.join(dir, '..', '..', '..');
 }
 

@@ -189,10 +189,10 @@ this.
 
 Manual fallback (already exists):
 ```bash
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js status
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js capture < summary.txt
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js analyze
-node .agents/skills/continuous-learning-v2/scripts/codex-learn.js weekly --week YYYY-Www
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js status
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js analyze
+node .agents/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week YYYY-Www
 ```
 
 **Effort**: Medium

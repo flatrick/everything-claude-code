@@ -87,6 +87,7 @@ function runTests() {
         try {
           const result = runInstaller(['--target', 'cursor', 'typescript'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpHome,
               USERPROFILE: tmpHome
@@ -117,6 +118,7 @@ function runTests() {
         try {
           const result = runInstaller(['--target', 'cursor', 'typescript', 'continuous-learning'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpHome,
               USERPROFILE: tmpHome
@@ -134,7 +136,7 @@ function runTests() {
             'Cursor install should copy the declared frontend-slides skill'
           );
           assert.ok(
-            fs.existsSync(path.join(cursorRoot, 'skills', 'continuous-learning-v2', 'SKILL.md')),
+            fs.existsSync(path.join(cursorRoot, 'skills', 'continuous-learning-manual', 'SKILL.md')),
             'Cursor install should copy selected shared capability skills'
           );
           assert.ok(
@@ -168,6 +170,7 @@ function runTests() {
         try {
           const result = runInstaller(['--target', 'cursor', 'typescript', 'continuous-learning'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpHome,
               USERPROFILE: tmpHome
@@ -292,6 +295,7 @@ function runTests() {
         try {
           const result = runInstaller(['typescript'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpProject,
               USERPROFILE: tmpProject
@@ -359,6 +363,7 @@ function runTests() {
         try {
           const result = runInstaller(['typescript', 'python'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpProject,
               USERPROFILE: tmpProject
@@ -387,6 +392,7 @@ function runTests() {
         try {
           const result = runInstaller(['typescript'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpProject,
               USERPROFILE: tmpProject
@@ -416,6 +422,7 @@ function runTests() {
         try {
           const result = runInstaller(['--target', 'gemini', 'typescript'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpHome,
               USERPROFILE: tmpHome
@@ -502,7 +509,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'coding-standards', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'documentation-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'tool-setup-verifier', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'continuous-learning-v2', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'skills', 'continuous-learning-manual', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'scripts', 'lib', 'detect-env.js')));
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'scripts', 'ci', 'validate-markdown-links.js')));
           assert.ok(fs.existsSync(path.join(projectAgentsRoot, 'scripts', 'ci', 'validate-markdown-path-refs.js')));
@@ -512,7 +519,7 @@ function runTests() {
 
           const learnStatus = spawnSync(
             'node',
-            [path.join(projectAgentsRoot, 'skills', 'continuous-learning-v2', 'scripts', 'codex-learn.js'), 'status'],
+            [path.join(projectAgentsRoot, 'skills', 'continuous-learning-manual', 'scripts', 'codex-learn.js'), 'status'],
             {
               encoding: 'utf8',
               cwd: tmpProject,
@@ -541,6 +548,7 @@ function runTests() {
         try {
           const result = runInstaller(['--target', 'gemini', 'continuous-learning'], {
             cwd: tmpProject,
+            projectDir: tmpProject,
             env: {
               HOME: tmpProject,
               USERPROFILE: tmpProject

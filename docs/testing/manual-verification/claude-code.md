@@ -21,7 +21,7 @@ node -e "const fs=require('fs'); console.log(fs.existsSync('.claude/settings.jso
 Expected:
 - `.claude/settings.json` exists
 - `.claude/commands/smoke.md` exists
-- `.claude/skills/continuous-learning-v2/` exists
+- `.claude/skills/continuous-learning-manual/` exists
 
 ## Quick Smoke
 

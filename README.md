@@ -102,7 +102,7 @@ Use these as the current source of truth:
 ## What's inside
 
 - `agents/` — Subagents (planner, code-reviewer, tdd-guide, security-reviewer, etc.)
-- `skills/` — Workflow definitions (TDD, security-review, continuous-learning-v2, etc.)
+- `skills/` — Workflow definitions (TDD, security-review, continuous-learning-manual, etc.)
 - `commands/` — Slash commands (/plan, /tdd, /e2e, /code-review, …)
 - `rules/` — Common + language-specific rules (TypeScript, Python, …)
 - `hooks/` — Hook mirrors and shared hook docs; `hooks/hooks.json` remains the Claude-facing mirror
