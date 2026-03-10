@@ -96,6 +96,39 @@ async function runTests() {
     }
   })) passed++; else failed++;
 
+  if (await asyncTest('maybeAnalyzeProject handles missing observations file gracefully', async () => {
+    const tempDir = createTestDir('codex-observer-missing-');
+    try {
+      const projectDir = path.join(tempDir, '.codex', 'homunculus', 'projects', 'demo-missing');
+      fs.mkdirSync(projectDir, { recursive: true });
+      const observationsFile = path.join(projectDir, 'observations.jsonl');
+
+      let analyzeCalled = false;
+      const result = await maybeAnalyzeProject({
+        cwd: tempDir,
+        config: { min_observations_to_analyze: 1 },
+        detectProjectImpl: () => ({
+          id: 'demo-missing',
+          name: 'demo-project-missing',
+          root: tempDir,
+          project_dir: projectDir,
+          observations_file: observationsFile
+        }),
+        analyzeImpl: () => {
+          analyzeCalled = true;
+          return null;
+        }
+      });
+
+      assert.strictEqual(result.triggered, false);
+      assert.strictEqual(result.reason, 'no-observations');
+      assert.strictEqual(result.observations, 0);
+      assert.strictEqual(analyzeCalled, false);
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
   if (await asyncTest('maybeAnalyzeProject runs analysis with Codex-scoped env when threshold is met', async () => {
     const tempDir = createTestDir('codex-observer-run-');
     try {
