@@ -1,6 +1,6 @@
 # MDT Workflow Matrix
 
-This page defines the intended MDT workflows, the repo artifacts that enable them, and how each supported tool is expected to realize the same outcome.
+This page is the human-readable view of MDT's machine-readable workflow contracts under [workflow-contracts/](../../workflow-contracts/). It defines the intended MDT workflows, the repo artifacts that enable them, and how each supported tool is expected to realize the same outcome.
 
 Use this together with [capability-matrix.md](./capability-matrix.md) and the per-tool pages. The capability matrix explains native surfaces; this page explains the MDT behaviors those surfaces are expected to support.
 
@@ -27,7 +27,7 @@ Use this together with [capability-matrix.md](./capability-matrix.md) and the pe
 
 For each workflow/tool mapping:
 
-1. Run `node scripts/verify-tool-setups.js` to verify that the documented files still exist and the workflow matrix still matches the machine-readable contract.
+1. Run `node scripts/verify-tool-setups.js` to verify that the documented files still exist and this matrix still matches the machine-readable workflow contracts in `workflow-contracts/`.
 2. Run `node scripts/smoke-tool-setups.js` when you want a local CLI probe for installed tools.
 3. If a tool is not installed locally, record the smoke result as `SKIP` instead of guessing.
 
@@ -37,3 +37,4 @@ For each workflow/tool mapping:
 - It does not claim full feature parity across tools.
 - OpenCode is verified here as a repo adapter, not as an `install-mdt` target.
 - Codex support in this page refers to the current MDT setup built around `codex-template/AGENTS.md`, `codex-template/config.toml`, `codex-template/skills/`, and package-selected skills materialized into `.agents/skills/`.
+- Tool-native terms like `command`, `skill`, `rule`, `hook`, and `guidance` are implementation surfaces, not the primary concept; the shared workflow outcome in `workflow-contracts/` is the source of truth.
