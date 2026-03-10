@@ -21,6 +21,13 @@ An advanced learning system that turns MDT tool sessions into reusable knowledge
 - Managing project-scoped vs global instincts
 - Promoting instincts from project to global scope
 
+For Codex specifically:
+
+- use this skill for explicit/manual capture and analysis
+- do not assume Claude/Cursor-style hook automation exists
+- treat the optional external observer as a background analysis helper, not as
+  full automatic capture parity
+
 ## What's New in v2.1
 
 | Feature | v2.0 | v2.1 |
@@ -135,6 +142,25 @@ Each project gets a 12-character hash ID (e.g., `a1b2c3d4e5f6`). A registry file
 
 ## Quick Start
 
+### Codex model in this repo
+
+Codex is intentionally different from Claude Code and Cursor:
+
+- project-local storage under `.codex/homunculus/` is supported
+- explicit/manual capture is the baseline
+- explicit/manual analysis is the baseline
+- the optional external observer only automates background analysis after
+  observations already exist
+- Codex does not currently get hook-style automatic observation capture in this
+  repo
+
+That means:
+
+- `continuous-learning-manual` is the primary Codex path
+- the external observer is an enhancement layer for convenience and restricted
+  shell environments
+- `continuous-learning-automatic` is not the Codex-facing skill contract
+
 ### Codex explicit workflow
 
 Codex does not rely on Claude/Cursor hook capture in this repo.
@@ -157,6 +183,10 @@ node .agents/skills/continuous-learning-automatic/scripts/codex-learn.js analyze
 ```
 
 This writes Codex project learning state under `.codex/homunculus/...`.
+
+For Codex, this explicit path is the source of truth. The optional external
+observer can help with background analysis later, but it does not replace manual
+capture as the baseline.
 
 ### 1. Enable Observation Hooks
 

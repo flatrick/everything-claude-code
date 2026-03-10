@@ -22,6 +22,13 @@ An advanced learning system that turns MDT tool sessions into reusable knowledge
 - Promoting instincts from project to global scope
 - Running low-noise weekly retrospectives to find automation candidates
 
+For Codex specifically:
+
+- use this skill for explicit/manual capture and analysis
+- do not assume Claude/Cursor-style hook automation exists
+- treat the optional external observer as a background analysis helper, not as
+  full automatic capture parity
+
 ## What's New in v2.1
 
 | Feature | v2.0 | v2.1 |
@@ -135,6 +142,25 @@ The system automatically detects your current project:
 Each project gets a 12-character hash ID (e.g., `a1b2c3d4e5f6`). A registry file at `<data>/homunculus/projects.json` maps IDs to human-readable names.
 
 ## Quick Start
+
+### Codex model in this repo
+
+Codex is intentionally different from Claude Code and Cursor:
+
+- project-local storage under `.codex/homunculus/` is supported
+- explicit/manual capture is the baseline
+- explicit/manual analysis is the baseline
+- the optional external observer only automates background analysis after
+  observations already exist
+- Codex does not currently get hook-style automatic observation capture in this
+  repo
+
+That means:
+
+- `continuous-learning-manual` is the primary Codex path
+- the external observer is an enhancement layer for convenience and restricted
+  shell environments
+- `continuous-learning-automatic` is not the Codex-facing skill contract
 
 ### 1. Enable Observation Hooks
 
@@ -280,6 +306,13 @@ Its goal is not to log more activity. It should stay sparse and highlight:
 - repeated shell commands that deserve a dedicated script or custom command
 - repeated external CLI usage that may deserve an MCP integration
 - repeated multi-step workflows that should be documented or automated
+
+For Codex, this is the recommended shape:
+
+- sparse, explicit capture
+- explicit weekly retrospectives
+- optional external observer for background analysis only
+- no fake hook parity claims
 
 Other behavior (observation capture, instinct thresholds, project scoping, promotion criteria) is configured via code defaults in `instinct-cli.js` and the observe hook script.
 

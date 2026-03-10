@@ -77,7 +77,7 @@ Status:
 - the first real capability package drafts should be `continuous-learning` and `context-compaction`
 - capability metadata such as `requires.hooks`, `requires.runtimeScripts`, and `requires.sessionData` is now actionable in the installer/validator
 - `requires.tools` currently means "implemented installer support in this repo today", not a permanent product limit
-- the next package-model follow-up should keep moving Codex install-time sources into `codex-template/` and reduce remaining mixed-source drift between `codex-template/` and `.agents/`
+- the next package-model follow-up should keep moving Codex install-time sources into `codex-template/` and reduce remaining mixed-source drift between `codex-template/` and the installed `.agents/skills/` tree
 
 ### 2. Cursor parity — wire continuous learning (P1)
 
@@ -221,7 +221,7 @@ explicit/manual `continuous-learning` path.
 Follow-ups for Codex should focus on:
 
 - deciding whether Codex gets real package-selected rule files under `codex-template/rules/`
-- reducing remaining source-layout drift between `codex-template/skills/` and the current `.agents/skills/` mirror
+- reducing remaining source-layout drift between `codex-template/skills/` and the installed `.agents/skills/` tree materialized by the installer
 - deciding whether any Codex app automations are worth using after the explicit path has proven itself
 - expanding Codex workflow verification beyond smoke into richer manual verification
 - keeping project detection repo-scoped even when the active Codex shell blocks
@@ -229,6 +229,13 @@ Follow-ups for Codex should focus on:
 - deciding whether Codex background analysis should remain purely explicit or
   gain an optional externally running Node observer that watches `.codex/`
   outside the restricted Codex session
+
+Codex continuous-learning guardrail:
+
+- Codex should be documented and implemented as explicit/manual capture first
+- the optional external observer is for background analysis only
+- do not describe Codex as having full automatic hook-style observation capture
+  unless Codex gains a real native surface for it
 ### 8. Extend Cursor parity tests (P2)
 
 Add test coverage for:
