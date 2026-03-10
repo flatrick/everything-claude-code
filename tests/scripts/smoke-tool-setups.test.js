@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { test } = require('../helpers/test-runner');
-const { resolveWindowsShim, runProbe, smokeToolSetups } = require('../../scripts/smoke-tool-setups');
+const { resolveWindowsShim, runProbe, smokeToolSetups, summarizeProbeDetail } = require('../../scripts/smoke-tool-setups');
 
 function runTests() {
   console.log('\n=== Testing smoke-tool-setups.js ===\n');
@@ -84,6 +84,11 @@ function runTests() {
 
     assert.strictEqual(probe.status, 'PASS');
     assert.ok(probe.detail.includes('codex 1.0.0'));
+  })) passed++; else failed++;
+
+  if (test('summarizes multi-line help output to the first line only', () => {
+    const summary = summarizeProbeDetail('Codex CLI\nUsage: codex [options]\nMore help');
+    assert.strictEqual(summary, 'Codex CLI');
   })) passed++; else failed++;
 
   if (test('summarizes tools with PASS, SKIP, and FAIL states', () => {

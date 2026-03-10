@@ -31,7 +31,10 @@ function createFixtureRoot() {
       '# Codex',
       'Complex features, architecture',
       'tdd-workflow',
-      'verification-loop'
+      'verification-loop',
+      'security-review',
+      'e2e-testing',
+      'Since Codex lacks hooks, security enforcement is instruction-based:'
     ].join('\n')
   );
 
@@ -47,6 +50,10 @@ function createFixtureRoot() {
   writeFile(rootDir, path.join('.agents', 'skills', 'tdd-workflow', 'SKILL.md'), '# Test-Driven Development Workflow');
   writeFile(rootDir, path.join('.agents', 'skills', 'coding-standards', 'SKILL.md'), '# Universal coding standards');
   writeFile(rootDir, path.join('.agents', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop Skill');
+  writeFile(rootDir, path.join('.agents', 'skills', 'security-review', 'SKILL.md'), '# Security Review Skill');
+  writeFile(rootDir, path.join('.agents', 'skills', 'e2e-testing', 'SKILL.md'), '# E2E Testing Patterns');
+  writeFile(rootDir, path.join('codex-template', 'skills', 'tool-setup-verifier', 'SKILL.md'), '# Tool Setup Verifier');
+  writeFile(rootDir, path.join('docs', 'testing', 'manual-verification', 'codex.md'), '# Codex Manual Verification');
 
   return rootDir;
 }
@@ -108,6 +115,7 @@ function runTests() {
     assert.ok(output.join('\n').includes('tdd: PASS'));
     assert.ok(output.join('\n').includes('code-review: PASS'));
     assert.ok(output.join('\n').includes('verify: PASS'));
+    assert.ok(output.join('\n').includes('smoke: SKIP') || output.join('\n').includes('smoke: PASS'));
   })) passed++; else failed++;
 
   if (test('fails when the Codex TDD skill is missing', () => {
@@ -152,6 +160,51 @@ function runTests() {
       assert.strictEqual(result.exitCode, 1, 'Expected missing verification sandbox defaults to fail');
       assert.ok(output.join('\n').includes('verify: FAIL'));
       assert.ok(output.join('\n').includes('codex-template/config.toml'));
+    } finally {
+      cleanupTestDir(rootDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('reports repo-source smoke as SKIP when CLI probes are blocked but contract files exist', () => {
+    const rootDir = createFixtureRoot();
+
+    try {
+      const output = [];
+      const result = smokeCodexWorkflows({
+        rootDir,
+        io: {
+          log: message => output.push(String(message))
+        },
+        spawnImpl: () => ({
+          error: Object.assign(new Error('spawn EPERM'), { code: 'EPERM' })
+        })
+      });
+
+      assert.strictEqual(result.exitCode, 0, 'Expected blocked CLI probes to produce a non-failing smoke result');
+      assert.ok(output.join('\n').includes('smoke: SKIP'));
+      assert.ok(output.join('\n').includes('Codex CLI smoke was skipped'));
+    } finally {
+      cleanupTestDir(rootDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('fails when repo-source smoke contract files are missing', () => {
+    const rootDir = createFixtureRoot();
+
+    try {
+      fs.rmSync(path.join(rootDir, 'codex-template', 'skills', 'tool-setup-verifier', 'SKILL.md'));
+      const output = [];
+      const result = smokeCodexWorkflows({
+        rootDir,
+        io: {
+          log: message => output.push(String(message))
+        },
+        spawnImpl: () => ({ status: 0, stdout: 'codex-cli 1.0.0' })
+      });
+
+      assert.strictEqual(result.exitCode, 1, 'Expected missing smoke contract files to fail');
+      assert.ok(output.join('\n').includes('smoke: FAIL'));
+      assert.ok(output.join('\n').includes('codex-template/skills/tool-setup-verifier/SKILL.md'));
     } finally {
       cleanupTestDir(rootDir);
     }

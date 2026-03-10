@@ -2,6 +2,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { TOOL_WORKFLOW_CONTRACT } = require('./lib/tool-workflow-contract');
+const { summarizeTool } = require('./smoke-tool-setups');
 
 function resolveWorkspaceRoot(scriptDir) {
   const installedRepoRoot = path.join(scriptDir, '..', '..');
@@ -195,12 +197,52 @@ function buildE2eChecks(files) {
   };
 }
 
+function buildSmokeChecks(files, options = {}) {
+  const codexSummary = summarizeTool('codex', TOOL_WORKFLOW_CONTRACT.smokeProbes.codex || [], options);
+  const hasRequiredFiles = [
+    files['codex-template/skills/tool-setup-verifier/SKILL.md'],
+    files['docs/testing/manual-verification/codex.md']
+  ].every(file => file && file.exists);
+  const cliPass = codexSummary.status === 'PASS';
+  const cliSkip = codexSummary.status === 'SKIP';
+  const cliFail = codexSummary.status === 'FAIL';
+  const cliDetails = codexSummary.probes.map(probe => `${probe.command} - ${probe.detail}`).join('; ');
+
+  return {
+    workflow: 'smoke',
+    checks: [
+      {
+        path: 'codex-template/skills/tool-setup-verifier/SKILL.md',
+        ok: files['codex-template/skills/tool-setup-verifier/SKILL.md'].exists,
+        message: 'Codex smoke verifier skill should exist in codex-template/skills'
+      },
+      {
+        path: 'docs/testing/manual-verification/codex.md',
+        ok: files['docs/testing/manual-verification/codex.md'].exists,
+        message: 'Codex manual verification guide should exist'
+      },
+      {
+        path: 'codex CLI probes',
+        ok: cliPass || cliSkip,
+        statusOverride: cliSkip ? 'SKIP' : undefined,
+        message: cliSkip
+          ? `Codex CLI smoke was skipped: ${cliDetails}`
+          : cliFail
+            ? `Codex CLI smoke failed: ${cliDetails}`
+            : 'Codex CLI smoke probes passed'
+      }
+    ],
+    statusOverride: hasRequiredFiles && cliSkip ? 'SKIP' : undefined
+  };
+}
+
 function buildWorkflowChecks(files) {
   return [
     buildPlanChecks(files),
     buildTddChecks(files),
     buildCodeReviewChecks(files),
     buildVerifyChecks(files),
+    buildSmokeChecks(files),
     buildSecurityChecks(files),
     buildE2eChecks(files)
   ];
@@ -394,6 +436,14 @@ function smokeCodexWorkflows(options = {}) {
         'AGENTS.md': readRepoFile(rootDir, 'AGENTS.md'),
         'codex-template/AGENTS.md': readRepoFile(rootDir, path.join('codex-template', 'AGENTS.md')),
         'codex-template/config.toml': readRepoFile(rootDir, path.join('codex-template', 'config.toml')),
+        'codex-template/skills/tool-setup-verifier/SKILL.md': readRepoFile(
+          rootDir,
+          path.join('codex-template', 'skills', 'tool-setup-verifier', 'SKILL.md')
+        ),
+        'docs/testing/manual-verification/codex.md': readRepoFile(
+          rootDir,
+          path.join('docs', 'testing', 'manual-verification', 'codex.md')
+        ),
         '.agents/skills/tdd-workflow/SKILL.md': readRepoFile(rootDir, path.join('.agents', 'skills', 'tdd-workflow', 'SKILL.md')),
         '.agents/skills/coding-standards/SKILL.md': readRepoFile(
           rootDir,
@@ -413,18 +463,20 @@ function smokeCodexWorkflows(options = {}) {
         )
       };
 
-  const workflows = (installedRepoMode ? buildInstalledWorkflowChecks(files) : buildWorkflowChecks(files)).map(entry => {
+  const workflows = (installedRepoMode ? buildInstalledWorkflowChecks(files) : buildWorkflowChecks(files, options)).map(entry => {
     const failures = entry.checks.filter(check => !check.ok);
+    const skips = entry.checks.filter(check => check.statusOverride === 'SKIP');
     return {
       workflow: entry.workflow,
-      status: failures.length === 0 ? 'PASS' : 'FAIL',
+      status: entry.statusOverride || (failures.length === 0 ? (skips.length > 0 ? 'SKIP' : 'PASS') : 'FAIL'),
       checks: entry.checks,
-      failures
+      failures,
+      skips
     };
   });
 
   const result = {
-    ok: workflows.every(workflow => workflow.status === 'PASS'),
+    ok: workflows.every(workflow => workflow.status !== 'FAIL'),
     workflows
   };
 
@@ -436,6 +488,9 @@ function smokeCodexWorkflows(options = {}) {
       io.log(`- ${workflow.workflow}: ${workflow.status}`);
       for (const failure of workflow.failures) {
         io.log(`  FAIL ${failure.path} - ${failure.message}`);
+      }
+      for (const skip of workflow.skips) {
+        io.log(`  SKIP ${skip.path} - ${skip.message}`);
       }
     }
   }
