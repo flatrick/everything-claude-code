@@ -63,6 +63,26 @@ Use this when:
 - `~/.cursor/commands/` no longer contains the old command
 - Cursor still behaves as if an older command definition exists
 
+## Path-Fidelity Troubleshooting
+
+Cursor Agent may sometimes improvise and look in other tool directories such as:
+
+- `.claude/`
+- `.codex/`
+- repo `skills/`
+
+even when the correct project-installed Cursor path exists under `.cursor/`.
+
+If that happens:
+1. Confirm the live `.cursor/commands/*.md` file contains the correct `.cursor/...` path.
+2. Confirm the referenced `.cursor/skills/...` or `.cursor/scripts/...` file really exists.
+3. Check for stale detached `node.exe` observer/helper processes from older `.cursor/` installs.
+4. Clear the relevant `workspaceStorage` cache and retry in a fresh Cursor session.
+
+Do not assume that Cursor searching `.claude/` or `.codex/` proves the MDT
+install is still wrong. It can be a cache or agent-path-selection problem even
+when the on-disk `.cursor/...` files are correct.
+
 ## Continuous Learning
 
 ### Observation Capture

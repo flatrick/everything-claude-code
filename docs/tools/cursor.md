@@ -29,7 +29,7 @@ These are official Cursor surfaces and should be treated as the primary integrat
 
 | MDT Concern | Cursor surface | Repo status |
 |---|---|---|
-| Rules / project guidance | `.cursor/rules/` (project only); user-level rules are database-backed and cannot be file-installed | official (project scope only) |
+| Rules / project guidance | `.cursor/rules/` (project) and `~/.cursor/rules/*.mdc` (user/global) | official, `locally-verified` |
 | Commands | Cursor custom commands | official vendor surface with repo-installed MDT command prompts |
 | Agents / delegation | custom modes, background agents, terminal agent | official |
 | Skills / reusable workflows | `.cursor/skills/` (project) and `~/.cursor/skills/` (user); `SKILL.md` format with YAML frontmatter; auto-discovered and `/`-invocable | official |
@@ -45,6 +45,25 @@ The repo currently ships:
 - `cursor-template/commands/*.md` for package-selected custom commands installed to `.cursor/commands/`
 - `cursor-template/hooks.json` and `cursor-template/hooks/*.js` — an MDT-specific Cursor hook adapter
 
+New local evidence:
+
+- `cursor-agent` accepts user-global rule files under `~/.cursor/rules/*.mdc`
+- locally verified example:
+  - `C:\Users\patri\.cursor\rules\never-attempt-to-read.mdc`
+  - frontmatter includes `description` and `alwaysApply: true`
+
+Important nuance:
+
+- Cursor's official docs still describe user rules as database-backed rather than
+  file-installed
+- local testing shows `cursor-agent` will happily create and use
+  `~/.cursor/rules/*.mdc`
+- this likely means there is a real difference between Cursor IDE behavior and
+  `cursor-agent` CLI behavior
+- until Cursor's official docs catch up, MDT should treat the user-global
+  `.mdc` rule surface as `locally-verified` for `cursor-agent`, not as fully
+  settled vendor-wide truth for every Cursor surface
+
 The rules and skills map directly onto official Cursor concepts.
 The command files are repo-defined MDT prompt bodies for Cursor custom commands, not vendor-provided built-ins.
 
@@ -59,7 +78,7 @@ as MDT's `experimental` Cursor adapter, not as vendor truth. MDT workflows must 
 
 ### Official guidance surfaces
 
-- Rules in `.cursor/rules/` — **project-scope only**; user-level rules are stored in a database and cannot be file-installed
+- Rules in `.cursor/rules/` (project) and `~/.cursor/rules/*.mdc` (user/global)
 - Skills in `.cursor/skills/` (project) or `~/.cursor/skills/` (user) — `SKILL.md` with YAML frontmatter
 - `AGENTS.md` at repo root
 - custom commands in Cursor's documented command system
@@ -92,9 +111,45 @@ That makes Cursor a viable official target for planning, Q&A, MCP, and rule-gene
 - Do not assume `cursor-template/hooks.json` is official just because it exists in this repo.
 - Do not assume every shared MDT slash command has a Cursor counterpart unless it is actually shipped under `cursor-template/commands/` and declared by a package manifest.
 - Skills are a first-class Cursor concept. Use `.cursor/skills/` with `SKILL.md` files — same format as Claude Code and Codex. Do not convert skills to rules when the skill format is the right fit.
-- Do not attempt to file-install user-level rules into `~/.cursor/rules/`. Cursor stores user rules in a database; only project-level rules (`.cursor/rules/`) are file-based and installable by MDT.
+- Do not assume project `.cursor/rules/*.md` and user `~/.cursor/rules/*.mdc` are interchangeable. Local evidence shows Cursor accepts user-global `.mdc` rule files, so MDT should treat global Cursor rules as a separate file format and install surface from project-local rules.
 - Do not force Claude hook semantics onto Cursor when rules, memories, background agents, or commands achieve the same MDT outcome more cleanly.
 - Do not assume live `.cursor/commands/*.md` files are the only source Cursor is consulting. Local troubleshooting showed Cursor can retain stale command/retrieval state under `AppData\\Roaming\\Cursor\\User\\workspaceStorage`, so command-path bugs should be checked against workspace cache as well as installed files.
+
+## Command And Skill Path Hardening
+
+Local troubleshooting showed two important Cursor behaviors:
+
+1. Cursor can cache stale command/retrieval state under:
+   - `AppData\Roaming\Cursor\User\workspaceStorage\...`
+2. When command or skill paths are ambiguous, Cursor Agent may improvise by
+   searching other tool directories such as `.claude/` or `.codex/` instead of
+   staying inside the current `.cursor/` install surface.
+
+Because of that, MDT guidance for Cursor should follow these rules:
+
+- Prefer a single explicit Cursor path in project-installed command prompts.
+- Do not give Cursor multiple equivalent path options unless that flexibility is
+  truly required.
+- In project-installed Cursor command files, prefer:
+  - `.cursor/...`
+  over generic placeholders or cross-tool examples.
+- If the required `.cursor/...` path is missing, tell Cursor to report the
+  install as incomplete rather than guessing another tool path.
+- When debugging surprising Cursor behavior, check:
+  1. the live `.cursor/...` files
+  2. stale detached `node.exe` helper/observer processes
+  3. `workspaceStorage` cache
+
+Treat Cursor as an integration that benefits from strict, tool-local prompts and
+explicit troubleshooting steps. Do not assume it will remain path-faithful when
+given ambiguous instructions.
+
+## Current MDT Gap
+
+MDT documentation now recognizes user-global Cursor rules under
+`~/.cursor/rules/*.mdc`, but the installer still treats global Cursor rules as
+unsupported and skips them. That is now a repo gap to close, not a Cursor
+vendor limitation.
 
 ## Hooks Adapter Scope and Opt-In
 

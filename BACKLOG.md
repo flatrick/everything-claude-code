@@ -150,6 +150,26 @@ be diagnosed from `.cursor/commands/` alone. If the on-disk command file is
 correct but Cursor still behaves as if an older command exists, clear the
 relevant workspace cache and retry in a fresh session before changing MDT.
 
+Cursor Agent may also improvise across tool boundaries when uncertain and look
+in `.claude/`, `.codex/`, or repo `skills/` even when the correct `.cursor/...`
+path exists. Future hardening work should keep Cursor prompts single-path and
+tool-local wherever possible.
+
+Local verification also shows `cursor-agent` accepts user-global rule files
+under `~/.cursor/rules/*.mdc`. MDT should add installer support for that
+surface instead of continuing to treat Cursor global rules as impossible.
+
+Official docs still describe user rules differently, so keep this classified as
+`cursor-agent` / locally verified behavior until the vendor docs clarify whether
+the IDE and CLI are meant to behave the same way. The current working
+assumption should be:
+
+- official docs say this is not the normal file-installed user-global rule path
+- local evidence shows `cursor-agent` will still create and use
+  `~/.cursor/rules/*.mdc`
+- treat that as a likely Cursor IDE vs `cursor-agent` CLI difference until
+  vendor documentation says otherwise
+
 ---
 
 ## Migrate Node runtime scripts to `.mjs` after v1.0.0 stabilization

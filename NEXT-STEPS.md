@@ -137,10 +137,22 @@ Follow-ups for this P2 item:
 - add more Cursor-facing skills intentionally (via packages) rather than by
   copying the entire shared `skills/` tree
 
-Note: Cursor user-level rules (`~/.cursor/rules/`) are stored in a database and
-cannot be file-installed. The install script must only target project-level paths
-(`.cursor/rules/`, `.cursor/skills/`). This is unlike Claude Code where
-`~/.claude/rules/` is file-based.
+Note: local verification now shows `cursor-agent` accepts user-global file rules
+under `~/.cursor/rules/*.mdc`. MDT still treats global Cursor rules as
+unsupported in the installer, so the next Cursor installer follow-up should:
+
+- add explicit global Cursor rule install support
+- map project `.cursor/rules/*.md` into the correct user-global `.mdc` format
+- document which rules should be safe/default at user-global scope vs
+  project-local scope
+
+Important nuance:
+
+- official Cursor docs still describe user rules differently
+- the current evidence is specifically that `cursor-agent` accepts and creates
+  `~/.cursor/rules/*.mdc`
+- this may be an IDE-vs-CLI difference, so keep the repo language at
+  `locally-verified` rather than treating it as fully settled vendor behavior
 
 ### 4. Add dependency declarations to SKILL.md frontmatter (P1)
 
@@ -251,6 +263,22 @@ Codex continuous-learning guardrail:
 Add test coverage for:
 - continuous-learning wiring in Cursor `afterFileEdit` / `afterShellExecution`
 - package-driven skill/command install output
+- user-global Cursor `.mdc` rule install behavior once that installer support lands
+
+### 8b. Add detached-process lifecycle management for background helpers (P1)
+
+Local debugging found that stale detached `node.exe` processes can keep old
+Cursor `.cursor/` state alive even after reinstalling or removing files. This
+must become a general MDT rule for any background helper launched separately
+from a tool session.
+
+Next implementation slice:
+
+- add a shared detached-process lifecycle contract
+- make observers/helpers self-terminate when the owning tool/session is gone
+- clean up PID files on exit
+- document stale detached-process checks as part of normal troubleshooting for
+  Cursor and any future background helper integrations
 
 ### 9. Add weekly continuous-learning retrospectives focused on automation candidates (P2)
 

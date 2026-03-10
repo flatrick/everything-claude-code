@@ -44,7 +44,7 @@ touch user-global config just because a tool happens to support a user layer.
 | Target | User/global layer | Project layer | Notes |
 | --- | --- | --- | --- |
 | `claude` | `~/.claude/` with `--global` | `.claude/` by default | installs rules, agents, commands, skills, hooks, and runtime scripts |
-| `cursor` | `~/.cursor/` with `--global` | `.cursor/` by default | global rules are not file-installable; project install is the primary mode |
+| `cursor` | `~/.cursor/` with `--global` | `.cursor/` by default | local evidence shows `cursor-agent` accepts user-global `~/.cursor/rules/*.mdc`, but official docs still describe user rules differently; MDT installer support for that surface still needs to be implemented |
 | `codex` | `~/.codex/` with `--global` | `.codex/skills/`, `.codex/scripts/`, and `.codex/rules/` in the target repo | package-driven; use `--project-dir` for clean external repo installs |
 | `gemini` | `~/.gemini/` with `--global` | `.agent/` and `.gemini/` by default | uses Gemini/Antigravity-specific layout |
 
