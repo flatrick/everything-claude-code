@@ -26,7 +26,7 @@ An advanced learning system that turns MDT tool sessions into reusable knowledge
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`<data>/homunculus/`) | Project-scoped (projects/<hash>/) |
+| Storage | Global (`<data>/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
 | Promotion | N/A | Project → global when seen in 2+ projects |
@@ -56,7 +56,7 @@ confidence: 0.7
 domain: "code-style"
 source: "session-observation"
 scope: project
-project_id: "a1b2c3d4e5f6"
+project_id: "my-react-app-a1b2c3d4"
 project_name: "my-react-app"
 ---
 
@@ -86,7 +86,7 @@ Session Activity (in a git repo)
       | + detect project context (git remote / repo path)
       v
 +---------------------------------------------+
-|  projects/<project-hash>/observations.jsonl  |
+|  <project-id>/observations.jsonl             |
 |   (prompts, tool calls, outcomes, project)   |
 +---------------------------------------------+
       |
@@ -103,7 +103,7 @@ Session Activity (in a git repo)
       | Creates/updates
       v
 +---------------------------------------------+
-|  projects/<project-hash>/instincts/personal/ |
+|  <project-id>/instincts/personal/            |
 |   * prefer-functional.yaml (0.7) [project]   |
 |   * use-react-hooks.yaml (0.9) [project]     |
 +---------------------------------------------+
@@ -115,7 +115,7 @@ Session Activity (in a git repo)
       | /evolve clusters + /promote
       v
 +---------------------------------------------+
-|  projects/<hash>/evolved/ (project-scoped)   |
+|  <project-id>/evolved/ (project-scoped)      |
 |  evolved/ (global)                           |
 |   * commands/new-feature.md                  |
 |   * skills/testing-workflow.md               |
@@ -128,11 +128,17 @@ Session Activity (in a git repo)
 The system automatically detects your current project:
 
 1. **`CLAUDE_PROJECT_DIR` env var** (highest priority)
-2. **`git remote get-url origin`** -- hashed to create a portable project ID (same repo on different machines gets the same ID)
-3. **`git rev-parse --show-toplevel`** -- fallback using repo path (machine-specific)
-4. **Global fallback** -- if no project is detected, instincts go to global scope
+2. **`git remote get-url origin`** — yields `<repo-name>-git` (e.g., `my-react-app-git`)
+3. **`git rev-parse --show-toplevel`** — fallback using repo path, yields `<basename>-<md5_8(path)>`
+4. **No VCS** — `<basename>-<md5_8(path)>` (path-anchored to prevent collisions)
 
-Each project gets a 12-character hash ID (e.g., `a1b2c3d4e5f6`). A registry file at `<data>/homunculus/projects.json` maps IDs to human-readable names.
+Project IDs encode both the name and detection method:
+
+- **VCS remote available** → `<repo-name>-<vcs>` (e.g., `mdt-git`) — remote-anchored, portable
+- **VCS repo, no remote** → `<basename>-<8-char-md5>` — path-anchored
+- **No VCS** → `<basename>-<8-char-md5>` — path-anchored
+
+Only git is currently detected; other VCS systems are in the backlog. A registry file at `<data>/homunculus/projects.json` maps IDs to human-readable names.
 
 ## Quick Start
 
@@ -192,7 +198,7 @@ The system creates directories automatically on first use, but you can also crea
 
 ```bash
 # Global directories
-mkdir -p <data>/homunculus/{instincts/{personal,inherited},evolved/{agents,skills,commands},projects}
+mkdir -p <data>/homunculus/{instincts/{personal,inherited},evolved/{agents,skills,commands}}
 
 # Project directories are auto-created when the hook first runs in a git repo
 ```
@@ -269,7 +275,7 @@ Other behavior (observation capture, instinct thresholds, project scoping, promo
 ```
 <data>/homunculus/
 +-- identity.json           # Your profile, technical level
-+-- projects.json           # Registry: project hash -> name/path/remote
++-- projects.json           # Registry: project ID -> name/path/remote
 +-- observations.jsonl      # Global observations (fallback)
 +-- instincts/
 |   +-- personal/           # Global auto-learned instincts
@@ -278,19 +284,18 @@ Other behavior (observation capture, instinct thresholds, project scoping, promo
 |   +-- agents/             # Global generated agents
 |   +-- skills/             # Global generated skills
 |   +-- commands/           # Global generated commands
-+-- projects/
-    +-- a1b2c3d4e5f6/       # Project hash (from git remote URL)
-    |   +-- observations.jsonl
-    |   +-- observations.archive/
-    |   +-- instincts/
-    |   |   +-- personal/   # Project-specific auto-learned
-    |   |   +-- inherited/  # Project-specific imported
-    |   +-- evolved/
-    |       +-- skills/
-    |       +-- commands/
-    |       +-- agents/
-    +-- f6e5d4c3b2a1/       # Another project
-        +-- ...
++-- <project-id>/           # e.g. my-react-app-git or scripts-a1b2c3d4
+|   +-- observations.jsonl
+|   +-- observations.archive/
+|   +-- instincts/
+|   |   +-- personal/       # Project-specific auto-learned
+|   |   +-- inherited/      # Project-specific imported
+|   +-- evolved/
+|       +-- skills/
+|       +-- commands/
+|       +-- agents/
++-- <another-project-id>/
+    +-- ...
 ```
 
 ## Scope Decision Guide
