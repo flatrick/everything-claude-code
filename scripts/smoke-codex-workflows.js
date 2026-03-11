@@ -6,6 +6,9 @@ const { TOOL_WORKFLOW_CONTRACT } = require('./lib/tool-workflow-contract');
 const { summarizeTool } = require('./smoke-tool-setups');
 
 function resolveWorkspaceRoot(scriptDir) {
+  if (path.basename(scriptDir) === 'scripts' && path.basename(path.dirname(scriptDir)) === 'mdt') {
+    return path.join(scriptDir, '..', '..');
+  }
   const installedRepoRoot = path.join(scriptDir, '..', '..');
   if (fs.existsSync(path.join(installedRepoRoot, '.codex'))) {
     return installedRepoRoot;
@@ -200,7 +203,7 @@ function buildE2eChecks(files) {
 function buildSmokeChecks(files, options = {}) {
   const codexSummary = summarizeTool('codex', TOOL_WORKFLOW_CONTRACT.smokeProbes.codex || [], options);
   const hasRequiredFiles = [
-    files['codex-template/skills/tool-setup-verifier/SKILL.md'],
+    files['codex-template/skills/smoke/SKILL.md'],
     files['docs/testing/manual-verification/codex.md']
   ].every(file => file && file.exists);
   const cliPass = codexSummary.status === 'PASS';
@@ -212,9 +215,9 @@ function buildSmokeChecks(files, options = {}) {
     workflow: 'smoke',
     checks: [
       {
-        path: 'codex-template/skills/tool-setup-verifier/SKILL.md',
-        ok: files['codex-template/skills/tool-setup-verifier/SKILL.md'].exists,
-        message: 'Codex smoke verifier skill should exist in codex-template/skills'
+        path: 'codex-template/skills/smoke/SKILL.md',
+        ok: files['codex-template/skills/smoke/SKILL.md'].exists,
+        message: 'Codex smoke skill should exist in codex-template/skills'
       },
       {
         path: 'docs/testing/manual-verification/codex.md',
@@ -369,18 +372,18 @@ function buildInstalledSmokeChecks(files) {
     workflow: 'smoke',
     checks: [
       {
-        path: '.codex/skills/tool-setup-verifier/SKILL.md',
-        ok: files['.codex/skills/tool-setup-verifier/SKILL.md'].exists,
-        message: 'Installed Codex smoke verifier skill should exist'
+        path: '~/.codex/skills/smoke/SKILL.md',
+        ok: files['~/.codex/skills/smoke/SKILL.md'].exists,
+        message: 'Installed Codex smoke skill should exist'
       },
       {
-        path: '.codex/scripts/smoke-tool-setups.js',
-        ok: files['.codex/scripts/smoke-tool-setups.js'].exists,
+        path: '~/.codex/mdt/scripts/smoke-tool-setups.js',
+        ok: files['~/.codex/mdt/scripts/smoke-tool-setups.js'].exists,
         message: 'Installed Codex smoke CLI probe script should exist'
       },
       {
-        path: '.codex/scripts/smoke-codex-workflows.js',
-        ok: files['.codex/scripts/smoke-codex-workflows.js'].exists,
+        path: '~/.codex/mdt/scripts/smoke-codex-workflows.js',
+        ok: files['~/.codex/mdt/scripts/smoke-codex-workflows.js'].exists,
         message: 'Installed Codex workflow smoke script should exist'
       }
     ]
@@ -403,42 +406,42 @@ function smokeCodexWorkflows(options = {}) {
   const rootDir = options.rootDir || resolveWorkspaceRoot(__dirname);
   const io = options.io || console;
   const installedRepoMode = !fs.existsSync(path.join(rootDir, 'codex-template', 'AGENTS.md'))
-    && fs.existsSync(path.join(rootDir, '.codex', 'skills'));
+    && fs.existsSync(path.join(rootDir, 'skills'));
   const files = installedRepoMode
     ? {
-        '.codex/AGENTS.md': readRepoFile(rootDir, path.join('.codex', 'AGENTS.md')),
-        '.codex/config.toml': readRepoFile(rootDir, path.join('.codex', 'config.toml')),
-        '.codex/skills/tool-setup-verifier/SKILL.md': readRepoFile(
+        '.codex/AGENTS.md': readRepoFile(rootDir, 'AGENTS.md'),
+        '.codex/config.toml': readRepoFile(rootDir, 'config.toml'),
+        '~/.codex/skills/smoke/SKILL.md': readRepoFile(
           rootDir,
-          path.join('.codex', 'skills', 'tool-setup-verifier', 'SKILL.md')
+          path.join('skills', 'smoke', 'SKILL.md')
         ),
-        '.codex/skills/tdd-workflow/SKILL.md': readRepoFile(rootDir, path.join('.codex', 'skills', 'tdd-workflow', 'SKILL.md')),
+        '.codex/skills/tdd-workflow/SKILL.md': readRepoFile(rootDir, path.join('skills', 'tdd-workflow', 'SKILL.md')),
         '.codex/skills/coding-standards/SKILL.md': readRepoFile(
           rootDir,
-          path.join('.codex', 'skills', 'coding-standards', 'SKILL.md')
+          path.join('skills', 'coding-standards', 'SKILL.md')
         ),
         '.codex/skills/verification-loop/SKILL.md': readRepoFile(
           rootDir,
-          path.join('.codex', 'skills', 'verification-loop', 'SKILL.md')
+          path.join('skills', 'verification-loop', 'SKILL.md')
         ),
         '.codex/skills/security-review/SKILL.md': readRepoFile(
           rootDir,
-          path.join('.codex', 'skills', 'security-review', 'SKILL.md')
+          path.join('skills', 'security-review', 'SKILL.md')
         ),
         '.codex/skills/e2e-testing/SKILL.md': readRepoFile(
           rootDir,
-          path.join('.codex', 'skills', 'e2e-testing', 'SKILL.md')
+          path.join('skills', 'e2e-testing', 'SKILL.md')
         ),
-        '.codex/scripts/smoke-tool-setups.js': readRepoFile(rootDir, path.join('.codex', 'scripts', 'smoke-tool-setups.js')),
-        '.codex/scripts/smoke-codex-workflows.js': readRepoFile(rootDir, path.join('.codex', 'scripts', 'smoke-codex-workflows.js'))
+        '~/.codex/mdt/scripts/smoke-tool-setups.js': readRepoFile(rootDir, path.join('mdt', 'scripts', 'smoke-tool-setups.js')),
+        '~/.codex/mdt/scripts/smoke-codex-workflows.js': readRepoFile(rootDir, path.join('mdt', 'scripts', 'smoke-codex-workflows.js'))
       }
     : {
         'AGENTS.md': readRepoFile(rootDir, 'AGENTS.md'),
         'codex-template/AGENTS.md': readRepoFile(rootDir, path.join('codex-template', 'AGENTS.md')),
         'codex-template/config.toml': readRepoFile(rootDir, path.join('codex-template', 'config.toml')),
-        'codex-template/skills/tool-setup-verifier/SKILL.md': readRepoFile(
+        'codex-template/skills/smoke/SKILL.md': readRepoFile(
           rootDir,
-          path.join('codex-template', 'skills', 'tool-setup-verifier', 'SKILL.md')
+          path.join('codex-template', 'skills', 'smoke', 'SKILL.md')
         ),
         'docs/testing/manual-verification/codex.md': readRepoFile(
           rootDir,

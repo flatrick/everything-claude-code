@@ -8,8 +8,7 @@ real local Codex session.
 Codex does not use the same markdown command surface as Claude Code or Cursor.
 For Codex, the smoke path is:
 
-- the `tool-setup-verifier` skill under `.codex/skills/` when the target repo
-  was installed under `~/.codex/skills/` with `--dev`
+- the `smoke` skill under `~/.codex/skills/` when Codex was installed with `--dev`
 - the local smoke scripts for the current repo mode:
   - MDT repo mode:
     - `node scripts/verify-tool-setups.js`
@@ -36,7 +35,7 @@ Then confirm:
 
 - `~/.codex/skills/` contains the selected Codex skills
 - `~/.codex/mdt/scripts/` exists for MDT runtime helpers
-- if you installed with `--dev`, `~/.codex/skills/tool-setup-verifier/` and
+- if you installed with `--dev`, `~/.codex/skills/smoke/`, `~/.codex/skills/tool-setup-verifier/`, and
   `~/.codex/skills/tool-doc-maintainer/` exist
 - if you did not install with `--dev`, those MDT-internal verifier/audit skills
   should be absent

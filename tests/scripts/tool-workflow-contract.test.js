@@ -41,7 +41,8 @@ function runTests() {
     const smokeWorkflow = TOOL_WORKFLOW_CONTRACT.workflows.find(workflow => workflow.id === 'smoke');
     assert.ok(smokeWorkflow, 'Expected smoke workflow');
     assert.strictEqual(smokeWorkflow.tools.codex.artifactMappings[0].surfaceType, 'skill');
-    assert.ok(smokeWorkflow.tools.codex.requiredFiles.includes('codex-template/skills/tool-setup-verifier/SKILL.md'));
+    assert.strictEqual(smokeWorkflow.tools.codex.artifactMappings[0].name, 'smoke');
+    assert.ok(smokeWorkflow.tools.codex.requiredFiles.includes('codex-template/skills/smoke/SKILL.md'));
   })) passed++; else failed++;
 
   if (test('supports reloading the workflow contract from a copied fixture tree', () => {

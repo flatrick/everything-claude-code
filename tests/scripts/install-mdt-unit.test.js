@@ -16,6 +16,8 @@ const {
   buildInstallPlan,
   resolveSelectedPackages,
   assertPackageRequirements,
+  assertSkillRequirements,
+  assertInstallRequirements,
   getSkillRequirementWarnings,
   installClaudeContentDirs,
   installCursorCoreDirs,
@@ -336,6 +338,16 @@ function runTests() {
     assert.ok(!plan.some((line) => line.includes("skill 'continuous-learning-manual'")));
   })) passed++; else failed++;
 
+  if (test('buildInstallPlan advertises dev smoke surfaces for audited tools', () => {
+    const claudePlan = buildInstallPlan({ target: 'claude', devMode: true, packageNames: ['continuous-learning'] });
+    const cursorPlan = buildInstallPlan({ target: 'cursor', devMode: true, packageNames: ['continuous-learning'] });
+    const codexPlan = buildInstallPlan({ target: 'codex', devMode: true, packageNames: ['continuous-learning'] });
+
+    assert.ok(claudePlan.some((line) => line.includes('Claude dev smoke scripts')));
+    assert.ok(cursorPlan.some((line) => line.includes('Cursor dev smoke command')));
+    assert.ok(codexPlan.some((line) => line.includes('Codex dev smoke skill')));
+  })) passed++; else failed++;
+
   if (test('buildInstallPlan rejects packages that do not support the selected target', () => {
     assert.throws(
       () => buildInstallPlan({ target: 'gemini', devMode: false, packageNames: ['continuous-learning'] }),
@@ -393,6 +405,7 @@ function runTests() {
     withTempDir('mdt-install-claude-dev-', (tempDir) => {
       installClaudeContentDirs(tempDir, resolveSelectedPackages(['typescript']), true);
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'smoke.md')));
     });
   })) passed++; else failed++;
 
@@ -432,6 +445,7 @@ function runTests() {
     withTempDir('mdt-install-cursor-dev-', (tempDir) => {
       installCursorCoreDirs(tempDir, resolveSelectedPackages(['typescript']), true);
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'smoke.md')));
     });
   })) passed++; else failed++;
 
@@ -483,6 +497,7 @@ function runTests() {
     withTempDir('mdt-install-codex-dev-', (tempDir) => {
       installCodexSkills(resolveSelectedPackages(['typescript', 'continuous-learning']), tempDir, true);
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-setup-verifier', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'smoke', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
     });
   })) passed++; else failed++;
@@ -567,7 +582,7 @@ function runTests() {
     );
   })) passed++; else failed++;
 
-  if (test('getSkillRequirementWarnings reports missing companion skill in custom selection', () => {
+  if (test('assertSkillRequirements rejects missing companion skill in custom selection', () => {
     withTempDir('mdt-package-skill-warn-', (tempDir) => {
       const packagesDir = path.join(tempDir, 'packages');
       fs.mkdirSync(path.join(packagesDir, 'demo'), { recursive: true });
@@ -575,15 +590,17 @@ function runTests() {
         name: 'demo',
         description: 'Demo',
         ruleDirectory: 'typescript',
-        rules: ['common/testing.md'],
+        rules: ['common/development-workflow.md', 'common/testing.md'],
         agents: [],
         commands: [],
         skills: ['tdd-workflow'],
         tools: {}
       }), 'utf8');
 
-      const warnings = getSkillRequirementWarnings('claude', resolveSelectedPackages(['demo'], { packagesDir }));
-      assert.ok(warnings.some((line) => line.includes("skill 'tdd-workflow' declares companion skill 'coding-standards'")));
+      assert.throws(
+        () => assertSkillRequirements('claude', resolveSelectedPackages(['demo'], { packagesDir })),
+        /skill 'tdd-workflow' declares companion skill 'coding-standards'/
+      );
     });
   })) passed++; else failed++;
 

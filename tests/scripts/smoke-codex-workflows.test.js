@@ -52,6 +52,7 @@ function createFixtureRoot() {
   writeFile(rootDir, path.join('codex-template', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop Skill');
   writeFile(rootDir, path.join('codex-template', 'skills', 'security-review', 'SKILL.md'), '# Security Review Skill');
   writeFile(rootDir, path.join('codex-template', 'skills', 'e2e-testing', 'SKILL.md'), '# E2E Testing Patterns');
+  writeFile(rootDir, path.join('codex-template', 'skills', 'smoke', 'SKILL.md'), '# Smoke');
   writeFile(rootDir, path.join('codex-template', 'skills', 'tool-setup-verifier', 'SKILL.md'), '# Tool Setup Verifier');
   writeFile(rootDir, path.join('docs', 'testing', 'manual-verification', 'codex.md'), '# Codex Manual Verification');
 
@@ -81,16 +82,17 @@ function createInstalledFixtureRoot() {
     ].join('\n')
   );
 
+  writeFile(rootDir, path.join('.codex', 'skills', 'smoke', 'SKILL.md'), '# Smoke');
   writeFile(rootDir, path.join('.codex', 'skills', 'tool-setup-verifier', 'SKILL.md'), '# Tool Setup Verifier');
   writeFile(rootDir, path.join('.codex', 'skills', 'tdd-workflow', 'SKILL.md'), '# Test-Driven Development Workflow');
   writeFile(rootDir, path.join('.codex', 'skills', 'coding-standards', 'SKILL.md'), '# Universal coding standards');
   writeFile(rootDir, path.join('.codex', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop Skill');
   writeFile(rootDir, path.join('.codex', 'skills', 'security-review', 'SKILL.md'), '# Security Review Skill');
   writeFile(rootDir, path.join('.codex', 'skills', 'e2e-testing', 'SKILL.md'), '# E2E Testing Patterns');
-  writeFile(rootDir, path.join('.codex', 'scripts', 'smoke-tool-setups.js'), '// smoke');
-  writeFile(rootDir, path.join('.codex', 'scripts', 'smoke-codex-workflows.js'), '// smoke');
+  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'smoke-tool-setups.js'), '// smoke');
+  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'smoke-codex-workflows.js'), '// smoke');
 
-  return { rootDir };
+  return path.join(rootDir, '.codex');
 }
 
 function runTests() {
@@ -190,7 +192,7 @@ function runTests() {
     const rootDir = createFixtureRoot();
 
     try {
-      fs.rmSync(path.join(rootDir, 'codex-template', 'skills', 'tool-setup-verifier', 'SKILL.md'));
+      fs.rmSync(path.join(rootDir, 'codex-template', 'skills', 'smoke', 'SKILL.md'));
       const output = [];
       const result = smokeCodexWorkflows({
         rootDir,
@@ -202,14 +204,14 @@ function runTests() {
 
       assert.strictEqual(result.exitCode, 1, 'Expected missing smoke contract files to fail');
       assert.ok(output.join('\n').includes('smoke: FAIL'));
-      assert.ok(output.join('\n').includes('codex-template/skills/tool-setup-verifier/SKILL.md'));
+      assert.ok(output.join('\n').includes('codex-template/skills/smoke/SKILL.md'));
     } finally {
       cleanupTestDir(rootDir);
     }
   })) passed++; else failed++;
 
   if (test('passes in installed target repo mode using project .codex only', () => {
-    const { rootDir } = createInstalledFixtureRoot();
+    const rootDir = createInstalledFixtureRoot();
 
     try {
       const output = [];
@@ -222,6 +224,7 @@ function runTests() {
 
       assert.strictEqual(result.exitCode, 0, output.join('\n'));
       assert.ok(output.join('\n').includes('installed-target'));
+      assert.ok(output.join('\n').includes('~/.codex/skills/smoke/SKILL.md') || output.join('\n').includes('smoke: PASS'));
       assert.ok(output.join('\n').includes('smoke: PASS'));
       assert.ok(output.join('\n').includes('code-review: PASS'));
       assert.ok(output.join('\n').includes('verify: PASS'));

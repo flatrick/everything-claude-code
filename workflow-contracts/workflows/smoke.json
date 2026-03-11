@@ -30,10 +30,10 @@
       "status": "repo-adapter",
       "verificationMode": "installer-target",
       "artifactMappings": [
-        { "surfaceType": "skill", "name": "tool-setup-verifier", "path": "codex-template/skills/tool-setup-verifier/SKILL.md", "role": "smoke-entrypoint" },
+        { "surfaceType": "skill", "name": "smoke", "path": "codex-template/skills/smoke/SKILL.md", "role": "smoke-entrypoint" },
         { "surfaceType": "manual-verification", "name": "codex", "path": "docs/testing/manual-verification/codex.md", "role": "human-checklist" }
       ],
-      "requiredFiles": ["codex-template/skills/tool-setup-verifier/SKILL.md", "docs/testing/manual-verification/codex.md"]
+      "requiredFiles": ["codex-template/skills/smoke/SKILL.md", "docs/testing/manual-verification/codex.md"]
     }
   }
 }

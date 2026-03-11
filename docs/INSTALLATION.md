@@ -111,7 +111,7 @@ Tool-specific manual checks live under:
 
 Dev-only verification helpers:
 
-- `--dev` installs MDT-internal surfaces such as `tool-setup-verifier`, `tool-doc-maintainer`, and Codex smoke workflow scripts into the global tool root
+- `--dev` guarantees a smoke-verification surface for Claude, Cursor, and Codex. It also installs MDT-internal surfaces such as `tool-setup-verifier` and `tool-doc-maintainer` plus the backing smoke scripts under the global MDT root
 - normal end-user installs keep `documentation-steward` as the general documentation skill but do not ship MDT-maintainer-specific verifier/audit skills by default
 
 ## Pre-v1 Policy

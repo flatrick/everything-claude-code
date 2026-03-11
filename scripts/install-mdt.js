@@ -33,12 +33,16 @@ const CURSOR_SRC = path.join(REPO_ROOT, 'cursor-template');
 const CODEX_SRC = path.join(REPO_ROOT, 'codex-template');
 const CODEX_SKILLS_SRC = path.join(CODEX_SRC, 'skills');
 const CODEX_RULES_SRC = path.join(CODEX_SRC, 'rules');
+const SHARED_SKILLS_SRC = path.join(REPO_ROOT, 'skills');
+const SHARED_COMMANDS_SRC = path.join(REPO_ROOT, 'commands');
 const RUNTIME_CI_FILES = [
   'markdown-utils.js',
   'validate-markdown-links.js',
   'validate-markdown-path-refs.js'
 ];
 const CLAUDE_WORKFLOW_SCRIPTS = ['smoke-claude-workflows.js'];
+const DEV_SMOKE_SCRIPT_FILES = ['smoke-tool-setups.js'];
+const CODEX_DEV_SKILL_NAMES = ['tool-setup-verifier', 'smoke'];
 const SUPPORTED_PACKAGE_TARGETS = new Set(['claude', 'cursor', 'gemini', 'codex']);
 const TARGET_CAPABILITIES = {
   claude: { hooks: 'official', runtimeScripts: true, sessionData: true },
@@ -356,13 +360,37 @@ function getPackageRequirementWarnings(target, selectedPackages) {
   return warnings;
 }
 
+function getDevSkillNamesForTarget(target, devMode = false) {
+  if (!devMode) {
+    return [];
+  }
+
+  if (target === 'codex') {
+    return ['tool-doc-maintainer', ...CODEX_DEV_SKILL_NAMES];
+  }
+
+  return ['tool-doc-maintainer'];
+}
+
 function getSelectedSkillNamesForTarget(target, selectedPackages, devMode = false) {
   const sharedSkillNames = target === 'codex'
     ? []
     : getManifestSelections(selectedPackages, 'skills');
   const toolSkillNames = getToolManifestSelections(selectedPackages, target, 'skills');
-  const devSkillNames = devMode ? ['tool-doc-maintainer', 'tool-setup-verifier'] : [];
+  const devSkillNames = getDevSkillNamesForTarget(target, devMode);
   return mergeUniqueOrdered(sharedSkillNames, toolSkillNames, devSkillNames);
+}
+
+function loadSelectedSkillMetadata(target, skillName) {
+  if (target === 'codex') {
+    return loadSkillMetadataByName(skillName, { skillsDir: CODEX_SKILLS_SRC }) || loadSkillMetadataByName(skillName);
+  }
+
+  if (target === 'cursor') {
+    return loadSkillMetadataByName(skillName, { skillsDir: path.join(CURSOR_SRC, 'skills') }) || loadSkillMetadataByName(skillName);
+  }
+
+  return loadSkillMetadataByName(skillName);
 }
 
 function getSelectedRuleNamesForTarget(target, selectedPackages) {
@@ -390,40 +418,47 @@ function getSelectedRuleNamesForTarget(target, selectedPackages) {
   return getManifestRuleSelections(selectedPackages);
 }
 
-function getSkillRequirementWarnings(target, selectedPackages, devMode = false) {
+function evaluateSkillRequirements(target, selectedPackages, devMode = false) {
   const capabilities = TARGET_CAPABILITIES[target];
   if (!capabilities) {
-    return [];
+    return { errors: [], warnings: [] };
   }
 
   const selectedRuleNames = new Set(getSelectedRuleNamesForTarget(target, selectedPackages));
   const selectedSkillNames = new Set(getSelectedSkillNamesForTarget(target, selectedPackages, devMode));
+  const errors = [];
   const warnings = [];
 
   for (const skillName of selectedSkillNames) {
-    const skillMetadata = loadSkillMetadataByName(skillName);
-    if (!skillMetadata || !skillMetadata.hasMetaFile) {
+    const skillMetadata = loadSelectedSkillMetadata(target, skillName);
+    if (!skillMetadata) {
+      errors.push(`skill '${skillName}' is selected for target '${target}', but no skill directory exists under skills/`);
+      continue;
+    }
+
+    if (!skillMetadata.hasMetaFile) {
+      errors.push(`skill '${skillName}' is selected for target '${target}', but ${path.relative(REPO_ROOT, skillMetadata.skillDir).replace(/\\/g, '/')} is missing skill.meta.json`);
       continue;
     }
 
     for (const requiredRule of skillMetadata.requires.rules) {
       if (!selectedRuleNames.has(requiredRule)) {
-        warnings.push(`skill '${skillName}' declares rule dependency '${requiredRule}', but the selected package set does not include it`);
+        errors.push(`skill '${skillName}' declares rule dependency '${requiredRule}', but the selected package set does not include it`);
       }
     }
 
     for (const companionSkill of skillMetadata.requires.skills) {
       if (!selectedSkillNames.has(companionSkill)) {
-        warnings.push(`skill '${skillName}' declares companion skill '${companionSkill}', but it is not part of this install selection`);
+        errors.push(`skill '${skillName}' declares companion skill '${companionSkill}', but it is not part of this install selection`);
       }
     }
 
     if (skillMetadata.requires.runtime.runtimeScripts && !capabilities.runtimeScripts) {
-      warnings.push(`skill '${skillName}' expects runtime scripts, but target '${target}' does not install MDT runtime scripts`);
+      errors.push(`skill '${skillName}' expects runtime scripts, but target '${target}' does not install MDT runtime scripts`);
     }
 
     if (skillMetadata.requires.runtime.sessionData && !capabilities.sessionData) {
-      warnings.push(`skill '${skillName}' expects session data support, but target '${target}' does not provide it`);
+      errors.push(`skill '${skillName}' expects session data support, but target '${target}' does not provide it`);
     }
 
     const hookMode = skillMetadata.requires.runtime.hooks.mode;
@@ -433,13 +468,32 @@ function getSkillRequirementWarnings(target, selectedPackages, devMode = false) 
     }
 
     if (hookMode === 'required' && !capabilities.hooks) {
-      warnings.push(`skill '${skillName}' requires hooks for target '${target}', but that target does not support MDT hook installs`);
+      errors.push(`skill '${skillName}' requires hooks for target '${target}', but that target does not support MDT hook installs`);
     } else if (hookMode === 'required' && capabilities.hooks === 'experimental') {
       warnings.push(`skill '${skillName}' depends on hooks for target '${target}', but that hook support is experimental in this repo`);
     }
   }
 
+  return { errors, warnings };
+}
+
+function getSkillRequirementWarnings(target, selectedPackages, devMode = false) {
+  return evaluateSkillRequirements(target, selectedPackages, devMode).warnings;
+}
+
+function assertSkillRequirements(target, selectedPackages, devMode = false) {
+  const { errors, warnings } = evaluateSkillRequirements(target, selectedPackages, devMode);
+  if (errors.length > 0) {
+    throw new Error(errors[0]);
+  }
   return warnings;
+}
+
+function assertInstallRequirements(target, selectedPackages, devMode = false) {
+  return [
+    ...assertPackageRequirements(target, selectedPackages),
+    ...assertSkillRequirements(target, selectedPackages, devMode)
+  ];
 }
 
 function assertPackageRequirements(target, selectedPackages) {
@@ -526,7 +580,12 @@ function buildCodexInstallPlan(lines, selectedPackages, overrideDir, devMode) {
     `[dry-run] Would install Codex rules to ${path.join(userCodexDir, 'rules')}`,
     `[dry-run] Would install Codex skills to ${path.join(userCodexDir, 'skills')}`,
     `[dry-run] Would install Codex runtime scripts to ${path.join(mdtRoot, 'scripts')}`,
-    ...(devMode ? [`[dry-run] Would install Codex dev smoke workflow scripts to ${path.join(mdtRoot, 'scripts')}`] : []),
+    ...(devMode
+      ? [
+        `[dry-run] Would install Codex dev smoke skill to ${path.join(userCodexDir, 'skills')}`,
+        `[dry-run] Would install Codex dev smoke workflow scripts to ${path.join(mdtRoot, 'scripts')}`
+      ]
+      : []),
     ...(codexScripts.length > 0
       ? [`[dry-run] Would install package-selected Codex workflow scripts to ${path.join(mdtRoot, 'scripts')}`]
       : [])
@@ -556,7 +615,7 @@ function buildGeminiInstallPlan(lines, selectedPackages, overrideDir) {
   ];
 }
 
-function buildClaudeInstallPlan(lines, selectedPackages, overrideDir) {
+function buildClaudeInstallPlan(lines, selectedPackages, overrideDir, devMode = false) {
   const packages = getSelectedPackageSummary(selectedPackages);
   const claudeBase = resolveInstallRoot('claude', overrideDir);
   const mdtRoot = resolveMdtRoot(claudeBase);
@@ -565,11 +624,15 @@ function buildClaudeInstallPlan(lines, selectedPackages, overrideDir) {
     ...lines,
     `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${claudeBase}`,
-    `[dry-run] Would copy rules, package-selected agents/commands/skills, hooks, and runtime scripts to ${mdtRoot}`
+    `[dry-run] Would copy rules, package-selected agents/commands/skills, hooks, and runtime scripts to ${mdtRoot}`,
+    ...(devMode ? [
+      `[dry-run] Would install Claude dev smoke command to ${path.join(claudeBase, 'commands')}`,
+      `[dry-run] Would install Claude dev smoke scripts to ${path.join(mdtRoot, 'scripts')}`
+    ] : [])
   ];
 }
 
-function buildCursorInstallPlan(lines, selectedPackages, overrideDir) {
+function buildCursorInstallPlan(lines, selectedPackages, overrideDir, devMode = false) {
   const packages = getSelectedPackageSummary(selectedPackages);
   const cursorBase = resolveInstallRoot('cursor', overrideDir);
   const mdtRoot = resolveMdtRoot(cursorBase);
@@ -578,6 +641,7 @@ function buildCursorInstallPlan(lines, selectedPackages, overrideDir) {
     `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${cursorBase}`,
     `[dry-run] Would install Cursor rules, package-selected agents/skills/commands, hook config, mcp config, and runtime scripts under ${mdtRoot}`,
+    ...(devMode ? [`[dry-run] Would install Cursor dev smoke command to ${path.join(cursorBase, 'commands')}`] : []),
     `[dry-run] Local exception bridges, if needed later, would materialize only the missing surface into the active repo`
   ];
 }
@@ -590,15 +654,14 @@ function buildInstallPlan({ target, devMode, overrideDir, packageNames }) {
   const warnings = selectedPackages.length === 0
     ? []
     : [
-      ...assertPackageRequirements(target, selectedPackages).map((warning) => `[dry-run] Warning: ${warning}`),
-      ...getSkillRequirementWarnings(target, selectedPackages, devMode).map((warning) => `[dry-run] Note: ${warning}`)
+      ...assertInstallRequirements(target, selectedPackages, devMode).map((warning) => `[dry-run] Warning: ${warning}`)
     ];
 
   if (target === 'codex') return [...warnings, ...buildCodexInstallPlan(header, selectedPackages, overrideDir, devMode)];
   if (target === 'gemini') return [...warnings, ...buildGeminiInstallPlan(header, selectedPackages, overrideDir)];
-  if (target === 'claude') return [...warnings, ...buildClaudeInstallPlan(header, selectedPackages, overrideDir)];
+  if (target === 'claude') return [...warnings, ...buildClaudeInstallPlan(header, selectedPackages, overrideDir, devMode)];
 
-  return [...warnings, ...buildCursorInstallPlan(header, selectedPackages, overrideDir)];
+  return [...warnings, ...buildCursorInstallPlan(header, selectedPackages, overrideDir, devMode)];
 }
 
 function copyRecursiveSync(srcDir, destDir, filter = () => true) {
@@ -788,13 +851,12 @@ function installClaudeRules(selectedPackages, rulesDest) {
 }
 
 function installDevSharedSkills(destDir) {
-  const skillsSrc = path.join(REPO_ROOT, 'skills');
-  if (!fs.existsSync(skillsSrc)) {
+  if (!fs.existsSync(SHARED_SKILLS_SRC)) {
     return 0;
   }
 
   const skillsDest = path.join(destDir, 'skills');
-  return copySelectedDirectories(skillsSrc, skillsDest, ['tool-doc-maintainer'], 'Dev-only shared skill');
+  return copySelectedDirectories(SHARED_SKILLS_SRC, skillsDest, ['tool-doc-maintainer'], 'Dev-only shared skill');
 }
 
 function installClaudeContentDirs(claudeBase, selectedPackages, devMode = false) {
@@ -807,16 +869,19 @@ function installClaudeContentDirs(claudeBase, selectedPackages, devMode = false)
     }
   }
 
-  const commandsSrc = path.join(REPO_ROOT, 'commands');
+  const commandsSrc = SHARED_COMMANDS_SRC;
   const commandsDest = path.join(claudeBase, 'commands');
   if (fs.existsSync(commandsSrc) && path.resolve(commandsSrc) !== path.resolve(commandsDest)) {
-    const commandFiles = getManifestSelections(selectedPackages, 'commands');
+    const commandFiles = mergeUniqueOrdered(
+      getManifestSelections(selectedPackages, 'commands'),
+      devMode ? ['smoke.md'] : []
+    );
     if (copySelectedMarkdownFiles(commandsSrc, commandsDest, commandFiles, 'Package-selected command') > 0) {
       console.log('Installing package-selected commands -> ' + commandsDest + '/');
     }
   }
 
-  const skillsSrc = path.join(REPO_ROOT, 'skills');
+  const skillsSrc = SHARED_SKILLS_SRC;
   const skillsDest = path.join(claudeBase, 'skills');
   if (fs.existsSync(skillsSrc) && path.resolve(skillsSrc) !== path.resolve(skillsDest)) {
     const skillNames = getManifestSelections(selectedPackages, 'skills');
@@ -874,6 +939,13 @@ function installClaudeRuntimeScripts(claudeBase) {
   }
 }
 
+function installDevSmokeScripts(installRoot, fileNames, logLabel) {
+  const scriptsDest = path.join(ensureMdtRoot(installRoot), 'scripts');
+  if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, fileNames, `${logLabel} smoke script`) > 0) {
+    console.log(`Installing ${logLabel} smoke scripts -> ${scriptsDest}/`);
+  }
+}
+
 function printWindowsHookNote(prefix) {
   if (process.platform !== 'win32') return;
   console.log('');
@@ -885,11 +957,8 @@ function installClaude(packageNames, overrideDir, devMode = false) {
   const { claudeBase, rulesDest } = resolveClaudePaths(overrideDir);
   if (!packageNames.length) usage('claude');
   const selectedPackages = resolveSelectedPackages(packageNames);
-  for (const warning of assertPackageRequirements('claude', selectedPackages)) {
+  for (const warning of assertInstallRequirements('claude', selectedPackages, devMode)) {
     console.warn('Warning: ' + warning);
-  }
-  for (const warning of getSkillRequirementWarnings('claude', selectedPackages, devMode)) {
-    console.warn('Note: ' + warning);
   }
 
   warnExistingRulesDir(rulesDest);
@@ -897,6 +966,9 @@ function installClaude(packageNames, overrideDir, devMode = false) {
   installClaudeContentDirs(claudeBase, selectedPackages, devMode);
   installClaudeHooks(claudeBase);
   installClaudeRuntimeScripts(claudeBase);
+  if (devMode) {
+    installDevSmokeScripts(claudeBase, DEV_SMOKE_SCRIPT_FILES, 'Claude dev');
+  }
   printWindowsHookNote('NOTE: Windows — Hook scripts use Node.js; tmux-dependent features are skipped on Windows.');
   console.log('Done. Claude configs installed to ' + claudeBase + '/');
 }
@@ -962,7 +1034,7 @@ function installCursorRules(destDir, selectedPackages) {
 
 function installCursorSkills(destDir, selectedPackages) {
   const skillsDest = path.join(destDir, 'skills');
-  const sharedSkillsSrc = path.join(REPO_ROOT, 'skills');
+  const sharedSkillsSrc = SHARED_SKILLS_SRC;
   const sharedSkillNames = getManifestSelections(selectedPackages, 'skills');
   if (copySelectedDirectories(sharedSkillsSrc, skillsDest, sharedSkillNames, 'Package-selected skill') > 0) {
     console.log('Installing package-selected skills -> ' + skillsDest + '/');
@@ -1007,9 +1079,12 @@ function installCursorCoreDirs(destDir, selectedPackages, devMode = false) {
   installCursorSkills(destDir, selectedPackages);
 
   const commandsDest = path.join(destDir, 'commands');
-  const sharedCommandsSrc = path.join(REPO_ROOT, 'commands');
+  const sharedCommandsSrc = SHARED_COMMANDS_SRC;
   if (fs.existsSync(sharedCommandsSrc)) {
-    const sharedCommandFiles = getManifestSelections(selectedPackages, 'commands');
+    const sharedCommandFiles = mergeUniqueOrdered(
+      getManifestSelections(selectedPackages, 'commands'),
+      devMode ? ['smoke.md'] : []
+    );
     if (copySelectedMarkdownFiles(sharedCommandsSrc, commandsDest, sharedCommandFiles, 'Package-selected command') > 0) {
       console.log('Installing package-selected commands -> ' + commandsDest + '/');
     }
@@ -1093,11 +1168,8 @@ function installCursor(packageNames, overrideDir, devMode = false) {
   const destDir = resolveCursorDestDir(overrideDir);
   if (!packageNames.length) usage('cursor');
   const selectedPackages = resolveSelectedPackages(packageNames);
-  for (const warning of assertPackageRequirements('cursor', selectedPackages)) {
+  for (const warning of assertInstallRequirements('cursor', selectedPackages, devMode)) {
     console.warn('Warning: ' + warning);
-  }
-  for (const warning of getSkillRequirementWarnings('cursor', selectedPackages, devMode)) {
-    console.warn('Note: ' + warning);
   }
 
   console.log('Installing Cursor configs to ' + destDir + '/');
@@ -1111,6 +1183,9 @@ function installCursor(packageNames, overrideDir, devMode = false) {
     installCursorHookScripts(destDir);
   }
   installCursorRuntimeScripts(destDir);
+  if (devMode) {
+    installDevSmokeScripts(destDir, DEV_SMOKE_SCRIPT_FILES, 'Cursor dev');
+  }
   installCursorMcp(destDir);
   printWindowsHookNote('NOTE: Windows — Cursor hooks use Node.js; tmux features are skipped on Windows.');
   console.log('Done. Cursor configs installed to ' + destDir + '/');
@@ -1136,7 +1211,7 @@ function installCodexSkills(selectedPackages, destDir, devMode = false) {
   }
 
   if (devMode) {
-    if (copySelectedDirectories(CODEX_SKILLS_SRC, skillsDest, ['tool-setup-verifier'], 'Codex dev skill') > 0) {
+    if (copySelectedDirectories(CODEX_SKILLS_SRC, skillsDest, CODEX_DEV_SKILL_NAMES, 'Codex dev skill') > 0) {
       console.log('Installing Codex dev skills -> ' + skillsDest + '/');
     }
     if (installDevSharedSkills(destDir) > 0) {
@@ -1207,11 +1282,8 @@ function installCodex(packageNames, overrideDir, devMode) {
   if (!packageNames.length) usage('codex');
 
   const selectedPackages = resolveSelectedPackages(packageNames);
-  for (const warning of assertPackageRequirements('codex', selectedPackages)) {
+  for (const warning of assertInstallRequirements('codex', selectedPackages, devMode)) {
     console.warn('Warning: ' + warning);
-  }
-  for (const warning of getSkillRequirementWarnings('codex', selectedPackages, devMode)) {
-    console.warn('Note: ' + warning);
   }
 
   installCodexGlobal(selectedPackages, overrideDir, devMode);
@@ -1428,6 +1500,8 @@ module.exports = {
   resolveSelectedPackages,
   buildInstallPlan,
   assertPackageRequirements,
+  assertSkillRequirements,
+  assertInstallRequirements,
   getSkillRequirementWarnings,
   installClaudeContentDirs,
   installCursorCoreDirs,

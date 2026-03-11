@@ -31,6 +31,15 @@ function isStringArray(value) {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string' && entry.trim().length > 0);
 }
 
+function validateSkillMetadata(skillDir, packageName, label, io) {
+  const metaPath = path.join(skillDir, 'skill.meta.json');
+  if (!fs.existsSync(metaPath)) {
+    io.error(`ERROR: ${packageName}/package.json - ${label} is missing skill.meta.json`);
+    return true;
+  }
+  return false;
+}
+
 function validateRequires(packageName, requires, io) {
   let hasErrors = false;
 
@@ -259,8 +268,11 @@ function validateInstallPackages(options = {}) {
       hasErrors = true;
     } else {
       for (const skillName of manifest.skills) {
-        if (!fs.existsSync(path.join(skillsDir, skillName))) {
+        const skillDir = path.join(skillsDir, skillName);
+        if (!fs.existsSync(skillDir)) {
           io.error(`ERROR: ${packageName}/package.json - missing shared skill reference: ${skillName}`);
+          hasErrors = true;
+        } else if (validateSkillMetadata(skillDir, packageName, `shared skill '${skillName}'`, io)) {
           hasErrors = true;
         }
       }
@@ -296,9 +308,16 @@ function validateInstallPackages(options = {}) {
           hasErrors = true;
         } else {
           for (const skillName of cursor.skills) {
-            if (!fs.existsSync(path.join(cursorSkillsDir, skillName)) && !fs.existsSync(path.join(skillsDir, skillName))) {
+            const cursorSkillDir = path.join(cursorSkillsDir, skillName);
+            const sharedSkillDir = path.join(skillsDir, skillName);
+            if (!fs.existsSync(cursorSkillDir) && !fs.existsSync(sharedSkillDir)) {
               io.error(`ERROR: ${packageName}/package.json - missing Cursor skill reference: ${skillName}`);
               hasErrors = true;
+            } else {
+              const resolvedSkillDir = fs.existsSync(cursorSkillDir) ? cursorSkillDir : sharedSkillDir;
+              if (validateSkillMetadata(resolvedSkillDir, packageName, `Cursor skill '${skillName}'`, io)) {
+                hasErrors = true;
+              }
             }
           }
         }
@@ -330,8 +349,11 @@ function validateInstallPackages(options = {}) {
           hasErrors = true;
         } else {
           for (const skillName of claude.skills) {
-            if (!fs.existsSync(path.join(skillsDir, skillName))) {
+            const skillDir = path.join(skillsDir, skillName);
+            if (!fs.existsSync(skillDir)) {
               io.error(`ERROR: ${packageName}/package.json - missing Claude skill reference: ${skillName}`);
+              hasErrors = true;
+            } else if (validateSkillMetadata(skillDir, packageName, `Claude skill '${skillName}'`, io)) {
               hasErrors = true;
             }
           }
@@ -383,8 +405,11 @@ function validateInstallPackages(options = {}) {
             hasErrors = true;
           } else {
             for (const skillName of codex.skills) {
-              if (!fs.existsSync(path.join(codexSkillsDir, skillName))) {
+              const skillDir = path.join(codexSkillsDir, skillName);
+              if (!fs.existsSync(skillDir)) {
                 io.error(`ERROR: ${packageName}/package.json - missing Codex skill reference: ${skillName}`);
+                hasErrors = true;
+              } else if (validateSkillMetadata(skillDir, packageName, `Codex skill '${skillName}'`, io)) {
                 hasErrors = true;
               }
             }

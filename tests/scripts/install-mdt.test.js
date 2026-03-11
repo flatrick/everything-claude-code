@@ -84,6 +84,31 @@ function runTests() {
       }
     },
     {
+      name: 'claude dev install always materializes smoke command and tool smoke script',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-claude-dev-home-');
+        const claudeBase = path.join(tmpHome, '.claude');
+
+        try {
+          const result = runInstaller(['--dev', 'continuous-learning'], {
+            overrideDir: claudeBase,
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome,
+              CLAUDE_BASE_DIR: claudeBase
+            }
+          });
+          assertSuccess(result, 'claude dev install');
+
+          assert.ok(fs.existsSync(path.join(claudeBase, 'commands', 'smoke.md')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'smoke-tool-setups.js')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'smoke-claude-workflows.js')));
+        } finally {
+          cleanupTestDir(tmpHome);
+        }
+      }
+    },
+    {
       name: 'claude install merges hooks into existing settings.json and preserves other keys',
       run: () => {
         const tmpHome = createTestDir('mdt-install-settings-');
@@ -154,6 +179,29 @@ function runTests() {
       }
     },
     {
+      name: 'cursor dev install always materializes smoke command and tool smoke script',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-cursor-dev-home-');
+        const cursorRoot = path.join(tmpHome, '.cursor');
+
+        try {
+          const result = runInstaller(['--target', 'cursor', '--dev', 'continuous-learning'], {
+            overrideDir: cursorRoot,
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome
+            }
+          });
+          assertSuccess(result, 'cursor dev install');
+
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'smoke.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'scripts', 'smoke-tool-setups.js')));
+        } finally {
+          cleanupTestDir(tmpHome);
+        }
+      }
+    },
+    {
       name: 'gemini global install appends only package-selected rules and installs mdt scripts',
       run: () => {
         const tmpHome = createTestDir('mdt-install-gemini-home-');
@@ -208,6 +256,31 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'lib', 'detect-env.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'ci', 'validate-markdown-links.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'ci', 'validate-markdown-path-refs.js')));
+        } finally {
+          cleanupTestDir(tmpHome);
+        }
+      }
+    },
+    {
+      name: 'codex dev install always materializes smoke skill and smoke scripts',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-codex-dev-home-');
+        const codexRoot = path.join(tmpHome, '.codex');
+
+        try {
+          const result = runInstaller(['--target', 'codex', '--dev', 'continuous-learning'], {
+            overrideDir: codexRoot,
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome
+            }
+          });
+          assertSuccess(result, 'codex dev install');
+
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'smoke', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'tool-setup-verifier', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'smoke-tool-setups.js')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'smoke-codex-workflows.js')));
         } finally {
           cleanupTestDir(tmpHome);
         }

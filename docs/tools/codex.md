@@ -106,7 +106,7 @@ agents/openai.yaml
 ```
 
 For MDT smoke-style verification in Codex, prefer the shipped
-`tool-setup-verifier` skill plus the local scripts when you are either:
+`smoke` skill plus the local scripts when you are either:
 
 - working in the MDT source repo itself
 - or installing Codex with `--dev`
@@ -126,7 +126,7 @@ from `codex-template/skills/` into `~/.codex/skills/`.
 
 Normal Codex installs keep the general `documentation-steward` skill but do not
 ship MDT-internal verifier/audit skills by default. Use `--dev` when you want
-`tool-setup-verifier`, `tool-doc-maintainer`, and the repo-style smoke scripts
+`smoke`, `tool-setup-verifier`, `tool-doc-maintainer`, and the repo-style smoke scripts
 materialized into the installed global Codex root.
 
 When testing against a clean environment, prefer:
@@ -223,7 +223,7 @@ Treat those as non-default until explicitly needed.
 - Do not assume Codex repo commands work like Claude markdown slash commands.
 - Do not assume Codex can consume Claude hooks directly.
 - Do not assume the absence of Claude-style hooks means Codex cannot support the same workflow outcome; use `AGENTS.md`, rules, skills, built-in slash commands, and automations instead.
-- Do not try to emulate `/smoke` as a fake markdown command in Codex; use the Codex skill and local smoke scripts instead.
+- Do not try to emulate a Claude-style markdown `/smoke` command in Codex; use the Codex `smoke` skill and local smoke scripts instead.
 - Do not treat `codex-template/` as optional documentation only; it is now the
   source tree the installer reads from for Codex-facing assets.
 
