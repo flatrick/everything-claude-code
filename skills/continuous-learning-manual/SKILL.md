@@ -56,7 +56,7 @@ The observer is an enhancement layer, not the baseline.
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`<data>/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
+| Storage | Global (`<data>/homunculus/`) | Project-scoped (`projects/<project-id>/` under homunculus) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
 | Promotion | N/A | Project -> global when seen in 2+ projects |
@@ -128,7 +128,7 @@ Session activity
       | - Codex: explicit/manual capture
       | - Claude/Cursor: hook-capable capture
       v
-<project-id>/observations.jsonl
+projects/<project-id>/observations.jsonl
       |
       | optional observer or explicit analysis
       v
@@ -136,12 +136,12 @@ pattern detection
       |
       | creates / updates
       v
-<project-id>/instincts/personal/
+projects/<project-id>/instincts/personal/
 instincts/personal/ (global)
       |
       | evolve / promote
       v
-<project-id>/evolved/
+projects/<project-id>/evolved/
 evolved/ (global)
 ```
 
@@ -192,7 +192,7 @@ Run a weekly retrospective for one ISO week:
 node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
-This writes Codex project learning state under `~/.codex/mdt/homunculus/<project-id>/...`.
+This writes Codex project learning state under `~/.codex/mdt/homunculus/projects/<project-id>/...`.
 
 Codex baseline:
 
@@ -333,7 +333,7 @@ Weekly retrospectives are intentionally low-noise.
 For Codex they are part of the recommended baseline:
 
 ```text
-~/.codex/mdt/homunculus/<project-id>/retrospectives/weekly/YYYY-Www.json
+~/.codex/mdt/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
 ```
 
 The goal is not to log more activity. The goal is to highlight:
@@ -358,16 +358,17 @@ The goal is not to log more activity. The goal is to highlight:
 |   |   +-- agents/
 |   |   +-- skills/
 |   |   +-- commands/
-|   +-- <project-id>/
-|       +-- observations.jsonl
-|       +-- observations.archive/
-|       +-- instincts/
-|       |   +-- personal/
-|       |   +-- inherited/
-|       +-- evolved/
-|           +-- skills/
-|           +-- commands/
-|           +-- agents/
+|   +-- projects/
+|   |   +-- <project-id>/
+|   |       +-- observations.jsonl
+|   |       +-- observations.archive/
+|   |       +-- instincts/
+|   |       |   +-- personal/
+|   |       |   +-- inherited/
+|   |       +-- evolved/
+|   |           +-- skills/
+|   |           +-- commands/
+|   |           +-- agents/
 +-- generated/
     +-- skills/
         +-- learned/

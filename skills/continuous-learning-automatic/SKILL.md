@@ -26,7 +26,7 @@ An advanced learning system that turns MDT tool sessions into reusable knowledge
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`<data>/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
+| Storage | Global (`<data>/homunculus/`) | Project-scoped (`projects/<project-id>/` under homunculus) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
 | Promotion | N/A | Project → global when seen in 2+ projects |
@@ -86,7 +86,7 @@ Session Activity (in a git repo)
       | + detect project context (git remote / repo path)
       v
 +---------------------------------------------+
-|  <project-id>/observations.jsonl             |
+|  projects/<project-id>/observations.jsonl    |
 |   (prompts, tool calls, outcomes, project)   |
 +---------------------------------------------+
       |
@@ -103,7 +103,7 @@ Session Activity (in a git repo)
       | Creates/updates
       v
 +---------------------------------------------+
-|  <project-id>/instincts/personal/            |
+|  projects/<project-id>/instincts/personal/   |
 |   * prefer-functional.yaml (0.7) [project]   |
 |   * use-react-hooks.yaml (0.9) [project]     |
 +---------------------------------------------+
@@ -115,7 +115,7 @@ Session Activity (in a git repo)
       | /evolve clusters + /promote
       v
 +---------------------------------------------+
-|  <project-id>/evolved/ (project-scoped)      |
+|  projects/<project-id>/evolved/              |
 |  evolved/ (global)                           |
 |   * commands/new-feature.md                  |
 |   * skills/testing-workflow.md               |
@@ -272,7 +272,7 @@ Other behavior (observation capture, instinct thresholds, project scoping, promo
 
 ## File Structure
 
-```
+```text
 <data>/homunculus/
 +-- identity.json           # Your profile, technical level
 +-- projects.json           # Registry: project ID -> name/path/remote
@@ -284,18 +284,19 @@ Other behavior (observation capture, instinct thresholds, project scoping, promo
 |   +-- agents/             # Global generated agents
 |   +-- skills/             # Global generated skills
 |   +-- commands/           # Global generated commands
-+-- <project-id>/           # e.g. my-react-app-git or scripts-a1b2c3d4
-|   +-- observations.jsonl
-|   +-- observations.archive/
-|   +-- instincts/
-|   |   +-- personal/       # Project-specific auto-learned
-|   |   +-- inherited/      # Project-specific imported
-|   +-- evolved/
-|       +-- skills/
-|       +-- commands/
-|       +-- agents/
-+-- <another-project-id>/
-    +-- ...
++-- projects/
+|   +-- <project-id>/
+|   |   +-- observations.jsonl
+|   |   +-- observations.archive/
+|   |   +-- instincts/
+|   |   |   +-- personal/       # Project-specific auto-learned
+|   |   |   +-- inherited/      # Project-specific imported
+|   |   +-- evolved/
+|   |       +-- skills/
+|   |       +-- commands/
+|   |       +-- agents/
+|   +-- <another-project-id>/
+|       +-- ...
 ```
 
 ## Scope Decision Guide

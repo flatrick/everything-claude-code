@@ -33,7 +33,7 @@ Codex is manual-first in this repo.
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`~/.codex/mdt/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
+| Storage | Global (`~/.codex/mdt/homunculus/`) | Project-scoped (`projects/<project-id>/` under homunculus) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
 | Promotion | N/A | Project -> global when seen in 2+ projects |
@@ -86,7 +86,7 @@ Session activity
       |
       | explicit/manual capture
       v
-<project-id>/observations.jsonl
+projects/<project-id>/observations.jsonl
       |
       | optional observer or explicit analysis
       v
@@ -94,12 +94,12 @@ pattern detection
       |
       | creates / updates
       v
-<project-id>/instincts/personal/
+projects/<project-id>/instincts/personal/
 instincts/personal/ (global)
       |
       | evolve / promote
       v
-<project-id>/evolved/
+projects/<project-id>/evolved/
 evolved/ (global)
 ```
 
@@ -107,10 +107,10 @@ evolved/ (global)
 
 The system detects project context in this order:
 
-1. explicit project/config environment variables
+1. explicit project/config environment variables such as `CLAUDE_PROJECT_DIR` or tool-agnostic `MDT_PROJECT_ROOT`
 2. git remote URL when available
-3. repo path / repo markers
-4. global fallback when no project can be identified
+3. git repo root fallback when no remote is available
+4. global fallback when no git-backed project can be identified
 
 Project IDs are stable 12-character hashes derived from the best available git identity:
 
@@ -148,7 +148,7 @@ Run a weekly retrospective for one ISO week:
 node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
-This writes Codex project learning state under `~/.codex/mdt/homunculus/<project-id>/...`.
+This writes Codex project learning state under `~/.codex/mdt/homunculus/projects/<project-id>/...`.
 
 Codex baseline:
 
@@ -226,7 +226,7 @@ Weekly retrospectives are intentionally low-noise.
 For Codex they are part of the recommended baseline:
 
 ```text
-~/.codex/mdt/homunculus/<project-id>/retrospectives/weekly/YYYY-Www.json
+~/.codex/mdt/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
 ```
 
 The goal is not to log more activity. The goal is to highlight:
@@ -257,16 +257,17 @@ The goal is not to log more activity. The goal is to highlight:
     |   |   +-- agents/
     |   |   +-- skills/
     |   |   +-- commands/
-    |   +-- <project-id>/
-    |       +-- observations.jsonl
-    |       +-- observations.archive/
-    |       +-- instincts/
-    |       |   +-- personal/
-    |       |   +-- inherited/
-    |       +-- evolved/
-    |           +-- skills/
-    |           +-- commands/
-    |           +-- agents/
+    |   +-- projects/
+    |   |   +-- <project-id>/
+    |   |       +-- observations.jsonl
+    |   |       +-- observations.archive/
+    |   |       +-- instincts/
+    |   |       |   +-- personal/
+    |   |       |   +-- inherited/
+    |   |       +-- evolved/
+    |   |           +-- skills/
+    |   |           +-- commands/
+    |   |           +-- agents/
     +-- generated/
         +-- skills/
             +-- learned/   # candidate/generated skills awaiting promotion

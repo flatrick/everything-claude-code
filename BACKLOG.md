@@ -38,7 +38,7 @@ When support for other VCS systems is added, extend `detect-project.js` to detec
 - Fossil: detect `.fossil` / `_FOSSIL_` → suffix `-fossil`
 - Jujutsu: detect `.jj/` → suffix `-jj`
 
-Projects without any detectable VCS remote continue to use `<basename>-<8-char-md5>` (path-anchored, no VCS suffix).
+Projects without any detectable git repository should stay in the global homunculus scope rather than creating a project-specific folder. Local git repos without a remote can still use a repo-root-anchored fallback project ID.
 
 ---
 
