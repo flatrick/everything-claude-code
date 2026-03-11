@@ -25,21 +25,20 @@ After the ModelDev Toolkit Node-only migration, skills and hooks run only via No
    cd /path/to/modeldev-toolkit
    node scripts/install-mdt.js typescript
    ```
-   For Cursor (project or global):
+   For Cursor:
    ```bash
    node scripts/install-mdt.js --target cursor typescript
-   node scripts/install-mdt.js --target cursor --global typescript
    ```
    For Codex only:
    ```bash
-   node scripts/install-mdt.js --target codex --project-dir ../scratch-repo typescript continuous-learning
-   node scripts/install-mdt.js --target codex --global typescript continuous-learning
+   node scripts/install-mdt.js --target codex typescript continuous-learning
    ```
 
    Scope rule reminder:
-   - without `--global`, MDT should not write to `~`
-   - use `--project-dir` for project-only installs
-   - use `--global` only when the user/global layer is the intended target
+   - installs are global-only now
+   - `--global` is only a compatibility alias
+   - `--project-dir` is retired
+   - MDT-owned state now lives under `~/.{tool}/mdt/`
 
 4. **Verify** (optional): run a quick smoke check that env detection works:
    ```bash

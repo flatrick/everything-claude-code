@@ -123,10 +123,9 @@ function resolveConfigDir(ctx) {
 function resolveDataDir(ctx) {
   if (ctx.cache.dataDir) return ctx.cache.dataDir;
 
-  const homeDir = getHomeDir(ctx);
   const configDir = resolveConfigDir(ctx);
   const explicit = getExplicitDirValue(ctx, 'DATA_DIR');
-  const explicitConfigDir = getExplicitDirValue(ctx, 'CONFIG_DIR');
+  const mdtDir = path.join(configDir, 'mdt');
 
   if (explicit && ctx.existsSync(explicit)) {
     ctx.cache.dataDir = explicit;
@@ -138,24 +137,7 @@ function resolveDataDir(ctx) {
     );
   }
 
-  if (explicitConfigDir && ctx.existsSync(explicitConfigDir)) {
-    ctx.cache.dataDir = explicitConfigDir;
-    return ctx.cache.dataDir;
-  }
-
-  const configHomunculusDir = path.join(configDir, 'homunculus');
-  if (ctx.existsSync(configHomunculusDir)) {
-    ctx.cache.dataDir = configDir;
-    return ctx.cache.dataDir;
-  }
-
-  const legacyClaudeHomunculusDir = path.join(homeDir, '.claude', 'homunculus');
-  if (ctx.existsSync(legacyClaudeHomunculusDir)) {
-    ctx.cache.dataDir = path.join(homeDir, '.claude');
-    return ctx.cache.dataDir;
-  }
-
-  ctx.cache.dataDir = configDir;
+  ctx.cache.dataDir = mdtDir;
   return ctx.cache.dataDir;
 }
 
@@ -212,6 +194,7 @@ function getDerivedPaths(ctx) {
   return {
     configDir,
     dataDir,
+    mdtDir: dataDir,
     skillsDir: path.join(configDir, 'skills'),
     hooksDir: path.join(configDir, 'hooks'),
     homunculusDir: path.join(dataDir, 'homunculus')

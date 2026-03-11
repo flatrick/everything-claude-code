@@ -242,8 +242,8 @@ function runTests() {
       const env = { CONFIG_DIR: '/custom/config' };
       const existsSync = (p) => p === '/custom/config' || p === path.join(home, '.claude', 'homunculus');
       const d = createDetectEnv({ env, homedir: () => home, existsSync });
-      assert.strictEqual(d.dataDir, '/custom/config');
-      assert.strictEqual(d.getDataDir(), '/custom/config');
+      assert.strictEqual(d.dataDir, path.join('/custom/config', 'mdt'));
+      assert.strictEqual(d.getDataDir(), path.join('/custom/config', 'mdt'));
     })
   )
     passed++;
@@ -257,7 +257,7 @@ function runTests() {
       const env = { CURSOR_AGENT: '1' };
       const existsSync = (p) => p === homunculusDir;
       const d = createDetectEnv({ env, homedir: () => home, existsSync });
-      assert.strictEqual(d.dataDir, configDir);
+      assert.strictEqual(d.dataDir, path.join(configDir, 'mdt'));
     })
   )
     passed++;
@@ -270,7 +270,7 @@ function runTests() {
       const env = { CURSOR_AGENT: '1' };
       const existsSync = (p) => p === legacyHomunculus;
       const d = createDetectEnv({ env, homedir: () => home, existsSync });
-      assert.strictEqual(d.dataDir, path.join(home, '.claude'));
+      assert.strictEqual(d.dataDir, path.join(home, '.cursor', 'mdt'));
     })
   )
     passed++;
@@ -282,7 +282,7 @@ function runTests() {
       const env = { CURSOR_AGENT: '1' };
       const existsSync = () => false;
       const d = createDetectEnv({ env, homedir: () => home, existsSync });
-      assert.strictEqual(d.dataDir, path.join(home, '.cursor'));
+      assert.strictEqual(d.dataDir, path.join(home, '.cursor', 'mdt'));
     })
   )
     passed++;
@@ -402,9 +402,10 @@ function runTests() {
       const d = createDetectEnv({ env, homedir: () => home, existsSync });
       const pathsInfo = d.getPaths();
       const expectedConfig = path.join(home, '.cursor');
-      const expectedData = expectedConfig;
+      const expectedData = path.join(expectedConfig, 'mdt');
       assert.strictEqual(pathsInfo.configDir, expectedConfig);
       assert.strictEqual(pathsInfo.dataDir, expectedData);
+      assert.strictEqual(pathsInfo.mdtDir, expectedData);
       assert.strictEqual(pathsInfo.skillsDir, path.join(expectedConfig, 'skills'));
       assert.strictEqual(pathsInfo.hooksDir, path.join(expectedConfig, 'hooks'));
       assert.strictEqual(pathsInfo.homunculusDir, path.join(expectedData, 'homunculus'));

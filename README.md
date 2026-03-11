@@ -66,13 +66,13 @@ Guides refer to the upstream project; this fork may differ. For this fork, prefe
    node scripts/install-mdt.js --target cursor typescript
 
    # Codex
-   node scripts/install-mdt.js --target codex --project-dir . typescript continuous-learning
+   node scripts/install-mdt.js --target codex typescript continuous-learning
 
    # Discover available targets/packages
    node scripts/install-mdt.js --list
 
    # Preview install without writing files
-   node scripts/install-mdt.js --target cursor --global --dry-run typescript
+   node scripts/install-mdt.js --target cursor --dry-run typescript
    ```
 
 3. **Verify** with:
@@ -89,7 +89,7 @@ Marketplace/plugin support remains secondary in this fork for now. For the offic
 
 Use these as the current source of truth:
 
-- [docs/INSTALLATION.md](docs/INSTALLATION.md) for install targets, package examples, and `--project-dir`
+- [docs/INSTALLATION.md](docs/INSTALLATION.md) for install targets, package examples, and the global-only install contract
 - [docs/supported-tools.md](docs/supported-tools.md) for audited tool capability status
 - [docs/tools/README.md](docs/tools/README.md) for the tool docs pack
 - [docs/V1-TARGET-STATE.md](docs/V1-TARGET-STATE.md) for the intended end state by `v1.0.0`
@@ -109,7 +109,7 @@ Use these as the current source of truth:
 - `claude-template/` — Claude-specific source templates such as hook config rendered into `.claude/`
 - `scripts/` — Node.js only (install-mdt.js, hooks, lib, detect-env, sync-hook-mirrors.js)
 - `cursor-template/` — Cursor source templates (rules, hooks, skills, and config files rendered into `.cursor/` on install)
-- `codex-template/` — Codex source templates (`config.toml`, `AGENTS.md`, `skills/`) rendered into either `~/.codex/` with `--global` or the target repo with `--project-dir`
+- `codex-template/` — Codex source templates (`config.toml`, `AGENTS.md`, `skills/`) rendered into `~/.codex/`, with MDT-owned runtime/state under `~/.codex/mdt/`
 - `tests/` — Test suite
 
 Full layout and detailed tool behavior: [docs/](docs/), [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md).

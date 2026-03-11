@@ -40,10 +40,11 @@ These are official Cursor surfaces and should be treated as the primary integrat
 ## What MDT Currently Ships
 
 The repo currently ships:
-- `cursor-template/rules/` for project-level rules installed to `.cursor/rules/`
+- `cursor-template/rules/` rendered as global `~/.cursor/rules/*.mdc`
 - `cursor-template/skills/frontend-slides/` plus package-selected shared skills from `skills/*/` (for example: `tdd-workflow`, `verification-loop`, `coding-standards`, `security-review`, `backend-patterns`, `frontend-patterns`, `e2e-testing`)
-- `cursor-template/commands/*.md` for package-selected custom commands installed to `.cursor/commands/`
+- `cursor-template/commands/*.md` for package-selected custom commands installed to `~/.cursor/commands/`
 - `cursor-template/hooks.json` and `cursor-template/hooks/*.js` — an MDT-specific Cursor hook adapter
+- `~/.cursor/mdt/` for MDT-owned helpers, learning state, manifests, and future script-owned state
 
 New local evidence:
 
@@ -144,16 +145,21 @@ Treat Cursor as an integration that benefits from strict, tool-local prompts and
 explicit troubleshooting steps. Do not assume it will remain path-faithful when
 given ambiguous instructions.
 
-## Current MDT Gap
+## Local Bridge Exception
 
-MDT documentation now recognizes user-global Cursor rules under
-`~/.cursor/rules/*.mdc`, but the installer still treats global Cursor rules as
-unsupported and skips them. That is now a repo gap to close, not a Cursor
-vendor limitation.
+MDT installs Cursor globally by default. If a specific workflow needs repo-local
+Cursor rules, use:
+
+```bash
+node scripts/materialize-mdt-local.js --target cursor --surface rules
+```
+
+That materializes only the local `.cursor/rules/` bridge for the current repo.
+It is not a full project-local MDT install.
 
 ## Hooks Adapter Scope and Opt-In
 
-- MDT installs `.cursor/hooks.json` and `.cursor/hooks/*.js` as an **experimental** adapter that mirrors Claude-style hook behavior for things like dev-server blocking, console.log checks, and continuous learning.
+- MDT installs `~/.cursor/hooks.json` and `~/.cursor/hooks/*.js` as an **experimental** adapter that mirrors Claude-style hook behavior for things like dev-server blocking, console.log checks, and continuous learning.
 - Cursor does not currently document this hook surface; future versions may ignore or change it.
 - If you want to skip installing Cursor hooks entirely, run the installer with `MDT_SKIP_CURSOR_HOOKS=1` in the environment. MDT will still install rules, skills, agents, and custom command prompts.
 - For adapter architecture and extension guidance, see [hooks/README.md](../../hooks/README.md#cursor-hook-adapter).

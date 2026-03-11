@@ -41,8 +41,9 @@ function resolveProjectRoot() {
 function buildCodexEnv(env = process.env) {
   const projectRoot = resolveProjectRoot();
   const nextEnv = { ...env };
-  const configDir = nextEnv.CONFIG_DIR || path.join(projectRoot, '.codex');
-  const dataDir = nextEnv.DATA_DIR || configDir;
+  const homeDir = nextEnv.HOME || nextEnv.USERPROFILE || process.env.HOME || process.env.USERPROFILE || '';
+  const configDir = nextEnv.CONFIG_DIR || path.join(homeDir, '.codex');
+  const dataDir = nextEnv.DATA_DIR || path.join(configDir, 'mdt');
   fs.mkdirSync(dataDir, { recursive: true });
 
   nextEnv.CODEX_AGENT = '1';

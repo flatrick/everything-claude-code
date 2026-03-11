@@ -7,12 +7,49 @@ const fs = require('fs');
 const path = require('path');
 const { asyncTest, createTestDir, cleanupTestDir, test } = require('../helpers/test-runner');
 const { withEnv } = require('../helpers/env-test-utils');
+const { ensureSubprocessCapability, probeNodeSubprocess } = require('../helpers/subprocess-capability');
 const { getDateString } = require('../../scripts/lib/utils');
 const { buildHookEnv, getPluginRoot, runExistingHook } = require('../../hooks/cursor/scripts/adapter');
 const { processCursorAfterFileEdit } = require('../../hooks/cursor/scripts/after-file-edit');
 const { processCursorAfterShellExecution } = require('../../hooks/cursor/scripts/after-shell-execution');
 const { processCursorSessionEnd } = require('../../hooks/cursor/scripts/session-end');
 const { processCursorStop } = require('../../hooks/cursor/scripts/stop');
+const { detectProject } = require('../../skills/continuous-learning-manual/scripts/detect-project.js');
+
+function createCursorHookRunner() {
+  return (command, args, options = {}) => {
+    const scriptPath = Array.isArray(args) ? args[0] : '';
+    if (scriptPath && scriptPath.endsWith(path.join('continuous-learning-automatic', 'hooks', 'observe.js'))) {
+      withEnv(options.env || {}, () => {
+        const payload = JSON.parse(String(options.input || '{}'));
+        if (payload.cwd) {
+          process.env.CLAUDE_PROJECT_DIR = payload.cwd;
+        }
+        const project = detectProject(payload.cwd || process.cwd());
+        const event = payload.output ? 'tool_complete' : 'tool_start';
+        fs.mkdirSync(path.dirname(project.observations_file), { recursive: true });
+        fs.appendFileSync(
+          project.observations_file,
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            event,
+            tool: payload.tool || 'unknown',
+            output: payload.output || '',
+            project_id: project.id,
+            project_name: project.name
+          }) + '\n',
+          'utf8'
+        );
+      });
+    }
+
+    return {
+      status: 0,
+      stdout: '',
+      stderr: ''
+    };
+  };
+}
 
 function buildCursorInput(options = {}) {
   const {
@@ -53,7 +90,7 @@ async function runTests() {
     assert.strictEqual(env.MDT_ROOT, '/custom/root');
   })) passed++; else failed++;
 
-  if (test('buildHookEnv marks delegated hooks as Cursor and anchors CONFIG_DIR to project .cursor install', () => {
+  if (test('buildHookEnv marks delegated hooks as Cursor without pinning CONFIG_DIR to a repo-local .cursor folder', () => {
     const testDir = createTestDir('cursor-hook-env-');
     const originalCwd = process.cwd();
     try {
@@ -62,7 +99,7 @@ async function runTests() {
       process.chdir(testDir);
       const env = buildHookEnv({});
       assert.strictEqual(env.CURSOR_AGENT, '1');
-      assert.strictEqual(env.CONFIG_DIR, configDir);
+      assert.ok(!env.CONFIG_DIR || env.CONFIG_DIR !== configDir);
     } finally {
       process.chdir(originalCwd);
       cleanupTestDir(testDir);
@@ -143,14 +180,14 @@ async function runTests() {
         const combinedStderr = stderr.join('\n');
         assert.ok(combinedStderr.includes('Session has 2 messages'), `Expected evaluation log, got: ${combinedStderr}`);
 
-        const sessionFile = path.join(configDir, 'sessions', `${getDateString()}-12345678-session.tmp`);
+        const sessionFile = path.join(configDir, 'mdt', 'sessions', `${getDateString()}-12345678-session.tmp`);
         assert.ok(fs.existsSync(sessionFile), 'Should create a Cursor session file');
         const content = fs.readFileSync(sessionFile, 'utf8');
         assert.ok(content.includes('Investigate the failing Cursor session summary hook'), 'Should include user task summary');
         assert.ok(content.includes('hooks/cursor/scripts/stop.js'), 'Should include modified files from Cursor payload');
         assert.ok(content.includes('Total user messages: 2'), 'Should count user messages from Cursor payload');
 
-        const metricsFile = path.join(configDir, 'metrics', 'costs.jsonl');
+        const metricsFile = path.join(configDir, 'mdt', 'metrics', 'costs.jsonl');
         assert.ok(fs.existsSync(metricsFile), 'Should record usage metrics when usage is provided');
         const metricsContent = fs.readFileSync(metricsFile, 'utf8');
         assert.ok(metricsContent.includes('"total_tokens":133'), 'Should store normalized usage');
@@ -196,7 +233,7 @@ async function runTests() {
           `Expected explicit missing-usage log, got: ${combinedStderr}`
         );
 
-        const metricsFile = path.join(configDir, 'metrics', 'costs.jsonl');
+        const metricsFile = path.join(configDir, 'mdt', 'metrics', 'costs.jsonl');
         assert.ok(!fs.existsSync(metricsFile), 'Should not create metrics file without usage');
       });
     } finally {
@@ -290,10 +327,10 @@ async function runTests() {
         CONFIG_DIR: configDir,
         CURSOR_TRACE_ID: 'cursor-observe-edit-12345678'
       }, async () => {
-        const output = await processCursorAfterFileEdit(JSON.stringify(input));
+        const output = await processCursorAfterFileEdit(JSON.stringify(input), { runner: createCursorHookRunner() });
         assert.strictEqual(output, JSON.stringify(input), 'Should pass through raw Cursor payload');
 
-        const homunculusRoot = path.join(configDir, 'homunculus');
+        const homunculusRoot = path.join(configDir, 'mdt', 'homunculus');
         const projectsFile = path.join(homunculusRoot, 'projects.json');
         assert.ok(fs.existsSync(projectsFile), 'Should create project registry for observed Cursor activity');
         const projects = JSON.parse(fs.readFileSync(projectsFile, 'utf8'));
@@ -336,7 +373,7 @@ async function runTests() {
         const originalError = console.error;
         try {
           console.error = (msg) => stderr.push(String(msg));
-          const output = await processCursorAfterShellExecution(JSON.stringify(input));
+          const output = await processCursorAfterShellExecution(JSON.stringify(input), { runner: createCursorHookRunner() });
           assert.strictEqual(output, JSON.stringify(input), 'Should pass through raw Cursor payload');
         } finally {
           console.error = originalError;
@@ -345,9 +382,9 @@ async function runTests() {
         const combinedStderr = stderr.join('\n');
         assert.ok(combinedStderr.includes('Build completed'), `Expected build hook log, got: ${combinedStderr}`);
 
-        const projects = JSON.parse(fs.readFileSync(path.join(configDir, 'homunculus', 'projects.json'), 'utf8'));
+        const projects = JSON.parse(fs.readFileSync(path.join(configDir, 'mdt', 'homunculus', 'projects.json'), 'utf8'));
         const [projectId] = Object.keys(projects);
-        const observationsFile = path.join(configDir, 'homunculus', 'projects', projectId, 'observations.jsonl');
+        const observationsFile = path.join(configDir, 'mdt', 'homunculus', 'projects', projectId, 'observations.jsonl');
         const observations = fs.readFileSync(observationsFile, 'utf8');
         assert.ok(observations.includes('"tool":"Bash"'), 'Should classify shell execution as Bash tool usage');
         assert.ok(observations.includes('Build succeeded'), 'Should include shell output context');

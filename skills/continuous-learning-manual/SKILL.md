@@ -27,7 +27,7 @@ This skill supports different tool modes. The instinct model is shared, but capt
 
 Codex is manual-first in this repo.
 
-- project-local state lives under `.codex/homunculus/`
+- global MDT state lives under `~/.codex/mdt/homunculus/`
 - explicit/manual capture is the baseline
 - explicit/manual analysis is the baseline
 - weekly retrospectives are part of the baseline
@@ -156,31 +156,31 @@ Each project gets a 12-character hash ID. A registry file at `<data>/homunculus/
 
 Codex does not rely on Claude/Cursor hook capture in this repo.
 
-Use the explicit project-local workflow:
+Use the explicit global-install workflow:
 
 ```bash
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js status
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js status
 ```
 
 Then capture a concise session summary:
 
 ```bash
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
 ```
 
 Run an explicit analysis pass:
 
 ```bash
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js analyze
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js analyze
 ```
 
 Run a weekly retrospective for one ISO week:
 
 ```bash
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
-This writes Codex project learning state under `.codex/homunculus/...`.
+This writes Codex project learning state under `~/.codex/mdt/homunculus/projects/<project-id>/...`.
 
 Codex baseline:
 
@@ -306,7 +306,7 @@ Weekly retrospectives are intentionally low-noise.
 For Codex they are part of the recommended baseline:
 
 ```text
-.codex/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
+~/.codex/mdt/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
 ```
 
 The goal is not to log more activity. The goal is to highlight:

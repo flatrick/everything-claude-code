@@ -12,9 +12,9 @@ It is safe to delete once the work is complete.
 
 ### Phase 1 work (fully done and committed)
 
-1. **install-mdt.js scope requirement** — Running the installer without `--global`
-   or `--project-dir` now exits with a helpful message explaining both flags.
-   `--dry-run` and `--list` bypass this check (they don't need a scope).
+1. **install-mdt.js scope requirement** — This section is obsolete. The current
+   installer is global-only by default, accepts `--global` as a compatibility
+   alias, and retires `--project-dir`.
 
 2. **Codex rule files (Phase 1b)** — Four files added to `codex-template/rules/`:
    - `common-coding-style.md`, `common-testing.md`, `common-security.md`, `common-git-workflow.md`
@@ -41,13 +41,13 @@ It is safe to delete once the work is complete.
 
 1. **Phase 2a: Codex external observer** — Added `scripts/codex-observer.js`
    with:
-   - `status` — inspect project-local Codex observation state
+   - `status` — inspect project-scoped Codex observation state under `~/.codex/mdt/`
    - `once` — run one analysis pass outside the active Codex shell
-   - `watch` / `--watch` — poll `.codex/homunculus/projects/<id>/observations.jsonl`
+   - `watch` / `--watch` — poll `~/.codex/mdt/homunculus/projects/<id>/observations.jsonl`
      and trigger analysis when the configured threshold is met
    - Reuses the existing `continuous-learning-manual` analyzer path with
      `MDT_OBSERVER_TOOL=codex`
-   - Installed into `<project>/.codex/scripts/codex-observer.js`
+   - Installed into `~/.codex/mdt/scripts/codex-observer.js`
    - Covered by `tests/scripts/codex-observer.test.js`
 
 ### How the skill install layers work (important context)
@@ -92,24 +92,14 @@ See `docs/functional-parity-plan.md` for the full plan. Outstanding items:
 - **Claude home hardening** — Replicate `codex-template/hardening/` for Claude Code.
   Constraint: do not implement until Claude's sensitive file paths are confirmed.
 
-### Codex project install (user wanted to do this)
+### Current install direction
 
-The user wants to run a Codex global install. The install command would be:
-```
-node scripts/install-mdt.js --target codex --project-dir <path-to-a-project> typescript continuous-learning
-```
+The user changed the product direction after this handoff was written:
 
-This will:
-- Install skills into `<project>/.codex/skills/`: coding-standards, documentation-steward,
-  tool-setup-verifier, continuous-learning-manual
-- Install runtime scripts into `<project>/.codex/scripts/`
-- Install `codex-observer.js`, `smoke-tool-setups.js`, and `smoke-codex-workflows.js`
-  into `<project>/.codex/scripts/`
-
-For a global Codex install, use:
-```
-node scripts/install-mdt.js --target codex --global typescript continuous-learning
-```
+- normal installs are global-only
+- MDT-owned state belongs under `~/.{tool}/mdt/`
+- `--project-dir` is retired
+- repo-local exceptions should use explicit bridge commands instead of full project installs
 
 ---
 

@@ -4,19 +4,20 @@
  * Node-only installer for rules, agents, skills, commands, hooks, and configs.
  *
  * Usage:
- *   node scripts/install-mdt.js [--target claude|cursor|codex] [--global] [--project-dir <path>] [--dev] [package ...]
+ *   node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--override <tool-config-dir>] [--dev] [package ...]
  *
  * Examples:
  *   node scripts/install-mdt.js typescript
  *   node scripts/install-mdt.js --target cursor typescript
- *   node scripts/install-mdt.js --target cursor --project-dir C:\src\my-app typescript
+ *   node scripts/install-mdt.js --target cursor --override C:\temp\.cursor typescript
  *   node scripts/install-mdt.js --target cursor --global typescript
  *   node scripts/install-mdt.js --target codex typescript continuous-learning
  *
  * Targets:
- *   claude (default) — Install to ./.claude/ or ~/.claude/ with --global
- *   cursor           — Install to ./.cursor/ or ~/.cursor/ with --global
- *   codex            — Install to ./.codex/ (or ~/.codex/ with --global)
+ *   claude (default) — Install to ~/.claude/
+ *   cursor           — Install to ~/.cursor/
+ *   codex            — Install to ~/.codex/
+ *   gemini           — Install to ~/.gemini/
  */
 
 const fs = require('fs');
@@ -78,6 +79,7 @@ function parseArgsFrom(args) {
   let dryRun = false;
   let devMode = false;
   let projectDir = null;
+  let overrideDir = null;
   const packageNames = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -86,6 +88,8 @@ function parseArgsFrom(args) {
       if (target === 'antigravity') target = 'gemini';
     } else if (args[i] === '--project-dir' && args[i + 1]) {
       projectDir = path.resolve(args[++i]);
+    } else if (args[i] === '--override' && args[i + 1]) {
+      overrideDir = path.resolve(args[++i]);
     } else if (args[i] === '--global') {
       globalScope = true;
     } else if (args[i] === '--list') {
@@ -99,7 +103,7 @@ function parseArgsFrom(args) {
     }
   }
 
-  return { target, globalScope, listMode, dryRun, devMode, projectDir, packageNames };
+  return { target, globalScope, listMode, dryRun, devMode, projectDir, overrideDir, packageNames };
 }
 
 function assertProjectDir(projectDir) {
@@ -463,7 +467,7 @@ function assertPackageRequirements(target, selectedPackages) {
 }
 
 function printAvailableOptions(target) {
-  console.log('Available targets: claude (supports --global), cursor (supports --global), codex, gemini (supports --global)');
+  console.log('Available targets: claude, cursor, codex, gemini');
   const packages = getAvailablePackages();
   console.log('Available packages:');
   if (packages.length === 0) {
@@ -473,51 +477,70 @@ function printAvailableOptions(target) {
   }
 }
 
-function getDryRunHeader(target, globalScope) {
-  const targetDisplay = target + (globalScope ? ' (global)' : '');
-  return [`[dry-run] Target: ${targetDisplay}`];
-}
-
-function buildCodexInstallPlan(lines, globalScope, selectedPackages, projectDir, devMode) {
-  const packages = getSelectedPackageSummary(selectedPackages);
-  if (globalScope) {
-    const userCodexDir = path.join(os.homedir(), '.codex');
-    return [
-      ...lines,
-      `[dry-run] Packages: ${packages}`,
-      `[dry-run] Would install Codex user config to ${userCodexDir}`,
-      `[dry-run] Would install Codex user rules to ${path.join(userCodexDir, 'rules')}`
-    ];
+function resolveInstallRoot(target, overrideDir = null) {
+  if (overrideDir) {
+    return overrideDir;
   }
 
-  const projectCodexDir = path.join(projectDir, '.codex');
+  if (target === 'claude') {
+    return process.env.CLAUDE_BASE_DIR || path.join(os.homedir(), '.claude');
+  }
+  if (target === 'cursor') {
+    return path.join(os.homedir(), '.cursor');
+  }
+  if (target === 'codex') {
+    return path.join(os.homedir(), '.codex');
+  }
+  if (target === 'gemini') {
+    return path.join(os.homedir(), '.gemini');
+  }
+
+  throw new Error(`Unsupported target '${target}'`);
+}
+
+function resolveMdtRoot(installRoot) {
+  return path.join(installRoot, 'mdt');
+}
+
+function getDryRunHeader(target, overrideDir = null) {
+  const installRoot = resolveInstallRoot(target, overrideDir);
+  return [
+    `[dry-run] Target: ${target} (global)`,
+    `[dry-run] Tool config root: ${installRoot}`,
+    `[dry-run] MDT root: ${resolveMdtRoot(installRoot)}`
+  ];
+}
+
+function buildCodexInstallPlan(lines, selectedPackages, overrideDir, devMode) {
+  const packages = getSelectedPackageSummary(selectedPackages);
+  const userCodexDir = resolveInstallRoot('codex', overrideDir);
+  const mdtRoot = resolveMdtRoot(userCodexDir);
   const codexScripts = getToolManifestSelections(selectedPackages, 'codex', 'scripts');
   return [
     ...lines,
     `[dry-run] Packages: ${packages}`,
-    `[dry-run] Project directory: ${projectDir}`,
-    `[dry-run] Would install Codex project config to ${path.join(projectCodexDir, 'config.toml')}`,
-    `[dry-run] Would install Codex project AGENTS.md to ${path.join(projectCodexDir, 'AGENTS.md')}`,
-    `[dry-run] Would install Codex project rules to ${path.join(projectCodexDir, 'rules')}`,
-    `[dry-run] Would install Codex project skills to ${path.join(projectCodexDir, 'skills')}`,
-    `[dry-run] Would install Codex runtime scripts to ${path.join(projectCodexDir, 'scripts')}`,
-    '[dry-run] Would materialize package-selected Codex skills from codex-template/skills into .codex/skills/',
-    ...(devMode ? [`[dry-run] Would install Codex dev smoke workflow scripts to ${path.join(projectCodexDir, 'scripts')}`] : []),
+    `[dry-run] Would install Codex config to ${path.join(userCodexDir, 'config.toml')}`,
+    `[dry-run] Would install Codex AGENTS.md to ${path.join(userCodexDir, 'AGENTS.md')}`,
+    `[dry-run] Would install Codex rules to ${path.join(userCodexDir, 'rules')}`,
+    `[dry-run] Would install Codex skills to ${path.join(userCodexDir, 'skills')}`,
+    `[dry-run] Would install Codex runtime scripts to ${path.join(mdtRoot, 'scripts')}`,
+    ...(devMode ? [`[dry-run] Would install Codex dev smoke workflow scripts to ${path.join(mdtRoot, 'scripts')}`] : []),
     ...(codexScripts.length > 0
-      ? [`[dry-run] Would install package-selected Codex workflow scripts to ${path.join(projectCodexDir, 'scripts')}`]
+      ? [`[dry-run] Would install package-selected Codex workflow scripts to ${path.join(mdtRoot, 'scripts')}`]
       : [])
   ];
 }
 
-function buildGeminiInstallPlan(lines, globalScope, selectedPackages, projectDir) {
-  const agentsDest = globalScope ? path.join(os.homedir(), '.gemini/antigravity/.agents') : path.join(projectDir, '.agent');
-  const cmdsDest = globalScope ? path.join(os.homedir(), '.gemini/commands') : path.join(projectDir, '.gemini/commands');
+function buildGeminiInstallPlan(lines, selectedPackages, overrideDir) {
+  const geminiRoot = resolveInstallRoot('gemini', overrideDir);
+  const agentsDest = path.join(geminiRoot, 'antigravity', '.agents');
+  const cmdsDest = path.join(geminiRoot, 'commands');
   const nextLines = [
     ...lines,
     `[dry-run] Packages: ${getSelectedPackageSummary(selectedPackages)}`,
-    `[dry-run] Project directory: ${projectDir}`,
     `[dry-run] Would install agents and skills to ${agentsDest}`,
-    `[dry-run] Would install custom commands to ${cmdsDest}`
+    `[dry-run] Would install custom commands to ${cmdsDest}`,
+    `[dry-run] Would install runtime state under ${resolveMdtRoot(geminiRoot)}`
   ];
 
   if (selectedPackages.length === 0) {
@@ -525,59 +548,40 @@ function buildGeminiInstallPlan(lines, globalScope, selectedPackages, projectDir
   }
 
   const packageNames = selectedPackages.map((pkg) => pkg.name);
-  if (globalScope) {
-    return [
-      ...nextLines,
-      `[dry-run] Would append rules for packages [${packageNames.join(', ')}] to ${path.join(os.homedir(), '.gemini/GEMINI.md')}`
-    ];
-  }
-
   return [
     ...nextLines,
-    `[dry-run] Would install rules for packages [${packageNames.join(', ')}] to ${path.join(agentsDest, 'rules')}`
+    `[dry-run] Would append rules for packages [${packageNames.join(', ')}] to ${path.join(geminiRoot, 'GEMINI.md')}`
   ];
 }
 
-function buildClaudeInstallPlan(lines, globalScope, selectedPackages, projectDir) {
+function buildClaudeInstallPlan(lines, selectedPackages, overrideDir) {
   const packages = getSelectedPackageSummary(selectedPackages);
-  const claudeBase = globalScope
-    ? (process.env.CLAUDE_BASE_DIR || path.join(os.homedir(), '.claude'))
-    : path.join(projectDir, '.claude');
+  const claudeBase = resolveInstallRoot('claude', overrideDir);
+  const mdtRoot = resolveMdtRoot(claudeBase);
 
-  const nextLines = [
+  return [
     ...lines,
     `[dry-run] Packages: ${packages}`,
-    `[dry-run] Project directory: ${projectDir}`,
     `[dry-run] Would install into ${claudeBase}`,
-    '[dry-run] Would copy rules, package-selected agents/commands/skills, hooks, and runtime scripts (scripts/hooks + scripts/lib)'
+    `[dry-run] Would copy rules, package-selected agents/commands/skills, hooks, and runtime scripts to ${mdtRoot}`
   ];
-
-  if (globalScope) {
-    return nextLines;
-  }
-  return [...nextLines, '[dry-run] Hook script paths will use project-relative references'];
 }
 
-function buildCursorInstallPlan(lines, globalScope, selectedPackages, projectDir) {
+function buildCursorInstallPlan(lines, selectedPackages, overrideDir) {
   const packages = getSelectedPackageSummary(selectedPackages);
-  const cursorBase = globalScope ? path.join(os.homedir(), '.cursor') : path.join(projectDir, '.cursor');
-  const nextLines = [
+  const cursorBase = resolveInstallRoot('cursor', overrideDir);
+  const mdtRoot = resolveMdtRoot(cursorBase);
+  return [
     ...lines,
     `[dry-run] Packages: ${packages}`,
-    `[dry-run] Project directory: ${projectDir}`,
     `[dry-run] Would install into ${cursorBase}`,
-    '[dry-run] Would copy package-selected agents, package-selected skills, hook scripts, hooks config, mcp config, and runtime scripts (scripts/hooks + scripts/lib)'
+    `[dry-run] Would install Cursor rules, package-selected agents/skills/commands, hook config, mcp config, and runtime scripts under ${mdtRoot}`,
+    `[dry-run] Local exception bridges, if needed later, would materialize only the missing surface into the active repo`
   ];
-
-  if (globalScope) {
-    return [...nextLines, '[dry-run] Would skip file-based rules (Cursor global mode limitation)'];
-  }
-  return [...nextLines, '[dry-run] Would install Cursor rules and skills declared by the selected packages'];
 }
 
-function buildInstallPlan({ target, globalScope, devMode, projectDir, packageNames }) {
-  const header = getDryRunHeader(target, globalScope);
-  const resolvedProjectDir = assertProjectDir(projectDir || process.cwd());
+function buildInstallPlan({ target, devMode, overrideDir, packageNames }) {
+  const header = getDryRunHeader(target, overrideDir);
   const selectedPackages = target === 'codex' && packageNames.length === 0
     ? []
     : resolveSelectedPackages(packageNames);
@@ -588,11 +592,11 @@ function buildInstallPlan({ target, globalScope, devMode, projectDir, packageNam
       ...getSkillRequirementWarnings(target, selectedPackages, devMode).map((warning) => `[dry-run] Note: ${warning}`)
     ];
 
-  if (target === 'codex') return [...warnings, ...buildCodexInstallPlan(header, globalScope, selectedPackages, resolvedProjectDir, devMode)];
-  if (target === 'gemini') return [...warnings, ...buildGeminiInstallPlan(header, globalScope, selectedPackages, resolvedProjectDir)];
-  if (target === 'claude') return [...warnings, ...buildClaudeInstallPlan(header, globalScope, selectedPackages, resolvedProjectDir)];
+  if (target === 'codex') return [...warnings, ...buildCodexInstallPlan(header, selectedPackages, overrideDir, devMode)];
+  if (target === 'gemini') return [...warnings, ...buildGeminiInstallPlan(header, selectedPackages, overrideDir)];
+  if (target === 'claude') return [...warnings, ...buildClaudeInstallPlan(header, selectedPackages, overrideDir)];
 
-  return [...warnings, ...buildCursorInstallPlan(header, globalScope, selectedPackages, resolvedProjectDir)];
+  return [...warnings, ...buildCursorInstallPlan(header, selectedPackages, overrideDir)];
 }
 
 function copyRecursiveSync(srcDir, destDir, filter = () => true) {
@@ -627,18 +631,30 @@ function copyRuntimeScripts(destScriptsDir) {
   }
 }
 
+function ensureMdtRoot(installRoot) {
+  const mdtRoot = resolveMdtRoot(installRoot);
+  fs.mkdirSync(mdtRoot, { recursive: true });
+  return mdtRoot;
+}
+
+function copyRuntimeScriptsToMdtRoot(installRoot) {
+  const scriptsDest = path.join(ensureMdtRoot(installRoot), 'scripts');
+  copyRuntimeScripts(scriptsDest);
+  return scriptsDest;
+}
+
 function usage(target) {
-  console.error('Usage: node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--project-dir <path>] [--list] [--dry-run] [package ...]');
+  console.error('Usage: node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--override <tool-config-dir>] [--list] [--dry-run] [package ...]');
   console.error('');
   console.error('Targets:');
-  console.error('  claude (default) — Install to ./.claude/ (or ~/.claude/ with --global)');
-  console.error('  cursor           — Install to ./.cursor/ (or ~/.cursor/ with --global)');
-  console.error('  codex            — Install to ./.codex/ (or ~/.codex/ with --global)');
-  console.error('  gemini           — Install Antigravity/Gemini CLI configs to .agent/ and .gemini/ (or ~/.gemini... with --global)');
+  console.error('  claude (default) — Install to ~/.claude/');
+  console.error('  cursor           — Install to ~/.cursor/');
+  console.error('  codex            — Install to ~/.codex/');
+  console.error('  gemini           — Install to ~/.gemini/');
   console.error('');
   console.error('Options:');
-  console.error('  --global         — Install to home directory instead of current project.');
-  console.error('  --project-dir    — Install project-level files into the specified repo path.');
+  console.error('  --global         — Compatibility alias; installs are global by default.');
+  console.error('  --override       — Install into the provided tool-config dir instead of the real ~/.tool root.');
   console.error('  --list           — Show available targets/packages and exit.');
   console.error('  --dry-run        — Print planned install actions without writing files.');
   console.error('');
@@ -722,13 +738,9 @@ function copyExplicitFiles(srcDir, destDir, fileNames, missingContext = '') {
   return copied;
 }
 
-function resolveClaudePaths(globalScope, projectDir) {
-  const claudeBase = globalScope
-    ? (process.env.CLAUDE_BASE_DIR || path.join(os.homedir(), '.claude'))
-    : path.join(projectDir, '.claude');
-  const rulesDest = globalScope
-    ? (process.env.CLAUDE_RULES_DIR || path.join(claudeBase, 'rules'))
-    : path.join(claudeBase, 'rules');
+function resolveClaudePaths(overrideDir) {
+  const claudeBase = resolveInstallRoot('claude', overrideDir);
+  const rulesDest = process.env.CLAUDE_RULES_DIR || path.join(claudeBase, 'rules');
   return { claudeBase, rulesDest };
 }
 
@@ -829,13 +841,13 @@ function readJsonFile(jsonPath, fallback = {}) {
   }
 }
 
-function installClaudeHooks(claudeBase, globalScope) {
+function installClaudeHooks(claudeBase) {
   const hooksJsonSrc = getHookPlatform('claude').sourceConfig;
   if (!fs.existsSync(hooksJsonSrc)) return;
 
   const settingsPath = path.join(claudeBase, 'settings.json');
   const hooksData = readJsonFile(hooksJsonSrc, {});
-  const pluginRoot = globalScope ? claudeBase.replace(/\\/g, '/') : '.claude';
+  const pluginRoot = resolveMdtRoot(claudeBase).replace(/\\/g, '/');
   const hooksJson = JSON.stringify(hooksData).replace(/\$\{MDT_ROOT\}/g, pluginRoot);
   const parsedHooks = JSON.parse(hooksJson);
 
@@ -853,9 +865,8 @@ function installClaudeHooks(claudeBase, globalScope) {
 }
 
 function installClaudeRuntimeScripts(claudeBase) {
-  const scriptsDest = path.join(claudeBase, 'scripts');
+  const scriptsDest = copyRuntimeScriptsToMdtRoot(claudeBase);
   console.log('Installing runtime scripts -> ' + scriptsDest + '/');
-  copyRuntimeScripts(scriptsDest);
   if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, CLAUDE_WORKFLOW_SCRIPTS, 'Claude workflow script') > 0) {
     console.log('Installing Claude workflow scripts -> ' + scriptsDest + '/');
   }
@@ -868,8 +879,8 @@ function printWindowsHookNote(prefix) {
   console.log('');
 }
 
-function installClaude(packageNames, globalScope, projectDir, devMode = false) {
-  const { claudeBase, rulesDest } = resolveClaudePaths(globalScope, projectDir);
+function installClaude(packageNames, overrideDir, devMode = false) {
+  const { claudeBase, rulesDest } = resolveClaudePaths(overrideDir);
   if (!packageNames.length) usage('claude');
   const selectedPackages = resolveSelectedPackages(packageNames);
   for (const warning of assertPackageRequirements('claude', selectedPackages)) {
@@ -882,31 +893,36 @@ function installClaude(packageNames, globalScope, projectDir, devMode = false) {
   warnExistingRulesDir(rulesDest);
   installClaudeRules(selectedPackages, rulesDest);
   installClaudeContentDirs(claudeBase, selectedPackages, devMode);
-  installClaudeHooks(claudeBase, globalScope);
+  installClaudeHooks(claudeBase);
   installClaudeRuntimeScripts(claudeBase);
   printWindowsHookNote('NOTE: Windows — Hook scripts use Node.js; tmux-dependent features are skipped on Windows.');
   console.log('Done. Claude configs installed to ' + claudeBase + '/');
 }
 
-function resolveCursorDestDir(globalScope, projectDir) {
-  return globalScope ? path.join(os.homedir(), '.cursor') : path.join(projectDir, '.cursor');
+function resolveCursorDestDir(overrideDir) {
+  return resolveInstallRoot('cursor', overrideDir);
 }
 
-function printCursorGlobalRulesNote(globalScope) {
-  if (!globalScope) return;
-  console.log('');
-  console.log('NOTE: Cursor does not support file-based rules in ~/.cursor/rules.');
-  console.log('      Add global rules in Settings > Cursor Settings > General > Rules for AI');
-  console.log('');
-}
-
-function installCursorRules(destDir, selectedPackages, globalScope) {
-  const cursorRulesSrc = path.join(CURSOR_SRC, 'rules');
-  if (globalScope) {
-    console.log('Skipping rules (not supported globally by Cursor).');
-    return;
+function renderCursorGlobalRuleContent(ruleFile, markdownContent) {
+  if (ruleFile.endsWith('.mdc')) {
+    return markdownContent;
   }
 
+  const titleLine = markdownContent.split(/\r?\n/).find((line) => line.startsWith('# '));
+  const description = (titleLine ? titleLine.replace(/^#\s+/, '').trim() : ruleFile.replace(/\.md$/, '')).replace(/"/g, '\\"');
+  return [
+    '---',
+    `description: "${description}"`,
+    'alwaysApply: true',
+    '---',
+    '',
+    markdownContent.trim(),
+    ''
+  ].join('\n');
+}
+
+function installCursorRules(destDir, selectedPackages) {
+  const cursorRulesSrc = path.join(CURSOR_SRC, 'rules');
   const rulesDest = path.join(destDir, 'rules');
   fs.mkdirSync(rulesDest, { recursive: true });
   if (!fs.existsSync(cursorRulesSrc)) {
@@ -925,13 +941,15 @@ function installCursorRules(destDir, selectedPackages, globalScope) {
 
     for (const ruleFile of cursorRules) {
       const srcPath = path.join(cursorRulesSrc, ruleFile);
-      const destPath = path.join(rulesDest, ruleFile);
+      const destFileName = ruleFile.endsWith('.md') ? ruleFile.replace(/\.md$/, '.mdc') : ruleFile;
+      const destPath = path.join(rulesDest, destFileName);
       if (!fs.existsSync(srcPath)) {
         console.error(`Warning: Cursor rule '${ruleFile}' for package '${selectedPackage.name}' does not exist, skipping.`);
         continue;
       }
-      fs.copyFileSync(srcPath, destPath);
-      copiedRules.add(ruleFile);
+      const content = fs.readFileSync(srcPath, 'utf8');
+      fs.writeFileSync(destPath, renderCursorGlobalRuleContent(ruleFile, content), 'utf8');
+      copiedRules.add(destFileName);
     }
   }
 
@@ -1028,16 +1046,14 @@ function installCursorCoreDirs(destDir, selectedPackages, devMode = false) {
   }
 }
 
-function installCursorHooksConfig(destDir, globalScope) {
+function installCursorHooksConfig(destDir) {
   const hooksJsonSrc = getHookPlatform('cursor').sourceConfig;
   if (!fs.existsSync(hooksJsonSrc)) return;
 
   const hooksDestPath = path.join(destDir, 'hooks.json');
   let content = fs.readFileSync(hooksJsonSrc, 'utf8');
-  if (globalScope) {
-    const absoluteHooksDir = path.join(destDir, 'hooks').replace(/\\/g, '/');
-    content = content.replace(/node \.cursor\/hooks\//g, 'node ' + absoluteHooksDir + '/');
-  }
+  const absoluteHooksDir = path.join(resolveMdtRoot(destDir), 'hooks').replace(/\\/g, '/');
+  content = content.replace(/node \.cursor\/hooks\//g, 'node ' + absoluteHooksDir + '/');
   const hooksParsed = JSON.parse(content);
   if (hooksParsed.version === null || hooksParsed.version === undefined) {
     hooksParsed.version = 1;
@@ -1051,15 +1067,14 @@ function installCursorHookScripts(destDir) {
   const hooksSrc = getHookPlatform('cursor').sourceScriptsDir;
   if (!fs.existsSync(hooksSrc)) return;
 
-  const hooksDest = path.join(destDir, 'hooks');
+  const hooksDest = path.join(ensureMdtRoot(destDir), 'hooks');
   console.log('Installing hook scripts -> ' + hooksDest + '/');
   copyRecursiveSync(hooksSrc, hooksDest);
 }
 
 function installCursorRuntimeScripts(destDir) {
-  const scriptsDest = path.join(destDir, 'scripts');
+  const scriptsDest = copyRuntimeScriptsToMdtRoot(destDir);
   console.log('Installing runtime scripts -> ' + scriptsDest + '/');
-  copyRuntimeScripts(scriptsDest);
 }
 
 function installCursorMcp(destDir) {
@@ -1072,8 +1087,8 @@ function installCursorMcp(destDir) {
   console.log('Installing MCP config -> ' + mcpDest);
 }
 
-function installCursor(packageNames, globalScope, projectDir, devMode = false) {
-  const destDir = resolveCursorDestDir(globalScope, projectDir);
+function installCursor(packageNames, overrideDir, devMode = false) {
+  const destDir = resolveCursorDestDir(overrideDir);
   if (!packageNames.length) usage('cursor');
   const selectedPackages = resolveSelectedPackages(packageNames);
   for (const warning of assertPackageRequirements('cursor', selectedPackages)) {
@@ -1084,14 +1099,13 @@ function installCursor(packageNames, globalScope, projectDir, devMode = false) {
   }
 
   console.log('Installing Cursor configs to ' + destDir + '/');
-  printCursorGlobalRulesNote(globalScope);
-  installCursorRules(destDir, selectedPackages, globalScope);
+  installCursorRules(destDir, selectedPackages);
   installCursorCoreDirs(destDir, selectedPackages, devMode);
   const skipHooks = String(process.env.MDT_SKIP_CURSOR_HOOKS || '').trim() === '1';
   if (skipHooks) {
     console.log('Skipping Cursor hooks install because MDT_SKIP_CURSOR_HOOKS=1');
   } else {
-    installCursorHooksConfig(destDir, globalScope);
+    installCursorHooksConfig(destDir);
     installCursorHookScripts(destDir);
   }
   installCursorRuntimeScripts(destDir);
@@ -1134,14 +1148,13 @@ function installCodexSkills(selectedPackages, destDir, devMode = false) {
   }
 }
 
-function installCodexRuntimeScripts(projectCodexDir) {
-  const scriptsDest = path.join(projectCodexDir, 'scripts');
+function installCodexRuntimeScripts(codexDir) {
+  const scriptsDest = copyRuntimeScriptsToMdtRoot(codexDir);
   console.log('Installing Codex runtime scripts -> ' + scriptsDest + '/');
-  copyRuntimeScripts(scriptsDest);
 }
 
-function installCodexWorkflowScripts(projectCodexDir, selectedPackages, devMode = false) {
-  const scriptsDest = path.join(projectCodexDir, 'scripts');
+function installCodexWorkflowScripts(codexDir, selectedPackages, devMode = false) {
+  const scriptsDest = path.join(ensureMdtRoot(codexDir), 'scripts');
   const baselineWorkflowScripts = devMode ? ['smoke-tool-setups.js', 'smoke-codex-workflows.js'] : [];
   const optionalWorkflowScripts = getToolManifestSelections(selectedPackages, 'codex', 'scripts');
   const workflowScripts = mergeUniqueOrdered(baselineWorkflowScripts, optionalWorkflowScripts);
@@ -1150,8 +1163,8 @@ function installCodexWorkflowScripts(projectCodexDir, selectedPackages, devMode 
   }
 }
 
-function installCodexGlobal(selectedPackages) {
-  const destDir = path.join(os.homedir(), '.codex');
+function installCodexGlobal(selectedPackages, overrideDir, devMode = false) {
+  const destDir = resolveInstallRoot('codex', overrideDir);
   console.log('Installing Codex CLI configs to ' + destDir + '/');
   fs.mkdirSync(destDir, { recursive: true });
 
@@ -1176,6 +1189,9 @@ function installCodexGlobal(selectedPackages) {
   }
 
   installCodexRules(selectedPackages, destDir);
+  installCodexSkills(selectedPackages, destDir, devMode);
+  installCodexRuntimeScripts(destDir);
+  installCodexWorkflowScripts(destDir, selectedPackages, devMode);
 
   if (process.platform === 'win32') {
     console.log('');
@@ -1186,31 +1202,7 @@ function installCodexGlobal(selectedPackages) {
   console.log('Done. Codex global configs installed to ' + destDir + '/');
 }
 
-function installCodexProject(selectedPackages, projectDir, devMode) {
-  const projectCodexDir = path.join(projectDir, '.codex');
-  console.log('Installing Codex project files to ' + projectCodexDir + '/');
-  fs.mkdirSync(projectCodexDir, { recursive: true });
-
-  const configSrc = path.join(CODEX_SRC, 'config.toml');
-  if (fs.existsSync(configSrc)) {
-    fs.copyFileSync(configSrc, path.join(projectCodexDir, 'config.toml'));
-    console.log('Installing Codex project config -> ' + path.join(projectCodexDir, 'config.toml'));
-  }
-
-  const agentsMdSrc = path.join(CODEX_SRC, 'AGENTS.md');
-  if (fs.existsSync(agentsMdSrc)) {
-    fs.copyFileSync(agentsMdSrc, path.join(projectCodexDir, 'AGENTS.md'));
-    console.log('Installing Codex project AGENTS.md -> ' + path.join(projectCodexDir, 'AGENTS.md'));
-  }
-
-  installCodexRules(selectedPackages, projectCodexDir);
-  installCodexSkills(selectedPackages, projectCodexDir, devMode);
-  installCodexRuntimeScripts(projectCodexDir);
-  installCodexWorkflowScripts(projectCodexDir, selectedPackages, devMode);
-  console.log('Done. Codex project files installed to ' + projectCodexDir + '/');
-}
-
-function installCodex(packageNames, globalScope, projectDir, devMode) {
+function installCodex(packageNames, overrideDir, devMode) {
   if (!fs.existsSync(CODEX_SRC)) {
     console.error('Error: codex-template source directory not found at ' + CODEX_SRC);
     process.exit(1);
@@ -1225,12 +1217,7 @@ function installCodex(packageNames, globalScope, projectDir, devMode) {
     console.warn('Note: ' + warning);
   }
 
-  if (globalScope) {
-    installCodexGlobal(selectedPackages);
-    return;
-  }
-
-  installCodexProject(selectedPackages, projectDir, devMode);
+  installCodexGlobal(selectedPackages, overrideDir, devMode);
 }
 
 function convertCommandsToToml(commandsSrc, commandsDest) {
@@ -1267,10 +1254,11 @@ function convertCommandsToToml(commandsSrc, commandsDest) {
   });
 }
 
-function resolveGeminiDestinations(globalScope, projectDir) {
+function resolveGeminiDestinations(overrideDir) {
+  const geminiRoot = resolveInstallRoot('gemini', overrideDir);
   return {
-    destDirAgent: globalScope ? path.join(os.homedir(), '.gemini/antigravity/.agents') : path.join(projectDir, '.agent'),
-    destDirGemini: globalScope ? path.join(os.homedir(), '.gemini') : path.join(projectDir, '.gemini')
+    destDirAgent: path.join(geminiRoot, 'antigravity', '.agents'),
+    destDirGemini: geminiRoot
   };
 }
 
@@ -1324,19 +1312,14 @@ function copyGeminiLocalRules(cursorRules, selectedPackages, destDirAgent) {
   }
 }
 
-function installGeminiRules(selectedPackages, globalScope, destDirAgent, destDirGemini) {
+function installGeminiRules(selectedPackages, destDirAgent, destDirGemini) {
   const cursorRules = path.join(CURSOR_SRC, 'rules');
   if (selectedPackages.length === 0) {
     console.log('No packages provided, skipping rules...');
     return;
   }
   if (!fs.existsSync(cursorRules)) return;
-
-  if (globalScope) {
-    appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini);
-    return;
-  }
-  copyGeminiLocalRules(cursorRules, selectedPackages, destDirAgent);
+  appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini);
 }
 
 function installGeminiContent(destDirAgent, destDirGemini, selectedPackages, devMode = false) {
@@ -1377,11 +1360,13 @@ function installGeminiContent(destDirAgent, destDirGemini, selectedPackages, dev
       }
     }
   }
+
+  copyRuntimeScriptsToMdtRoot(destDirGemini);
 }
 
-function installGemini(packageNames, globalScope, projectDir, devMode = false) {
+function installGemini(packageNames, overrideDir, devMode = false) {
   console.log('Installing Gemini CLI / Antigravity configs...');
-  const { destDirAgent, destDirGemini } = resolveGeminiDestinations(globalScope, projectDir);
+  const { destDirAgent, destDirGemini } = resolveGeminiDestinations(overrideDir);
   const selectedPackages = resolveSelectedPackages(packageNames);
   for (const warning of assertPackageRequirements('gemini', selectedPackages)) {
     console.warn('Warning: ' + warning);
@@ -1389,35 +1374,19 @@ function installGemini(packageNames, globalScope, projectDir, devMode = false) {
   for (const warning of getSkillRequirementWarnings('gemini', selectedPackages, devMode)) {
     console.warn('Note: ' + warning);
   }
-  installGeminiRules(selectedPackages, globalScope, destDirAgent, destDirGemini);
+  installGeminiRules(selectedPackages, destDirAgent, destDirGemini);
   installGeminiContent(destDirAgent, destDirGemini, selectedPackages, devMode);
   console.log('Done. Gemini configs installed.');
 }
 
 function main() {
-  const { target, globalScope, listMode, dryRun, devMode, projectDir, packageNames } = parseArgs();
+  const { target, globalScope, listMode, dryRun, devMode, projectDir, overrideDir, packageNames } = parseArgs();
 
-  if (!dryRun && !listMode && !globalScope && projectDir === null) {
-    console.log('No install scope specified. Nothing was installed.');
-    console.log('');
-    console.log('Specify where to install using one of:');
-    console.log('');
-    console.log('  --global');
-    console.log('      Install to your home directory (~/.claude/, ~/.cursor/, etc.).');
-    console.log('      Makes MDT available across all projects for this user.');
-    console.log('');
-    console.log('  --project-dir <path>');
-    console.log('      Install project-level files into the specified repository path.');
-    console.log('      Use this to add MDT to a specific project.');
-    console.log('');
-    console.log('Examples:');
-    console.log('  node scripts/install-mdt.js --global typescript');
-    console.log('  node scripts/install-mdt.js --project-dir /path/to/my-project typescript');
-    console.log('  node scripts/install-mdt.js --target cursor --global typescript');
-    process.exit(0);
+  if (projectDir !== null) {
+    console.error('Error: --project-dir is retired. MDT installs are global-only now.');
+    console.error('Use node scripts/materialize-mdt-local.js for repo-local exception bridges when a tool needs them.');
+    process.exit(1);
   }
-
-  const resolvedProjectDir = projectDir !== null ? assertProjectDir(projectDir) : null;
 
   if (target !== 'claude' && target !== 'cursor' && target !== 'codex' && target !== 'gemini') {
     console.error("Error: unknown target '" + target + "'. Must be claude, cursor, codex, or gemini.");
@@ -1429,7 +1398,7 @@ function main() {
   }
   if (dryRun) {
     try {
-      const plan = buildInstallPlan({ target, globalScope, devMode, projectDir: resolvedProjectDir || process.cwd(), packageNames });
+      const plan = buildInstallPlan({ target, devMode, overrideDir, packageNames });
       plan.forEach((line) => console.log(line));
       process.exit(0);
     } catch (error) {
@@ -1438,10 +1407,13 @@ function main() {
     }
   }
   try {
-    if (target === 'claude') installClaude(packageNames, globalScope, resolvedProjectDir, devMode);
-    else if (target === 'cursor') installCursor(packageNames, globalScope, resolvedProjectDir, devMode);
-    else if (target === 'gemini') installGemini(packageNames, globalScope, resolvedProjectDir, devMode);
-    else installCodex(packageNames, globalScope, resolvedProjectDir, devMode);
+    if (globalScope) {
+      console.log('Note: --global is now optional; MDT installs globally by default.');
+    }
+    if (target === 'claude') installClaude(packageNames, overrideDir, devMode);
+    else if (target === 'cursor') installCursor(packageNames, overrideDir, devMode);
+    else if (target === 'gemini') installGemini(packageNames, overrideDir, devMode);
+    else installCodex(packageNames, overrideDir, devMode);
   } catch (error) {
     console.error(`Error: ${error.message}`);
     usage(target);

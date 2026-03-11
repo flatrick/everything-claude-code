@@ -64,26 +64,26 @@ function runTests() {
     assert.deepStrictEqual(parsed.packageNames, []);
   })) passed++; else failed++;
 
-  if (test('buildInstallPlan returns codex package-driven plan', () => {
-    const plan = buildInstallPlan({ target: 'codex', globalScope: false, projectDir: process.cwd(), packageNames: ['typescript', 'continuous-learning'] });
-    assert.ok(plan.some((line) => line.includes('[dry-run] Target: codex')));
+  if (test('buildInstallPlan returns codex global plan by default', () => {
+    const plan = buildInstallPlan({ target: 'codex', devMode: false, packageNames: ['typescript', 'continuous-learning'] });
+    assert.ok(plan.some((line) => line.includes('[dry-run] Target: codex (global)')));
     assert.ok(plan.some((line) => line.includes('Packages: typescript, continuous-learning')));
-    assert.ok(plan.some((line) => line.includes('.codex')));
-    assert.ok(!plan.some((line) => line.includes(path.join(os.homedir(), '.codex'))));
+    assert.ok(plan.some((line) => line.includes(path.join(os.homedir(), '.codex'))));
+    assert.ok(plan.some((line) => line.includes(path.join(os.homedir(), '.codex', 'mdt'))));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan returns codex global-only plan', () => {
-    const plan = buildInstallPlan({ target: 'codex', globalScope: true, projectDir: process.cwd(), packageNames: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'codex', devMode: false, packageNames: ['typescript'] });
     assert.ok(plan.some((line) => line.includes('[dry-run] Target: codex (global)')));
     assert.ok(plan.some((line) => line.includes(path.join(os.homedir(), '.codex'))));
     assert.ok(!plan.some((line) => line.includes(path.join(process.cwd(), '.codex'))));
   })) passed++; else failed++;
 
-  if (test('buildInstallPlan uses explicit project dir for project-level targets', () => {
+  if (test('buildInstallPlan uses override dir for redirected installs', () => {
     withTempDir('mdt-install-plan-', (tempDir) => {
-      const plan = buildInstallPlan({ target: 'cursor', globalScope: false, projectDir: tempDir, packageNames: ['typescript'] });
-      assert.ok(plan.some((line) => line.includes(`Project directory: ${tempDir}`)));
-      assert.ok(plan.some((line) => line.includes(path.join(tempDir, '.cursor'))));
+      const plan = buildInstallPlan({ target: 'cursor', devMode: false, overrideDir: tempDir, packageNames: ['typescript'] });
+      assert.ok(plan.some((line) => line.includes(`Tool config root: ${tempDir}`)));
+      assert.ok(plan.some((line) => line.includes(path.join(tempDir, 'mdt'))));
     });
   })) passed++; else failed++;
 
@@ -302,65 +302,72 @@ function runTests() {
     });
   })) passed++; else failed++;
 
-  if (test('buildInstallPlan includes global cursor rule-skip note and packages', () => {
-    const plan = buildInstallPlan({ target: 'cursor', globalScope: true, projectDir: process.cwd(), packageNames: ['typescript'] });
+  if (test('buildInstallPlan includes global cursor rule install and packages', () => {
+    const plan = buildInstallPlan({ target: 'cursor', devMode: false, packageNames: ['typescript'] });
     assert.ok(plan.some((line) => line.includes('Target: cursor (global)')));
     assert.ok(plan.some((line) => line.includes('Packages: typescript')));
-    assert.ok(plan.some((line) => line.includes('Would skip file-based rules')));
+    assert.ok(plan.some((line) => line.includes('Would install Cursor rules')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes claude runtime scripts detail', () => {
-    const plan = buildInstallPlan({ target: 'claude', globalScope: false, projectDir: process.cwd(), packageNames: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'claude', devMode: false, packageNames: ['typescript'] });
     assert.ok(plan.some((line) => line.includes('runtime scripts')));
-    assert.ok(plan.some((line) => line.includes('scripts/hooks + scripts/lib')));
+    assert.ok(plan.some((line) => line.includes(path.join(os.homedir(), '.claude', 'mdt'))));
     assert.ok(plan.some((line) => line.includes('Packages: typescript')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes gemini local paths', () => {
-    const plan = buildInstallPlan({ target: 'gemini', globalScope: false, projectDir: process.cwd(), packageNames: ['typescript'] });
-    assert.ok(plan.some((l) => l.includes('Target: gemini')));
-    assert.ok(plan.some((l) => l.includes('.agent')));
+    const plan = buildInstallPlan({ target: 'gemini', devMode: false, packageNames: ['typescript'] });
+    assert.ok(plan.some((l) => l.includes('Target: gemini (global)')));
+    assert.ok(plan.some((l) => l.includes('.agents')));
     assert.ok(plan.some((line) => line.includes('Packages: typescript')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan includes gemini global paths', () => {
-    const plan = buildInstallPlan({ target: 'gemini', globalScope: true, projectDir: process.cwd(), packageNames: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'gemini', devMode: false, packageNames: ['typescript'] });
     assert.ok(plan.some((l) => l.includes('Target: gemini (global)')));
     assert.ok(plan.some((l) => l.includes('GEMINI.md')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan warns when package requires experimental Cursor hooks', () => {
-    const plan = buildInstallPlan({ target: 'cursor', globalScope: false, projectDir: process.cwd(), packageNames: ['continuous-learning'] });
+    const plan = buildInstallPlan({ target: 'cursor', devMode: false, packageNames: ['continuous-learning'] });
     assert.ok(plan.some((line) => line.includes("skill 'continuous-learning-automatic' depends on hooks for target 'cursor'")));
     assert.ok(!plan.some((line) => line.includes("skill 'continuous-learning-manual'")));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan rejects packages that do not support the selected target', () => {
     assert.throws(
-      () => buildInstallPlan({ target: 'gemini', globalScope: false, projectDir: process.cwd(), packageNames: ['continuous-learning'] }),
+      () => buildInstallPlan({ target: 'gemini', devMode: false, packageNames: ['continuous-learning'] }),
       /Package 'continuous-learning' does not support target 'gemini'/
     );
   })) passed++; else failed++;
 
-  if (test('buildInstallPlan claude project-level installs to cwd .claude', () => {
-    const plan = buildInstallPlan({ target: 'claude', globalScope: false, projectDir: process.cwd(), packageNames: ['typescript'] });
+  if (test('buildInstallPlan claude installs globally by default', () => {
+    const plan = buildInstallPlan({ target: 'claude', devMode: false, packageNames: ['typescript'] });
     assert.ok(plan.some((line) => line.includes('.claude')));
-    assert.ok(plan.some((line) => line.includes('project-relative')));
-    assert.ok(!plan.some((line) => line.includes('Target: claude (global)')));
+    assert.ok(plan.some((line) => line.includes(path.join(os.homedir(), '.claude', 'mdt'))));
+    assert.ok(plan.some((line) => line.includes('Target: claude (global)')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan claude global installs to home .claude', () => {
-    const plan = buildInstallPlan({ target: 'claude', globalScope: true, projectDir: process.cwd(), packageNames: ['typescript'] });
+    const plan = buildInstallPlan({ target: 'claude', devMode: false, packageNames: ['typescript'] });
     const home = require('os').homedir();
     assert.ok(plan.some((line) => line.includes('Target: claude (global)')));
     assert.ok(plan.some((line) => line.includes(home)));
-    assert.ok(!plan.some((line) => line.includes('project-relative')));
+    assert.ok(plan.some((line) => line.includes(path.join(home, '.claude', 'mdt'))));
   })) passed++; else failed++;
 
   if (test('parseArgsFrom parses --global for claude target', () => {
     const parsed = parseArgsFrom(['--global', 'typescript']);
     assert.strictEqual(parsed.target, 'claude');
     assert.strictEqual(parsed.globalScope, true);
+    assert.deepStrictEqual(parsed.packageNames, ['typescript']);
+  })) passed++; else failed++;
+
+  if (test('parseArgsFrom parses --override for redirected installs', () => {
+    const parsed = parseArgsFrom(['--target', 'cursor', '--override', 'C:\\temp\\.cursor', 'typescript']);
+    assert.strictEqual(parsed.target, 'cursor');
+    assert.strictEqual(parsed.overrideDir, path.resolve('C:\\temp\\.cursor'));
     assert.deepStrictEqual(parsed.packageNames, ['typescript']);
   })) passed++; else failed++;
 

@@ -33,7 +33,7 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  if (test('getCliPaths prefers repo-local .codex storage for Codex workflows', () => {
+  if (test('getCliPaths uses global ~/.codex/mdt storage for Codex workflows', () => {
     const tempDir = createTestDir('instinct-cli-codex-');
     try {
       fs.mkdirSync(path.join(tempDir, '.git'), { recursive: true });
@@ -74,8 +74,8 @@ function runTests() {
         CURSOR_AGENT: undefined
       }, () => cli.getCliPaths());
 
-      assert.ok(paths.GLOBAL_PERSONAL.includes(path.join(tempDir, '.codex', 'homunculus')));
-      assert.ok(!paths.GLOBAL_PERSONAL.includes(path.join(tempDir, '.cursor', 'homunculus')));
+      assert.ok(paths.GLOBAL_PERSONAL.includes(path.join(tempDir, '.codex', 'mdt', 'homunculus')));
+      assert.ok(!paths.GLOBAL_PERSONAL.includes(path.join(tempDir, '.cursor', 'mdt', 'homunculus')));
     } finally {
       cleanupTestDir(tempDir);
     }

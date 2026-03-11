@@ -41,18 +41,18 @@ The repo currently ships:
 - `codex-template/AGENTS.md`
 - `codex-template/skills/` as the install-source tree for Codex-readable skills
 - package-driven Codex installs via `node scripts/install-mdt.js --target codex <package...>`
-- optional explicit project targeting via `node scripts/install-mdt.js --target codex --project-dir <repo> <package...>`
 
 Codex install scope follows the shared MDT contract:
 
-- no `--global` => do not touch `~`
-- `--global` => user/global install is the intended target
-- `--project-dir <repo>` => project-local `.codex/` install is the intended target
+- installs are global-only by default
+- `--global` is accepted as a compatibility alias/no-op
+- `--project-dir` is retired
+- `--override <dir>` is for tests/dev when you need a fake Codex root
 
-That means Codex installs are not implicitly two-layer anymore:
+Codex now uses two distinct global layers:
 
-- user layer: `~/.codex/` only when `--global` is explicit
-- project layer: `.codex/skills/`, `.codex/scripts/`, and `.codex/rules/` when `--project-dir` is used
+- tool-facing layer: `~/.codex/` for `config.toml`, `AGENTS.md`, skills, and rules
+- MDT-owned layer: `~/.codex/mdt/` for runtime helpers, observer scripts, manifests, and continuous-learning state
 
 Codex global-config policy:
 
@@ -62,8 +62,8 @@ Codex global-config policy:
   as a reference file instead of overwriting local Codex settings
 - repo guidance belongs in `AGENTS.md`, not in `config.toml`
 
-For Codex, `codex-template/` is the install-source tree. `.codex/` is the
-materialized project-facing surface after install.
+For Codex, `codex-template/` is the install-source tree and `~/.codex/` is the
+materialized tool-facing surface after install.
 
 Important implication:
 - do not document Codex as "single-agent only"
@@ -117,36 +117,36 @@ Smoke paths:
   - `node scripts/verify-tool-setups.js`
   - `node scripts/smoke-tool-setups.js`
   - `node scripts/smoke-codex-workflows.js`
-- installed target repo mode with `--dev`:
-  - `node .codex/scripts/smoke-tool-setups.js`
-  - `node .codex/scripts/smoke-codex-workflows.js`
+- installed global Codex root with `--dev`:
+  - `node ~/.codex/mdt/scripts/smoke-tool-setups.js`
+  - `node ~/.codex/mdt/scripts/smoke-codex-workflows.js`
 
 For package-driven Codex installs, the installer materializes selected skills
-from `codex-template/skills/` into `.codex/skills/`.
+from `codex-template/skills/` into `~/.codex/skills/`.
 
 Normal Codex installs keep the general `documentation-steward` skill but do not
 ship MDT-internal verifier/audit skills by default. Use `--dev` when you want
 `tool-setup-verifier`, `tool-doc-maintainer`, and the repo-style smoke scripts
 materialized into an installed target repo.
 
-When testing against a clean repo, prefer:
+When testing against a clean environment, prefer:
 
 ```bash
-node scripts/install-mdt.js --target codex --project-dir ../scratch-repo typescript continuous-learning
-node scripts/install-mdt.js --target codex --global typescript continuous-learning
+node scripts/install-mdt.js --target codex typescript continuous-learning
+node scripts/install-mdt.js --target codex --dev typescript continuous-learning
 ```
 
 For `continuous-learning`, Codex currently uses an explicit manual workflow
 instead of hooks:
 
 ```bash
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js status
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js analyze
-node .codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js status
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js capture < summary.txt
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js analyze
+node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
-That writes project-local learning state under `.codex/homunculus/`.
+That writes project-scoped learning state under `~/.codex/mdt/homunculus/projects/<project-id>/`.
 
 This is an intentional product choice, not a temporary documentation gap:
 
@@ -162,7 +162,7 @@ The weekly retrospective path is manual-first and writes one summary per ISO
 week under:
 
 ```text
-.codex/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
+~/.codex/mdt/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
 ```
 
 The intended output is low-noise and automation-focused:
@@ -173,8 +173,9 @@ The intended output is low-noise and automation-focused:
 
 Important operational note:
 
-- Codex project detection should prefer repo-scoped `.codex/homunculus/projects/<id>/...`
-  storage even when Node cannot spawn `git` in the active shell
+- Codex project detection should prefer project-scoped records inside
+  `~/.codex/mdt/homunculus/projects/<id>/...` even when Node cannot spawn `git`
+  in the active shell
 - background analysis is different: if the active Codex shell blocks subprocess
   spawn (`EPERM`/`EACCES`), `analyze` may still be unable to launch the native
   Codex CLI from inside that session
@@ -184,20 +185,20 @@ active Codex shell cannot spawn `codex exec`. Install it explicitly when
 needed:
 
 ```bash
-node scripts/install-mdt.js --target codex --project-dir ../scratch-repo continuous-learning-observer
+node scripts/install-mdt.js --target codex continuous-learning-observer
 ```
 
 Then use:
 
 ```bash
-node .codex/scripts/codex-observer.js status
-node .codex/scripts/codex-observer.js once
-node .codex/scripts/codex-observer.js watch --interval-seconds 15
+node ~/.codex/mdt/scripts/codex-observer.js status
+node ~/.codex/mdt/scripts/codex-observer.js once
+node ~/.codex/mdt/scripts/codex-observer.js watch --interval-seconds 15
 ```
 
 That observer:
 - keeps the explicit/manual `status`, `capture`, `analyze`, and `weekly` flows as the baseline
-- watches project `.codex/homunculus/projects/<id>/observations.jsonl`
+- watches `~/.codex/mdt/homunculus/projects/<id>/observations.jsonl`
 - runs analysis in a normal shell environment where `codex exec` is allowed
 - does not change Cursor or Claude behavior
 - does not make Codex fully automatic; it supplements manual capture with

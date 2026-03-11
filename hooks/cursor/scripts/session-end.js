@@ -252,7 +252,7 @@ function normalizeUsage(rawUsage) {
 
 function trackCursorCost(input, utilsOverride) {
   const utils = utilsOverride || loadRuntimeHelpers().utils;
-  const { appendFile, ensureDir, getConfigDir, log } = utils;
+  const { appendFile, ensureDir, getDataDir, log } = utils;
   const usage = normalizeUsage(input.usage || input.token_usage || input.session?.usage || input.session?.token_usage);
 
   if (!usage) {
@@ -260,7 +260,7 @@ function trackCursorCost(input, utilsOverride) {
     return { tracked: false, reason: 'missing-usage' };
   }
 
-  const metricsDir = path.join(getConfigDir(), 'metrics');
+  const metricsDir = path.join(getDataDir(), 'metrics');
   const metricsFile = path.join(metricsDir, 'costs.jsonl');
   ensureDir(metricsDir);
 

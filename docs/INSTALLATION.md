@@ -14,39 +14,40 @@ Detailed tool behavior lives in:
 ## CLI
 
 ```bash
-node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--project-dir <path>] [--dev] [--list] [--dry-run] [package ...]
+node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--override <tool-config-dir>] [--dev] [--list] [--dry-run] [package ...]
 ```
 
 Notes:
 
 - positional args are package names
 - default target is `claude`
-- `--project-dir` changes where project-level files are installed
-- `--global` only affects targets that support a user-level install mode
+- installs are global-only; `--global` is accepted as a compatibility no-op
+- `--project-dir` is retired and exits with a migration message
+- `--override` redirects the tool config root for tests or isolated installs
 - `--dev` adds MDT-internal maintenance surfaces meant for MDT development, not normal end-user installs
 
-## Scope Contract
+## Install Contract
 
-This is the install-scope rule for MDT:
+This is the install model for MDT now:
 
-- if `--global` is not supplied, do not write to `~`
-- treat `--global` as: `user/global install is the intended target`
-- `--project-dir` means the named repo is the intended project target
-- only make a user-home exception if there is a hard technical requirement
-- if an exception exists, document it explicitly in this file and the relevant
-  tool page
+- normal installs always target the tool's user/global config root
+- MDT-owned runtime and state live under `~/.{tool}/mdt/`
+- tool-facing assets still live where the tool expects them
+- repo-local installs are exceptions, not the baseline
+- repo-local exceptions use explicit bridge commands instead of full project installs
 
-This rule applies across tools. A project-targeted install should not silently
-touch user-global config just because a tool happens to support a user layer.
+Current bridge support:
+
+- Cursor repo-local rules via `node scripts/materialize-mdt-local.js --target cursor --surface rules`
 
 ## Target Summary
 
-| Target | User/global layer | Project layer | Notes |
+| Target | Tool config root | MDT-owned root | Notes |
 | --- | --- | --- | --- |
-| `claude` | `~/.claude/` with `--global` | `.claude/` by default | installs rules, agents, commands, skills, hooks, and runtime scripts |
-| `cursor` | `~/.cursor/` with `--global` | `.cursor/` by default | local evidence shows `cursor-agent` accepts user-global `~/.cursor/rules/*.mdc`, but official docs still describe user rules differently; MDT installer support for that surface still needs to be implemented |
-| `codex` | `~/.codex/` with `--global` | `.codex/skills/`, `.codex/scripts/`, and `.codex/rules/` in the target repo | package-driven; use `--project-dir` for clean external repo installs |
-| `gemini` | `~/.gemini/` with `--global` | `.agent/` and `.gemini/` by default | uses Gemini/Antigravity-specific layout |
+| `claude` | `~/.claude/` | `~/.claude/mdt/` | installs rules, agents, commands, skills, hooks, and runtime scripts |
+| `cursor` | `~/.cursor/` | `~/.cursor/mdt/` | installs global `.mdc` rules, skills, commands, optional experimental hooks, and runtime state |
+| `codex` | `~/.codex/` | `~/.codex/mdt/` | installs Codex config, AGENTS, skills, rules, and helper scripts globally |
+| `gemini` | `~/.gemini/` | `~/.gemini/mdt/` | uses Gemini/Antigravity-specific layout with MDT state under `mdt/` |
 
 ## Examples
 
@@ -62,34 +63,28 @@ Cursor:
 ```bash
 node scripts/install-mdt.js --target cursor typescript
 node scripts/install-mdt.js --target cursor typescript continuous-learning
-node scripts/install-mdt.js --target cursor --global typescript
+node scripts/materialize-mdt-local.js --target cursor --surface rules
 ```
 
 Codex:
 
 ```bash
-node scripts/install-mdt.js --target codex --project-dir ../scratch-repo typescript continuous-learning
-node scripts/install-mdt.js --target codex --global typescript continuous-learning
-node scripts/install-mdt.js --target codex --project-dir ../scratch-repo --dev typescript continuous-learning
+node scripts/install-mdt.js --target codex typescript continuous-learning
+node scripts/install-mdt.js --target codex --dev typescript continuous-learning
 ```
 
-Codex note:
+Codex notes:
 
-- project-targeted Codex installs should stay out of `~`
 - `~/.codex/config.toml` is treated as user-owned
-- if a global Codex install targets `~/.codex` and `config.toml` already exists,
-  the installer should preserve it and write `~/.codex/config.mdt.toml` as an
-  MDT reference file instead
-- Codex-specific MDT guidance lives primarily in `~/.codex/AGENTS.md` for
-  global installs
-- MDT does not enable any Codex MCP servers by default; add them manually only
-  when a concrete workflow needs them
+- if `config.toml` already exists, MDT preserves it and writes `~/.codex/config.mdt.toml` as a reference file instead of overwriting local Codex settings
+- Codex-specific MDT guidance lives primarily in `~/.codex/AGENTS.md`
+- continuous-learning state is project-scoped inside `~/.codex/mdt/homunculus/projects/<project-id>/`
+- MDT does not enable any Codex MCP servers by default; add them manually only when a concrete workflow needs them
 
 Gemini:
 
 ```bash
 node scripts/install-mdt.js --target gemini typescript
-node scripts/install-mdt.js --target gemini --global typescript
 ```
 
 Discovery:
@@ -116,12 +111,8 @@ Tool-specific manual checks live under:
 
 Dev-only verification helpers:
 
-- `--dev` installs MDT-internal surfaces such as `tool-setup-verifier`,
-  `tool-doc-maintainer`, and Codex smoke workflow scripts into the target
-  project install
-- normal end-user installs keep `documentation-steward` as the general
-  documentation skill but do not ship MDT-maintainer-specific verifier/audit
-  skills by default
+- `--dev` installs MDT-internal surfaces such as `tool-setup-verifier`, `tool-doc-maintainer`, and Codex smoke workflow scripts into the global tool root
+- normal end-user installs keep `documentation-steward` as the general documentation skill but do not ship MDT-maintainer-specific verifier/audit skills by default
 
 ## Pre-v1 Policy
 

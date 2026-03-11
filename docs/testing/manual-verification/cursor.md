@@ -1,10 +1,10 @@
 # Cursor Manual Verification
 
-Use this page to confirm MDT behavior inside Cursor desktop after installing into a fresh `.cursor/` directory.
+Use this page to confirm MDT behavior inside Cursor desktop after installing into a fresh global `~/.cursor/` directory.
 
 ## Preconditions
 
-1. Start from a clean repo checkout or remove the existing local `.cursor/` install.
+1. Start from a clean repo checkout or remove the existing MDT files under `~/.cursor/`.
 2. Install MDT into Cursor:
 
 ```bash
@@ -14,13 +14,13 @@ node scripts/install-mdt.js --target cursor typescript continuous-learning
 3. Confirm the install exists (full MDT baseline with experimental hooks enabled):
 
 ```bash
-node -e "const fs=require('fs'); console.log(fs.existsSync('.cursor/hooks.json'));"
+node -e "const fs=require('fs');const path=require('path');const root=path.join(process.env.HOME||process.env.USERPROFILE,'.cursor'); console.log(fs.existsSync(path.join(root,'hooks.json')));"
 ```
 
 Expected:
-- `.cursor/hooks.json` exists (experimental adapter, not a vendor-documented surface)
-- `.cursor/hooks/` exists
-- `.cursor/skills/continuous-learning-manual/` exists
+- `~/.cursor/hooks.json` exists (experimental adapter, not a vendor-documented surface)
+- `~/.cursor/hooks/` exists
+- `~/.cursor/skills/continuous-learning-manual/` exists
 
 ## Quick Smoke
 
@@ -28,10 +28,10 @@ Run the installed Cursor `smoke` command from Agent chat when you want a fast
 sanity check before doing deeper runtime verification.
 
 Expected:
-- it reports whether `.cursor/` is installed
+- it reports whether `~/.cursor/` is installed
 - it checks for rules, skills, commands, and `AGENTS.md`
 - it distinguishes runtime `OK`, `PARTIAL`, `SKIPPED`, and `FAIL`
-- it should treat a missing `.cursor/homunculus/` as `PARTIAL` if install paths
+- it should treat a missing `~/.cursor/mdt/homunculus/` as `PARTIAL` if install paths
   exist but no continuous-learning activity has happened yet
 - it tells you what to test next if runtime behavior is not yet proven
 
@@ -93,8 +93,8 @@ Run this inside Cursor desktop with an Agent session:
 2. Ask the agent to run a shell command such as `node -v`.
 
 Expected after the edit and shell command:
-- `.cursor/homunculus/projects.json` exists
-- `.cursor/homunculus/projects/<project-id>/observations.jsonl` exists
+- `~/.cursor/mdt/homunculus/projects.json` exists
+- `~/.cursor/mdt/homunculus/projects/<project-id>/observations.jsonl` exists
 - the observations file contains:
   - `"event":"tool_complete"`
   - `"tool":"Edit"` for file edits
@@ -103,7 +103,7 @@ Expected after the edit and shell command:
 Helpful local check:
 
 ```bash
-node -e "const fs=require('fs');const path=require('path');const root=path.join(process.cwd(),'.cursor','homunculus');const projects=JSON.parse(fs.readFileSync(path.join(root,'projects.json'),'utf8'));const id=Object.keys(projects)[0];console.log(fs.readFileSync(path.join(root,'projects',id,'observations.jsonl'),'utf8'));"
+node -e "const fs=require('fs');const path=require('path');const root=path.join(process.env.HOME||process.env.USERPROFILE,'.cursor','mdt','homunculus');const projects=JSON.parse(fs.readFileSync(path.join(root,'projects.json'),'utf8'));const id=Object.keys(projects)[0];console.log(fs.readFileSync(path.join(root,'projects',id,'observations.jsonl'),'utf8'));"
 ```
 
 ### Observer Tool Selection
@@ -111,25 +111,25 @@ node -e "const fs=require('fs');const path=require('path');const root=path.join(
 Check observer status from the repo root:
 
 ```bash
-node .cursor/skills/continuous-learning-manual/agents/start-observer.js status
+node ~/.cursor/skills/continuous-learning-manual/agents/start-observer.js status
 ```
 
 Expected:
 - output includes `Observer tool: cursor`
-- `Storage:` points into project `.cursor/homunculus/...`, not `~/.claude/...`
+- `Storage:` points into `~/.cursor/mdt/homunculus/...`, not `~/.claude/...`
 
 If you are testing an older install that predates the self-anchoring fix, use this fallback:
 
 ```powershell
 $env:MDT_OBSERVER_TOOL='cursor'
 $env:CURSOR_AGENT='1'
-$env:CONFIG_DIR=(Resolve-Path .\.cursor).Path
-node .\.cursor\skills\continuous-learning-manual\agents\start-observer.js status
+$env:CONFIG_DIR=(Resolve-Path ~\.cursor).Path
+node ~\.cursor\skills\continuous-learning-manual\agents\start-observer.js status
 ```
 
 ### Observer Runtime
 
-1. Edit `.cursor/skills/continuous-learning-manual/config.json`
+1. Edit `~/.cursor/skills/continuous-learning-manual/config.json`
 2. Set:
 
 ```json
@@ -143,7 +143,7 @@ node .\.cursor\skills\continuous-learning-manual\agents\start-observer.js status
 3. Start the observer:
 
 ```bash
-node .cursor/skills/continuous-learning-manual/agents/start-observer.js start
+node ~/.cursor/skills/continuous-learning-manual/agents/start-observer.js start
 ```
 
 Expected:
@@ -153,18 +153,18 @@ Expected:
 4. After enough observations accumulate, inspect:
 
 ```bash
-node .cursor/skills/continuous-learning-manual/agents/start-observer.js status
+node ~/.cursor/skills/continuous-learning-manual/agents/start-observer.js status
 ```
 
 Expected:
 - `Observations:` shows a non-zero line count before analysis
-- `.cursor/homunculus/projects/<project-id>/observations.archive/` is created after analysis runs
-- `.cursor/homunculus/projects/<project-id>/observer.log` includes `with cursor (auto)` by default
+- `~/.cursor/mdt/homunculus/projects/<project-id>/observations.archive/` is created after analysis runs
+- `~/.cursor/mdt/homunculus/projects/<project-id>/observer.log` includes `with cursor (auto)` by default
 
 5. Stop the observer when done:
 
 ```bash
-node .cursor/skills/continuous-learning-manual/agents/start-observer.js stop
+node ~/.cursor/skills/continuous-learning-manual/agents/start-observer.js stop
 ```
 
 ## Session Lifecycle
@@ -172,7 +172,7 @@ node .cursor/skills/continuous-learning-manual/agents/start-observer.js stop
 Run a normal Cursor Agent session and then end it cleanly.
 
 Expected:
-- `.cursor/sessions/` contains a new session file
+- `~/.cursor/mdt/sessions/` contains a new session file
 - the newest session file includes:
   - `## Session Summary`
   - your user requests
@@ -181,11 +181,11 @@ Expected:
 
 ## Pass Criteria
 
-- Cursor hooks create continuous-learning observations under `.cursor/homunculus/`
+- Cursor hooks create continuous-learning observations under `~/.cursor/mdt/homunculus/`
 - continuous-learning resolves Cursor-native storage instead of `~/.claude`
 - observer status reports `cursor`
 - observer uses Cursor CLI defaults, with model `auto` unless overridden
-- session summaries still persist correctly under `.cursor/sessions/`
+- session summaries still persist correctly under `~/.cursor/mdt/sessions/`
 
 ## Behavior Without Hooks
 

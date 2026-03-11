@@ -2,8 +2,8 @@
 /**
  * Optional external observer for Codex continuous learning.
  *
- * This runs outside the Codex session and watches project-local observations
- * under .codex/homunculus/projects/<id>/observations.jsonl. When enough new
+ * This runs outside the Codex session and watches global MDT observations
+ * under ~/.codex/mdt/homunculus/projects/<id>/observations.jsonl. When enough new
  * observations exist, it triggers the existing observer analysis pipeline using
  * the native Codex CLI from a normal shell environment.
  *
@@ -76,16 +76,18 @@ function parsePositiveInt(value, fallback) {
 function buildCodexObserverEnv(env = process.env, options = {}) {
   const cwd = path.resolve(options.cwd || process.cwd());
   const nextEnv = { ...env };
+  const homeDir = options.homeDir || nextEnv.HOME || nextEnv.USERPROFILE || process.env.HOME || process.env.USERPROFILE || '';
 
   if (!nextEnv.CONFIG_DIR || !String(nextEnv.CONFIG_DIR).trim()) {
-    nextEnv.CONFIG_DIR = path.join(cwd, '.codex');
+    nextEnv.CONFIG_DIR = path.join(homeDir, '.codex');
   }
   if (!nextEnv.DATA_DIR || !String(nextEnv.DATA_DIR).trim()) {
-    nextEnv.DATA_DIR = nextEnv.CONFIG_DIR;
+    nextEnv.DATA_DIR = path.join(nextEnv.CONFIG_DIR, 'mdt');
   }
 
   nextEnv.CODEX_AGENT = '1';
   nextEnv.MDT_OBSERVER_TOOL = 'codex';
+  nextEnv.MDT_PROJECT_ROOT = nextEnv.MDT_PROJECT_ROOT || cwd;
 
   return nextEnv;
 }

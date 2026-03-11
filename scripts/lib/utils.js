@@ -64,14 +64,14 @@ function getClaudeDir() {
  * Get the sessions directory
  */
 function getSessionsDir() {
-  return path.join(getConfigDir(), 'sessions');
+  return path.join(getDataDir(), 'sessions');
 }
 
 /**
  * Get the learned skills directory
  */
 function getLearnedSkillsDir() {
-  return path.join(getConfigDir(), 'skills', 'learned');
+  return path.join(getDataDir(), 'skills', 'learned');
 }
 
 /**

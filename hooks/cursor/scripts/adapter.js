@@ -112,14 +112,9 @@ function buildHookEnv(env = process.env) {
     nextEnv.CURSOR_AGENT = '1';
   }
   if (!nextEnv.CONFIG_DIR || !String(nextEnv.CONFIG_DIR).trim()) {
-    const installedConfigDir = path.join(process.cwd(), '.cursor');
-    if (fs.existsSync(installedConfigDir)) {
-      nextEnv.CONFIG_DIR = installedConfigDir;
-    } else {
-      const cursorRoot = getCursorRoot();
-      if (path.basename(cursorRoot).toLowerCase() === '.cursor' && fs.existsSync(cursorRoot)) {
-        nextEnv.CONFIG_DIR = cursorRoot;
-      }
+    const cursorRoot = getCursorRoot();
+    if (path.basename(cursorRoot).toLowerCase() === '.cursor' && fs.existsSync(cursorRoot)) {
+      nextEnv.CONFIG_DIR = cursorRoot;
     }
   }
   return nextEnv;
