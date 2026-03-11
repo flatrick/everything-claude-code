@@ -68,10 +68,11 @@ function getSessionsDir() {
 }
 
 /**
- * Get the learned skills directory
+ * Get the MDT-managed generated skills staging directory.
  */
-function getLearnedSkillsDir() {
-  return path.join(getDataDir(), 'skills', 'learned');
+function getLearnedSkillsDir(env = process.env) {
+  const dataDir = env.DATA_DIR || getDataDir();
+  return path.join(dataDir, 'generated', 'skills', 'learned');
 }
 
 /**

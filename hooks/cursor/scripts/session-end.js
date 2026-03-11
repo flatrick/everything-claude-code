@@ -226,7 +226,7 @@ function evaluateCursorSession(input, runtimeHelpers) {
   }
 
   log(`[ContinuousLearning] Session has ${messageCount} messages - evaluate for extractable patterns`);
-  log(`[ContinuousLearning] Save learned skills to: ${learnedSkillsPath}`);
+  log(`[ContinuousLearning] Save learned candidate skills to: ${learnedSkillsPath}`);
   return { shouldEvaluate: true, reason: 'evaluate', messageCount, learnedSkillsPath };
 }
 

@@ -147,7 +147,7 @@ async function runTests() {
       fs.mkdirSync(configDir, { recursive: true });
       fs.writeFileSync(
         learnConfig,
-        JSON.stringify({ min_session_length: 2, learned_skills_path: '<config>/skills/learned' }),
+        JSON.stringify({ min_session_length: 2, learned_skills_path: '<data>/generated/skills/learned' }),
         'utf8'
       );
 
@@ -205,7 +205,7 @@ async function runTests() {
       fs.mkdirSync(configDir, { recursive: true });
       fs.writeFileSync(
         learnConfig,
-        JSON.stringify({ min_session_length: 10, learned_skills_path: '<config>/skills/learned' }),
+        JSON.stringify({ min_session_length: 10, learned_skills_path: '<data>/generated/skills/learned' }),
         'utf8'
       );
 

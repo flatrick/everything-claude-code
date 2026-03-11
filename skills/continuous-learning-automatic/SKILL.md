@@ -368,7 +368,7 @@ Hooks fire **100% of the time**, deterministically. This means:
 
 v2.1 is fully compatible with v2.0 and v1:
 - Existing global instincts in `<data>/homunculus/instincts/` still work as global instincts
-- Existing learned skills in `<config>/skills/learned/` still work
+- Existing learned candidate skills in `<data>/generated/skills/learned/` still work
 - Stop hook still runs (but now also feeds into v2)
 - Gradual migration: run both in parallel
 
