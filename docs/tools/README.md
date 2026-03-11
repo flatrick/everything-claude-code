@@ -29,13 +29,13 @@ It exists to prevent repeated web searches and prevent agents from guessing base
 
 ## Audit Baseline
 
-Audit date: `2026-03-08`
+Audit date: `2026-03-11`
 
 Local tools seen on this machine:
-- Claude Code `2.1.71`
-- Cursor IDE `2.6.13`
+- Claude Code `2.1.72`
 - Cursor terminal agent present as `agent` on this machine, with `cursor-agent` also installed
-- Codex CLI `0.111.0`
+- Cursor desktop/CLI launcher `cursor` was not on `PATH` in the current shell, so its desktop version was not re-verified in this audit
+- Codex CLI `0.114.0`
 
 ## Important Rule
 

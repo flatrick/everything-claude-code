@@ -1,16 +1,16 @@
 # Cursor
 
-Audit date: `2026-03-08`
+Audit date: `2026-03-11`
 
 Status:
 - `official`
 - `locally-verified`
 - `experimental` for MDT's current hook adapter (optional safety layer, not required for MDT workflows)
 
-Local versions and binaries seen:
-- `cursor --version` -> `2.6.13`
+Local binaries seen:
 - `agent --help` launches Cursor Agent
 - `cursor-agent --help` is also available locally
+- `cursor` is not on `PATH` in this shell, so Cursor desktop version was not re-verified here
 
 ## MDT-Relevant Native Surfaces
 
@@ -92,7 +92,6 @@ Local CLI evidence:
 
 ```bash
 agent --help
-cursor agent --help
 cursor-agent --help
 ```
 
@@ -128,13 +127,14 @@ Local troubleshooting showed two important Cursor behaviors:
 
 Because of that, MDT guidance for Cursor should follow these rules:
 
-- Prefer a single explicit Cursor path in project-installed command prompts.
+- Prefer a single explicit Cursor path in installed command prompts.
 - Do not give Cursor multiple equivalent path options unless that flexibility is
   truly required.
-- In project-installed Cursor command files, prefer:
-  - `.cursor/...`
+- In normal installed Cursor command files, prefer:
+  - `~/.cursor/...`
+  - `~/.cursor/mdt/...`
   over generic placeholders or cross-tool examples.
-- If the required `.cursor/...` path is missing, tell Cursor to report the
+- If the required Cursor path is missing, tell Cursor to report the
   install as incomplete rather than guessing another tool path.
 - When debugging surprising Cursor behavior, check:
   1. the live `.cursor/...` files
@@ -159,7 +159,7 @@ It is not a full project-local MDT install.
 
 ## Hooks Adapter Scope and Opt-In
 
-- MDT installs `~/.cursor/hooks.json` and `~/.cursor/hooks/*.js` as an **experimental** adapter that mirrors Claude-style hook behavior for things like dev-server blocking, console.log checks, and continuous learning.
+- MDT installs `~/.cursor/hooks.json` and `~/.cursor/mdt/hooks/*.js` as an **experimental** adapter that mirrors Claude-style hook behavior for things like dev-server blocking, console.log checks, and continuous learning.
 - Cursor does not currently document this hook surface; future versions may ignore or change it.
 - If you want to skip installing Cursor hooks entirely, run the installer with `MDT_SKIP_CURSOR_HOOKS=1` in the environment. MDT will still install rules, skills, agents, and custom command prompts.
 - For adapter architecture and extension guidance, see [hooks/README.md](../../hooks/README.md#cursor-hook-adapter).
@@ -182,17 +182,13 @@ flowchart TD
 ## Local Verification Commands
 
 ```bash
-cursor --version
-cursor --help
 agent --help
-cursor agent --help
 cursor-agent --help
 ```
 
 Look for:
-- `agent` subcommand in `cursor --help`
 - plan/ask modes in `agent --help`
-- MCP-related CLI support such as `--add-mcp`
+- MCP-related CLI support such as the `mcp` command
 
 ## Source Links
 

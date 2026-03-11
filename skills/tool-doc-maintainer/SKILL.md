@@ -87,10 +87,7 @@ claude --help
 claude agents --help
 claude mcp --help
 
-cursor --version
-cursor --help
 agent --help
-cursor agent --help
 cursor-agent --help
 
 codex --version

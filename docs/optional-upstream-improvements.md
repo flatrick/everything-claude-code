@@ -23,7 +23,7 @@ Use this section to avoid mistakes; update it after changes.
 | Item | Status | Notes |
 |------|--------|--------|
 | **check-hook-enabled.js** | Not present | Add to `scripts/hooks/`. Depends on `scripts/lib/hook-flags.js` (present). |
-| **cost-tracker.js** | Not present | Add to `scripts/hooks/`. No `stop:cost-tracker` in `hooks/hooks.json` or `.cursor/hooks/stop.js`. Use `getConfigDir()` from `scripts/lib/utils.js` (or `getClaudeDir()` which delegates to it) for metrics path. |
+| **cost-tracker.js** | Not present | Add to `scripts/hooks/`. No `stop:cost-tracker` in `hooks/hooks.json` or `~/.cursor/mdt/hooks/stop.js`. Use `getConfigDir()` from `scripts/lib/utils.js` (or `getClaudeDir()` which delegates to it) for metrics path. |
 | **Harness/loop commands** | Not present | `commands/` has no harness-audit, loop-start, loop-status, quality-gate, model-route. |
 | **Harness/loop agents** | Not present | `agents/` has no harness-optimizer, loop-operator. |
 | **hook-flags.js** | Present | `scripts/lib/hook-flags.js` exists. |
@@ -57,7 +57,7 @@ Use this section to avoid mistakes; update it after changes.
 
 **Why adopt:** Lightweight per-session cost tracking without external tooling. Only useful if the harness sends token usage on Stop (Claude Code may; Cursor may not).
 
-**Effort:** Low–medium. Port the script and wire it in `hooks/hooks.json` (Stop) and `.cursor/hooks/stop.js`. This repo's utils use different names (e.g. no `getClaudeDir()`); use existing config/sessions dir or a dedicated `metrics` path under config dir.
+**Effort:** Low–medium. Port the script and wire it in `hooks/hooks.json` (Stop) and `~/.cursor/mdt/hooks/stop.js`. This repo's utils use different names (e.g. no `getClaudeDir()`); use existing config/sessions dir or a dedicated `metrics` path under config dir.
 
 ---
 
@@ -121,7 +121,7 @@ Use the indented rows under each task for status updates, gotchas found during w
 
 - [ ] **Cost-tracker hook**
   - *(Add status or important notes here when working on this task.)*
-  - Use this repo's config dir (or derived path) for metrics; no `getClaudeDir()`. Wire in `hooks/hooks.json` (Stop) and `.cursor/hooks/stop.js` with run-with-flags and hook ID e.g. `stop:cost-tracker`.
+  - Use this repo's config dir (or derived path) for metrics; no `getClaudeDir()`. Wire in `hooks/hooks.json` (Stop) and `~/.cursor/mdt/hooks/stop.js` with run-with-flags and hook ID e.g. `stop:cost-tracker`.
   - Only useful if the harness sends token usage on Stop.
 
 - [ ] **Harness/loop commands and agents**

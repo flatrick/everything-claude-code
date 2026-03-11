@@ -1,6 +1,6 @@
 # Codex
 
-Audit date: `2026-03-08`
+Audit date: `2026-03-11`
 
 Status:
 - `official`
@@ -8,7 +8,7 @@ Status:
 - `experimental` for some feature flags
 
 Local version seen:
-- `codex --version` -> `codex-cli 0.111.0`
+- `codex --version` -> `codex-cli 0.114.0`
 
 ## MDT-Relevant Native Surfaces
 
@@ -127,7 +127,7 @@ from `codex-template/skills/` into `~/.codex/skills/`.
 Normal Codex installs keep the general `documentation-steward` skill but do not
 ship MDT-internal verifier/audit skills by default. Use `--dev` when you want
 `tool-setup-verifier`, `tool-doc-maintainer`, and the repo-style smoke scripts
-materialized into an installed target repo.
+materialized into the installed global Codex root.
 
 When testing against a clean environment, prefer:
 
@@ -150,7 +150,7 @@ That writes project-scoped learning state under `~/.codex/mdt/homunculus/project
 
 This is an intentional product choice, not a temporary documentation gap:
 
-- Codex is a good fit for project-local learning state and explicit summaries
+- Codex is a good fit for project-scoped learning state stored under the global MDT root plus explicit summaries
 - Codex is not treated as having Claude/Cursor-style automatic hook capture
 - the baseline Codex contract is explicit/manual capture plus explicit/manual analysis
 - the optional external observer is only for background analysis after

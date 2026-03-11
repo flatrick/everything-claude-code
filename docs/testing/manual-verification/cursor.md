@@ -19,7 +19,7 @@ node -e "const fs=require('fs');const path=require('path');const root=path.join(
 
 Expected:
 - `~/.cursor/hooks.json` exists (experimental adapter, not a vendor-documented surface)
-- `~/.cursor/hooks/` exists
+- `~/.cursor/mdt/hooks/` exists
 - `~/.cursor/skills/continuous-learning-manual/` exists
 
 ## Quick Smoke
@@ -40,7 +40,7 @@ Expected:
 If Cursor keeps behaving as though an old custom command definition still exists
 even after you update or remove files under:
 
-- project `.cursor/commands/`
+- explicit local bridge `.cursor/commands/`
 - user/global `~/.cursor/commands/`
 
 then check Cursor's workspace cache before assuming the installer is still wrong.
@@ -49,7 +49,7 @@ Observed local evidence:
 - Cursor can retain stale command/retrieval state under
   `C:\Users\<user>\AppData\Roaming\Cursor\User\workspaceStorage\...`
 - that cache may continue to surface older command behavior even when the live
-  `.cursor/commands/*.md` file on disk is already correct
+  command file on disk is already correct
 
 Recommended reset flow:
 1. Fully quit Cursor.
@@ -59,7 +59,7 @@ Recommended reset flow:
 4. Retry the command in a fresh Agent session.
 
 Use this when:
-- the on-disk `.cursor/commands/*.md` file is correct
+- the on-disk `~/.cursor/commands/*.md` file is correct
 - `~/.cursor/commands/` no longer contains the old command
 - Cursor still behaves as if an older command definition exists
 
@@ -71,17 +71,17 @@ Cursor Agent may sometimes improvise and look in other tool directories such as:
 - `.codex/`
 - repo `skills/`
 
-even when the correct project-installed Cursor path exists under `.cursor/`.
+even when the correct installed Cursor path is already on disk.
 
 If that happens:
-1. Confirm the live `.cursor/commands/*.md` file contains the correct `.cursor/...` path.
-2. Confirm the referenced `.cursor/skills/...` or `.cursor/scripts/...` file really exists.
+1. Confirm the live command file contains the correct `~/.cursor/...` or `~/.cursor/mdt/...` path.
+2. Confirm the referenced `~/.cursor/skills/...` or `~/.cursor/mdt/scripts/...` file really exists.
 3. Check for stale detached `node.exe` observer/helper processes from older `.cursor/` installs.
 4. Clear the relevant `workspaceStorage` cache and retry in a fresh Cursor session.
 
 Do not assume that Cursor searching `.claude/` or `.codex/` proves the MDT
 install is still wrong. It can be a cache or agent-path-selection problem even
-when the on-disk `.cursor/...` files are correct.
+when the on-disk Cursor install files are correct.
 
 ## Continuous Learning
 

@@ -2,54 +2,9 @@
 
 Deferred work items that are documented but not yet scheduled.
 
----
+Completed backlog items have been moved to:
 
-## Replace hardcoded `~/.claude/` with tool-aware paths
-
-**Status:** Completed for generic docs, commands, skills, and JSDoc/comments. Remaining `~/.claude/` mentions are intentional Claude-specific examples, upstream-reference guides, validator/test text, or explicit compatibility notes.
-
-**Why it mattered:** MDT supports multiple active tools (Claude Code, Cursor, Codex). Generic documentation now uses config-dir/data-dir wording unless a tool-specific path is required.
-
----
-
-## Local-first tool setup and workflow verification
-
-**Status:** Core local verification now exists.
-
-Implemented:
-
-- `docs/tools/workflow-matrix.md` for intended MDT workflow behavior by tool
-- `scripts/verify-tool-setups.js` for deterministic local contract checks
-- `scripts/smoke-tool-setups.js` for local CLI smoke probes
-- `scripts/smoke-codex-workflows.js` for deeper Codex workflow smoke on `plan`, `tdd`, and `verify`
-- `skills/tool-setup-verifier/SKILL.md` and `harness-audit setup` guidance
-
-Remaining follow-up:
-
-- Add deeper workflow smoke coverage for Claude
-- Decide whether Cursor desktop verification should remain manual or get a documented assisted workflow
-- Revisit OpenCode support after `v1.0.0` and the planned `.mjs` migration
-
----
-
-## Split continuous-learning into manual and hook-driven skills
-
-**Status:** Completed.
-
-`continuous-learning-v2` has been split and renamed:
-
-- `skills/continuous-learning-manual/` — operator-triggered workflows: instinct
-  management, codex-learn.js, weekly retrospectives, evolve/promote/export/import
-- `skills/continuous-learning-automatic/` — hook-driven observation capture only:
-  `hooks/observe.js` + `detect-project.js`
-- `codex-template/skills/continuous-learning-manual/` — Codex copy (no hooks)
-- `packages/continuous-learning/package.json` lists both skills; Codex only
-  receives `continuous-learning-manual` (hooks unsupported)
-- All ~50 references updated across commands, hooks configs, docs, tests, and
-  installed copies under `.claude/` and `.cursor/`
-
-Follow-up: update SKILL.md descriptions and Quick Start sections in both new
-skills to reflect their narrowed focus (currently still carry the full v2 content).
+- [History: 2026-03-11 global-install stabilization](docs/history/2026-03-11.global-install-stabilization.md)
 
 ---
 
@@ -113,7 +68,7 @@ requested.
 
 ---
 
-## Cursor duplicate command-name precedence between `~/.cursor/` and project `.cursor/`
+## Cursor duplicate command-name precedence between `~/.cursor/` and explicit local bridges
 
 **Status:** Open.
 
@@ -130,9 +85,10 @@ opening files manually.
 
 **Why it matters:**
 
-MDT currently supports both user/global and project-local Cursor installs. If
-command names collide across those scopes, Cursor may hide the intended
-project-local behavior in the picker even though the project copy is present.
+MDT now installs Cursor globally by default, but this can still matter when an
+explicit local bridge creates a repo-local Cursor surface. If command names
+collide across those scopes, Cursor may hide the intended local behavior in the
+picker even though the project copy is present.
 
 **Potential follow-up options:**
 
@@ -156,19 +112,9 @@ path exists. Future hardening work should keep Cursor prompts single-path and
 tool-local wherever possible.
 
 Local verification also shows `cursor-agent` accepts user-global rule files
-under `~/.cursor/rules/*.mdc`. MDT should add installer support for that
-surface instead of continuing to treat Cursor global rules as impossible.
-
-Official docs still describe user rules differently, so keep this classified as
-`cursor-agent` / locally verified behavior until the vendor docs clarify whether
-the IDE and CLI are meant to behave the same way. The current working
-assumption should be:
-
-- official docs say this is not the normal file-installed user-global rule path
-- local evidence shows `cursor-agent` will still create and use
-  `~/.cursor/rules/*.mdc`
-- treat that as a likely Cursor IDE vs `cursor-agent` CLI difference until
-  vendor documentation says otherwise
+under `~/.cursor/rules/*.mdc`. Keep this classified as `cursor-agent` /
+locally verified behavior until vendor docs clarify whether the IDE and CLI are
+meant to behave the same way.
 
 ---
 

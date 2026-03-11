@@ -234,7 +234,7 @@ See [docs/token-optimization.md](docs/token-optimization.md) for recommended set
 
 ## Links
 
-- **Original project:** [Everything Claude Code](https://github.com/affaan-m/modeldev-toolkit) — plugin, guides, community
+- **Original project:** [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) — plugin, guides, community
 - **Upstream shorthand guide:** [Affaan's shorthand guide for Everything Claude Code](https://x.com/affaanmustafa/status/2012378465664745795)
 - **Upstream longform guide:** [Affaan's longform guide for Everything Claude Code](https://x.com/affaanmustafa/status/2014040193557471352)
 

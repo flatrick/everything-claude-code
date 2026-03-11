@@ -24,11 +24,10 @@ From simplest to most sophisticated:
 | Pattern | Complexity | Best For |
 |---------|-----------|----------|
 | [Sequential Pipeline](#1-sequential-pipeline-claude-p) | Low | Daily dev steps, scripted workflows |
-| [NanoClaw REPL](#2-nanoclaw-repl) | Low | Interactive persistent sessions |
-| [Infinite Agentic Loop](#3-infinite-agentic-loop) | Medium | Parallel content generation, spec-driven work |
-| [Continuous Claude PR Loop](#4-continuous-claude-pr-loop) | Medium | Multi-day iterative projects with CI gates |
-| [De-Sloppify Pattern](#5-the-de-sloppify-pattern) | Add-on | Quality cleanup after any Implementer step |
-| [Ralphinho / RFC-Driven DAG](#6-ralphinho-rfc-driven-dag-orchestration) | High | Large features, multi-unit parallel work with merge queue |
+| [Infinite Agentic Loop](#2-infinite-agentic-loop) | Medium | Parallel content generation, spec-driven work |
+| [Continuous Claude PR Loop](#3-continuous-claude-pr-loop) | Medium | Multi-day iterative projects with CI gates |
+| [De-Sloppify Pattern](#4-the-de-sloppify-pattern) | Add-on | Quality cleanup after any Implementer step |
+| [Ralphinho / RFC-Driven DAG](#5-ralphinho-rfc-driven-dag-orchestration) | High | Large features, multi-unit parallel work with merge queue |
 
 ---
 
@@ -65,7 +64,7 @@ claude -p "Create a conventional commit for all staged changes. Use 'feat: add O
 
 1. **Each step is isolated** — A fresh context window per `claude -p` call means no context bleed between steps.
 2. **Order matters** — Steps execute sequentially. Each builds on the filesystem state left by the previous.
-3. **Negative instructions are dangerous** — Don't say "don't test type systems." Instead, add a separate cleanup step (see [De-Sloppify Pattern](#5-the-de-sloppify-pattern)).
+3. **Negative instructions are dangerous** — Don't say "don't test type systems." Instead, add a separate cleanup step (see [De-Sloppify Pattern](#4-the-de-sloppify-pattern)).
 4. **Exit codes propagate** — `set -e` stops the pipeline on failure.
 
 ### Variations
@@ -101,40 +100,7 @@ claude -p --allowedTools "Read,Write,Edit,Bash" "Implement the fixes from securi
 
 ---
 
-## 2. NanoClaw REPL
-
-**MDT's built-in persistent loop.** A session-aware REPL that calls `claude -p` synchronously with full conversation history.
-
-```bash
-# Start the default session
-node scripts/claw.js
-
-# Named session with skill context
-CLAW_SESSION=my-project CLAW_SKILLS=tdd-workflow,security-review node scripts/claw.js
-```
-
-### How It Works
-
-1. Loads conversation history from `<data>/claw/{session}.md`
-2. Each user message is sent to `claude -p` with full history as context
-3. Responses are appended to the session file (Markdown-as-database)
-4. Sessions persist across restarts
-
-### When NanoClaw vs Sequential Pipeline
-
-| Use Case | NanoClaw | Sequential Pipeline |
-|----------|----------|-------------------|
-| Interactive exploration | Yes | No |
-| Scripted automation | No | Yes |
-| Session persistence | Built-in | Manual |
-| Context accumulation | Grows per turn | Fresh each step |
-| CI/CD integration | Poor | Excellent |
-
-See the `/claw` command documentation for full details.
-
----
-
-## 3. Infinite Agentic Loop
+## 2. Infinite Agentic Loop
 
 **A two-prompt system** that orchestrates parallel sub-agents for specification-driven generation. Developed by disler (credit: @disler).
 
@@ -203,7 +169,7 @@ Don't rely on agents to self-differentiate. The orchestrator **assigns** each ag
 
 ---
 
-## 4. Continuous Claude PR Loop
+## 3. Continuous Claude PR Loop
 
 **A production-grade shell script** that runs Claude Code in a continuous loop, creating PRs, waiting for CI, and merging automatically. Created by AnandChowdhary (credit: @AnandChowdhary).
 
@@ -311,7 +277,7 @@ Three consecutive iterations signaling completion stops the loop, preventing was
 
 ---
 
-## 5. The De-Sloppify Pattern
+## 4. The De-Sloppify Pattern
 
 **An add-on pattern for any loop.** Add a dedicated cleanup/refactor step after each Implementer step.
 
@@ -373,7 +339,7 @@ done
 
 ---
 
-## 6. Ralphinho / RFC-Driven DAG Orchestration
+## 5. Ralphinho / RFC-Driven DAG Orchestration
 
 **The most sophisticated pattern.** An RFC-driven, multi-agent pipeline that decomposes a spec into a dependency DAG, runs each unit through a tiered quality pipeline, and lands them via an agent-driven merge queue. Created by enitrat (credit: @enitrat).
 
@@ -537,7 +503,7 @@ Pipeline stages for the same unit **share** a worktree, preserving state (contex
 | Single-file change | No | Yes (sequential pipeline) |
 | Multi-day project | Yes | Maybe (continuous-claude) |
 | Spec/RFC already written | Yes | Maybe |
-| Quick iteration on one thing | No | Yes (NanoClaw or pipeline) |
+| Quick iteration on one thing | No | Yes (pipeline) |
 
 ---
 
@@ -547,7 +513,7 @@ Pipeline stages for the same unit **share** a worktree, preserving state (contex
 
 ```
 Is the task a single focused change?
-├─ Yes → Sequential Pipeline or NanoClaw
+├─ Yes → Sequential Pipeline
 └─ No → Is there a written spec/RFC?
          ├─ Yes → Do you need parallel implementation?
          │        ├─ Yes → Ralphinho (DAG orchestration)
@@ -603,5 +569,4 @@ These patterns compose well:
 | Ralphinho | enitrat | credit: @enitrat |
 | Infinite Agentic Loop | disler | credit: @disler |
 | Continuous Claude | AnandChowdhary | credit: @AnandChowdhary |
-| NanoClaw | MDT | `/claw` command in this repo |
 | Verification Loop | MDT | `skills/verification-loop/` in this repo |

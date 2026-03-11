@@ -22,7 +22,7 @@ use:
 By `v1.0.0`, the installer should be documented and understood as:
 
 - package-driven for every first-class target
-- explicit about user-layer versus project-layer installs
+- global-first for normal installs, with explicit local bridges only where a tool truly requires them
 - testable through dry-run output and temp-repo installs
 - consistent enough that `docs/INSTALLATION.md` can stay short and stable
 
@@ -30,9 +30,9 @@ Desired target surfaces:
 
 | Tool | User layer | Project layer | Desired maturity |
 | --- | --- | --- | --- |
-| Claude Code | `~/.claude/` | `.claude/` | stable primary reference implementation |
-| Cursor | `~/.cursor/` where supported | `.cursor/` | stable package-driven install with clear experimental/runtime boundaries |
-| Codex | `~/.codex/` | project `.codex/` | stable package-driven install with native Codex workflow mapping |
+| Claude Code | `~/.claude/` | explicit bridge only if ever required | stable primary reference implementation |
+| Cursor | `~/.cursor/` | explicit `.cursor/` bridge where needed | stable package-driven install with clear experimental/runtime boundaries |
+| Codex | `~/.codex/` | explicit bridge only if ever required | stable package-driven install with native Codex workflow mapping |
 | Gemini | `~/.gemini/` | `.agent/` and `.gemini/` | supported adapter with explicit limitations |
 
 ## Documentation Target State
@@ -81,7 +81,7 @@ Desired state:
 
 - package-driven installs are first-class
 - Codex uses native guidance, skills, and local scripts instead of fake markdown command clones
-- project-local Codex install and runtime state under `.codex/` is explicit and documented
+- Codex installs remain global-first, with project-scoped runtime state under `~/.codex/mdt/`
 - continuous-learning works natively for Codex without Claude or Cursor dependencies
 
 ## Capability Package Target State

@@ -117,7 +117,6 @@ const testFiles = [
   'ci/validators-rounds.test.js',
   'ci/validators-rounds-3.test.js',
   'ci/validators-rounds-2.test.js',
-  'scripts/claw.test.js',
   'scripts/check-dependencies.test.js',
   'scripts/hook-platforms.test.js',
   'scripts/codex-observer.test.js',

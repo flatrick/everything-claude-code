@@ -30,8 +30,8 @@ If this workspace is using an installed MDT Cursor surface and the repo itself
 does not contain `scripts/ci/`, use:
 
 ```bash
-node .cursor/scripts/ci/validate-markdown-links.js
-node .cursor/scripts/ci/validate-markdown-path-refs.js
+node ~/.cursor/mdt/scripts/ci/validate-markdown-links.js
+node ~/.cursor/mdt/scripts/ci/validate-markdown-path-refs.js
 ```
 
 2. Use the `documentation-steward` skill.

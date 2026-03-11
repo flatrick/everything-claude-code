@@ -9,21 +9,15 @@
 - Cross-tool functional parity analysis and implementation plan: [docs/functional-parity-plan.md](docs/functional-parity-plan.md)
 - Until a commit is tagged `v1.0.0`, install layout and package composition are allowed to change.
 - Before `v1.0.0`, assume fresh installs rather than in-place migration: re-run `node scripts/install-mdt.js` instead of preserving upgrade workflows between intermediate layouts.
-
-Recently completed:
-
-- Cursor lifecycle hooks now use native Cursor payloads for session summaries and session evaluation instead of depending on Claude `transcript_path`.
-- The Cursor adapter now guarantees `MDT_ROOT` for delegated subprocesses.
-- Cursor cost tracking now records usage when payload data is present and logs an explicit fallback when it is not.
-- Focused Cursor lifecycle tests now cover the native session-end/stop path.
-- Codex installs are now package-driven and materialize package-selected skills into `.agents/skills/` from `codex-template/skills/`.
-- Codex `continuous-learning` now has an explicit project-local workflow under `.codex/homunculus/...` instead of depending on Claude/Cursor hooks.
+- Recent completed milestone archive:
+  - [2026-03-11 global-install stabilization](docs/history/2026-03-11.global-install-stabilization.md)
 
 Installer scope contract:
 
-- `--global` means `user/global install is the intended target`
-- if `--global` is absent, MDT should not write to `~` for any tool
-- any exception to that rule must be a hard technical requirement and must be documented explicitly
+- normal installs target the tool's user/global config root
+- `--global` remains accepted as a compatibility alias/no-op
+- `--project-dir` is retired
+- any repo-local exception must use an explicit bridge flow and must be documented explicitly
 
 ---
 
@@ -83,83 +77,15 @@ Status:
 - the first real capability package drafts should be `continuous-learning` and `context-compaction`
 - capability metadata such as `requires.hooks`, `requires.runtimeScripts`, and `requires.sessionData` is now actionable in the installer/validator
 - `requires.tools` currently means "implemented installer support in this repo today", not a permanent product limit
-- the next package-model follow-up should keep moving Codex install-time sources into `codex-template/` and reduce remaining mixed-source drift between `codex-template/` and the installed `.agents/skills/` tree
+- the next package-model follow-up should keep moving Codex install-time sources into `codex-template/` and reduce remaining mixed-source drift between `codex-template/` and the installed `~/.codex/skills/` tree
 
-### 2. Cursor parity — wire continuous learning (P1)
-
-Status: **done** — Cursor continuous-learning wiring now uses native Cursor
-payloads and storage.
-
-`skills/continuous-learning-manual/hooks/observe.js` is now called from
-`hooks/cursor/scripts/after-file-edit.js` and
-`hooks/cursor/scripts/after-shell-execution.js` via the Cursor hook adapter.
-The adapter:
-
-- anchors `CONFIG_DIR` and `MDT_ROOT` to the project `.cursor/` install
-- sends Cursor-native payloads into `observe.js` (no dependency on Claude
-  `transcript_path`)
-- writes observations under `.cursor/homunculus/...`
-
-Manual verification lives in
-`docs/testing/manual-verification/cursor.md` (Continuous Learning +
-Session Lifecycle sections).
-
-Continuous-learning planning constraint:
-
-- keep observation capture sparse and event-driven rather than logging every
-  conversational turn
-- optimize for detecting repeated or costly workflows that should become
-  dedicated scripts, custom commands, or MCP-backed integrations
-- treat raw observation volume as a cost unless it produces better automation
-  candidates
-
-### 3. Cursor parity — populate `.cursor/skills/` (P2)
-
-Status: **first slice complete** — Cursor skills are now package-driven.
-
-Cursor has a native skills system using the same `SKILL.md` format and
-auto-discovery as Claude Code. Skills live in `.cursor/skills/` (project) or
-`~/.cursor/skills/` (user) and are invocable via `/` in Agent chat.
-
-MDT now installs Cursor skills via the package-manifest model:
-
-- language packages (for example `typescript`) list shared skills explicitly
-  under `"skills"` (`tdd-workflow`, `verification-loop`, `coding-standards`,
-  `security-review`, `backend-patterns`, `frontend-patterns`, `e2e-testing`)
-- capability packages such as `continuous-learning` and `context-compaction`
-  list their own skills
-- `installCursorSkills()` copies only package-selected skills from `skills/*/`
-  plus any Cursor-specific skills from `cursor-template/skills/`
-
-Follow-ups for this P2 item:
-
-- keep the priority skills list in sync with `packages/*/package.json`
-- add more Cursor-facing skills intentionally (via packages) rather than by
-  copying the entire shared `skills/` tree
-
-Note: local verification now shows `cursor-agent` accepts user-global file rules
-under `~/.cursor/rules/*.mdc`. MDT still treats global Cursor rules as
-unsupported in the installer, so the next Cursor installer follow-up should:
-
-- add explicit global Cursor rule install support
-- map project `.cursor/rules/*.md` into the correct user-global `.mdc` format
-- document which rules should be safe/default at user-global scope vs
-  project-local scope
-
-Important nuance:
-
-- official Cursor docs still describe user rules differently
-- the current evidence is specifically that `cursor-agent` accepts and creates
-  `~/.cursor/rules/*.mdc`
-- this may be an IDE-vs-CLI difference, so keep the repo language at
-  `locally-verified` rather than treating it as fully settled vendor behavior
-
-### 4. Add dependency declarations to SKILL.md frontmatter (P1)
+### 2. Add dependency declarations to SKILL.md frontmatter (P1)
 
 Currently all inter-component dependencies are implicit. Skills that assume rules
 are loaded don't declare it, so the install script cannot warn when installing to
-an environment where those dependencies can't be satisfied (e.g. Cursor global
-install, where user-level rules are database-backed and unavailable).
+an environment where those dependencies can't be satisfied (for example a tool
+surface where rules are absent, disabled, or only available through an explicit
+local bridge).
 
 **Proposed addition to SKILL.md frontmatter:**
 
@@ -199,30 +125,7 @@ the same runtime truth:
 - packages declare install-time capability constraints
 - skills declare asset-level expectations for direct/manual installs
 
-### 5. Cursor parity — expand custom command coverage (P2)
-
-Status: **first slice done** — package-selected Cursor custom command prompts
-now ship from `cursor-template/commands/`.
-
-Current state:
-
-- `scripts/install-mdt.js` installs package-selected Cursor commands into
-  `.cursor/commands/`
-- shipped prompts now exist for `plan`, `tdd`, `verify`, `code-review`,
-  `learn`, and `skill-create`
-- package validation now checks `tools.cursor.commands`
-- Cursor command coverage is still intentionally narrower than the shared Claude
-  slash-command catalog
-
-Future work for this item should focus on:
-
-- deciding which additional shared MDT workflows deserve first-class Cursor
-  command prompts
-- keeping Cursor command prompts aligned with the corresponding shared workflow
-  contracts
-- adding manual verification coverage for the shipped Cursor command set
-
-### 6. Add deeper Claude workflow smoke (P2)
+### 3. Add deeper Claude workflow smoke (P2)
 
 Codex has workflow-level smoke coverage. Claude should get the same for:
 
@@ -231,15 +134,12 @@ Codex has workflow-level smoke coverage. Claude should get the same for:
 - `verify`
 - `security`
 
-### 7. Codex parity — expand beyond first explicit continuous-learning slice (P2)
-
-Status: **first slice done** — Codex now supports package-driven install plus an
-explicit/manual `continuous-learning` path.
+### 4. Codex parity — expand beyond first explicit continuous-learning slice (P2)
 
 Follow-ups for Codex should focus on:
 
 - deciding whether Codex gets real package-selected rule files under `codex-template/rules/`
-- reducing remaining source-layout drift between `codex-template/skills/` and the installed `.agents/skills/` tree materialized by the installer
+- reducing remaining source-layout drift between `codex-template/skills/` and the installed `~/.codex/skills/` tree materialized by the installer
 - keeping the `continuous-learning` package truthful for Codex so manual learning
   stays the baseline, `continuous-learning-automatic` is not treated as a
   Codex install surface, and the optional observer remains a separate
@@ -258,14 +158,14 @@ Codex continuous-learning guardrail:
 - the optional external observer is for background analysis only
 - do not describe Codex as having full automatic hook-style observation capture
   unless Codex gains a real native surface for it
-### 8. Extend Cursor parity tests (P2)
+### 5. Extend Cursor parity tests (P2)
 
 Add test coverage for:
 - continuous-learning wiring in Cursor `afterFileEdit` / `afterShellExecution`
 - package-driven skill/command install output
-- user-global Cursor `.mdc` rule install behavior once that installer support lands
+- user-global Cursor `.mdc` rule install behavior under the new default global install model
 
-### 8b. Add detached-process lifecycle management for background helpers (P1)
+### 6. Add detached-process lifecycle management for background helpers (P1)
 
 Local debugging found that stale detached `node.exe` processes can keep old
 Cursor `.cursor/` state alive even after reinstalling or removing files. This
@@ -280,45 +180,30 @@ Next implementation slice:
 - document stale detached-process checks as part of normal troubleshooting for
   Cursor and any future background helper integrations
 
-### 9. Add weekly continuous-learning retrospectives focused on automation candidates (P2)
-
-Status: **first manual slice done**
+### 7. Validate weekly continuous-learning retrospectives (P2)
 
 Goal:
 
 - keep the live observer cheap and low-noise
-- analyze one calendar week of observations and archived batches
-- identify repeated, costly, or failure-prone workflows that should become:
-  - dedicated scripts
-  - custom commands
-  - MCP-backed integrations
+- validate one-calendar-week summaries as useful sources of automation
+  candidates
+- keep monthly rollups deferred unless weekly summaries prove useful
 
-Important constraints:
+Current shipped surface:
 
-- do not increase observation frequency just to collect more data
-- do not treat raw log volume as a success metric
-- prefer sparse event capture plus higher-value summaries
-- do not add monthly rollups until weekly reports prove useful
+- Codex weekly retrospectives run through:
+  `node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week YYYY-Www`
+- structured output lands under:
+  `~/.codex/mdt/homunculus/projects/<id>/retrospectives/weekly/YYYY-Www.json`
 
-Current state:
-
-1. Codex now has an explicit weekly retrospective entrypoint:
-   `node .agents/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week YYYY-Www`
-2. the retrospective reads current `observations.jsonl` plus matching
-   `observations.archive/*.jsonl` for one ISO week
-3. it writes one structured weekly summary under project storage:
-   `.codex/homunculus/projects/<id>/retrospectives/weekly/YYYY-Www.json`
-4. the summary now includes repeated commands, repeated files, repeated
-   workflows, and automation candidates for script/MCP follow-up
-
-Follow-ups for this item:
+Follow-ups:
 
 - manually validate that the weekly summaries produce useful automation
   candidates instead of noise
 - decide whether Cursor should get the same explicit weekly command surface
 - keep monthly rollups deferred until weekly summaries prove useful
 
-### 10. Cut a stabilization release boundary (P3)
+### 8. Cut a stabilization release boundary (P3)
 
 Once Cursor hook parity is working and Claude workflow smoke is added, prepare
 release notes covering:
@@ -327,7 +212,7 @@ release notes covering:
 - Claude workflow smoke coverage
 - package-driven install selection and Cursor skills/commands composition
 
-### 11. Revisit OpenCode after v1.0.0 + `.mjs` migration
+### 9. Revisit OpenCode after v1.0.0 + `.mjs` migration
 
 OpenCode is intentionally out of the active support surface for now.
 

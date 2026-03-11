@@ -17,8 +17,8 @@ asks for them:
 
 When you are working in Cursor:
 
-- prefer `.cursor/...` for project-local Cursor files
-- prefer `~/.cursor/...` for user-global Cursor files
+- prefer `~/.cursor/...` and `~/.cursor/mdt/...` for the normal global Cursor install
+- only use `.cursor/...` when the user explicitly asked for a repo-local bridge file
 - if the expected Cursor path is missing, report the install as incomplete
   instead of guessing another tool path
 

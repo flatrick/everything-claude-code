@@ -64,10 +64,7 @@ claude mcp --help
 ### Cursor
 
 ```bash
-cursor --version
-cursor --help
 agent --help
-cursor agent --help
 cursor-agent --help
 ```
 

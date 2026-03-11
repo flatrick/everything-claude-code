@@ -112,9 +112,12 @@ Tips:
 
 ---
 
-## Future: configure-mdt Integration
+## Future: install-time guidance
 
-The `configure-mdt` install wizard could offer to set these environment variables during setup, with explanations of the cost tradeoffs. This would help new users optimize from day one rather than discovering these settings after hitting limits.
+The installer and docs could eventually offer these environment variable
+recommendations during setup, with explanations of the cost tradeoffs. That
+would help new users optimize from day one rather than discovering these
+settings after hitting limits.
 
 ---
 

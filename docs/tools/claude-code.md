@@ -1,13 +1,13 @@
 # Claude Code
 
-Audit date: `2026-03-08`
+Audit date: `2026-03-11`
 
 Status:
 - `official`
 - `locally-verified`
 
 Local version seen:
-- `claude --version` -> `2.1.71 (Claude Code)`
+- `claude --version` -> `2.1.72 (Claude Code)`
 
 ## MDT-Relevant Native Surfaces
 
@@ -64,10 +64,10 @@ Claude smoke now has two complementary surfaces:
 - `node scripts/smoke-claude-workflows.js` for deterministic local verification
   of the current Claude workflow contract surfaces
 
-For installed project targets, the same deterministic check is materialized to:
+For installed Claude homes, the same deterministic check is materialized to:
 
 ```bash
-node .claude/scripts/smoke-claude-workflows.js
+node ~/.claude/mdt/scripts/smoke-claude-workflows.js
 ```
 
 ### Agents
