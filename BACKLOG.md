@@ -47,27 +47,6 @@ so that actual sensitive file paths can be confirmed rather than guessed.
 
 ---
 
-## Cursor install copies non-requested skills
-
-**Status:** Open.
-
-**Repro:**
-
-```text
-node scripts/install-mdt.js --target cursor typescript
-```
-
-**Current behavior:** Cursor install copies skills for unrelated languages as
-well, including items such as Rust and SQL-oriented skills.
-
-**Expected behavior:** A language-scoped Cursor install should only copy the
-skills intended for the requested install scope, or otherwise follow an explicit
-tool-level rule for which skills are global versus language-specific. It should
-not silently install unrelated language skills when only `typescript` was
-requested.
-
----
-
 ## Cursor duplicate command-name precedence between `~/.cursor/` and explicit local bridges
 
 **Status:** Open.

@@ -84,6 +84,16 @@
         "common-testing.md",
         "common-security.md",
         "common-git-workflow.md"
+      ],
+      "skills": [
+        "documentation-steward",
+        "coding-standards",
+        "tdd-workflow",
+        "verification-loop",
+        "security-review",
+        "backend-patterns",
+        "frontend-patterns",
+        "e2e-testing"
       ]
     },
     "gemini": {

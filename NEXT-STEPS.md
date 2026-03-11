@@ -23,61 +23,41 @@ Installer scope contract:
 
 ## Next Practical Steps
 
-### 1. Replace rule-driven install selection with package manifests (P1)
+### 1. Tighten package-manifest validation and dependency metadata (P1)
 
-The next major restructuring step is to stop using `rules/` as the indirect source
-of truth for what gets installed. That model is already leaking in Cursor, where:
+Package manifests are now the install source of truth for Claude, Cursor,
+Codex, and Gemini. Cursor no longer over-installs unrelated skills in the
+covered package paths, and Codex skill selection is now explicit under
+`tools.codex.*` instead of inheriting shared top-level package skills.
 
-```text
-node scripts/install-mdt.js --target cursor typescript
-```
+The next package-model work should focus on validation and maintainability, not
+another install-selection rewrite.
 
-can install unrelated skills because the installer copies content based on
-hardcoded directories rather than an explicit install package definition.
-
-Introduce a `packages/` model that declares install bundles directly. Each
-package should describe which rules, skills, commands, hooks, and tool-specific
-assets belong together.
-
-Design note:
+Design references:
 
 - [docs/packages-install-model.md](docs/packages-install-model.md)
 - [docs/package-manifest-v1.md](docs/package-manifest-v1.md)
 
-Proposed direction:
+What remains:
 
-- keep source assets in `rules/`, `skills/`, `commands/`, `hooks/`, and per-tool template dirs
-- add package manifests under `packages/`
-- make `scripts/install-mdt.js` resolve requested install scopes from package manifests instead of inferring behavior from `rules/`
-- allow tool-specific package overrides where Cursor/Claude/Codex need different assets
-
-What this should solve:
-
-- language-scoped installs stop pulling unrelated skills implicitly
-- install behavior becomes explicit and testable
-- tool-specific differences stop living as scattered installer conditionals
-- future dependency handling can attach to packages instead of ad hoc path rules
+- validate every package manifest shape in CI
+- add explicit tests for dry-run/install-plan output versus actual installed assets
+- keep Codex intent explicit under `tools.codex.rules`, `tools.codex.skills`, and `tools.codex.scripts`
+- document any truly shared assets versus tool-specific assets so manifests stay easy to audit
 
 Important pre-v1 constraint:
 
 - do not preserve intermediate migration workflows for package layout changes
 - until `v1.0.0`, the expected update path is: start fresh and run `node scripts/install-mdt.js`
-- docs should describe reset/reinstall, not compatibility migration, while this restructuring is in progress
-
-Suggested first slice:
-
-1. define the package manifest shape
-2. model the current `typescript` install as a package
-3. switch Cursor skill install logic to use package selection instead of copying the shared `skills/` tree
-4. add tests proving `--target cursor typescript` does not install unrelated skills
+- docs should describe reset/reinstall, not compatibility migration, while installer details are still settling
 
 Status:
 
-- language packages are now explicit
-- the first real capability package drafts should be `continuous-learning` and `context-compaction`
-- capability metadata such as `requires.hooks`, `requires.runtimeScripts`, and `requires.sessionData` is now actionable in the installer/validator
-- `requires.tools` currently means "implemented installer support in this repo today", not a permanent product limit
-- the next package-model follow-up should keep moving Codex install-time sources into `codex-template/` and reduce remaining mixed-source drift between `codex-template/` and the installed `~/.codex/skills/` tree
+- language packages are explicit
+- capability packages exist for `continuous-learning` and `context-compaction`
+- capability metadata such as `requires.hooks`, `requires.runtimeScripts`, and `requires.sessionData` is actionable in the installer and validator
+- Codex package installs now come only from explicit `tools.codex.*` manifest entries
+- the next package-model follow-up should be validation and drift prevention, not another source-layout transition
 
 ### 2. Add dependency declarations to SKILL.md frontmatter (P1)
 

@@ -57,6 +57,12 @@
         "promote.md",
         "skill-create.md"
       ]
+    },
+    "codex": {
+      "skills": [
+        "documentation-steward",
+        "continuous-learning-manual"
+      ]
     }
   },
   "requires": {

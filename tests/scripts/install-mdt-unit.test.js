@@ -244,7 +244,7 @@ function runTests() {
     assert.deepStrictEqual(manifest.tools.cursor.skills, ['frontend-slides']);
     assert.deepStrictEqual(manifest.tools.cursor.commands, ['docs-health.md', 'plan.md', 'tdd.md', 'verify.md', 'code-review.md', 'smoke.md', 'e2e.md', 'security.md', 'build-fix.md', 'refactor-clean.md']);
     assert.deepStrictEqual(manifest.tools.codex.rules, ['common-coding-style.md', 'common-testing.md', 'common-security.md', 'common-git-workflow.md']);
-    assert.deepStrictEqual(manifest.tools.codex.skills || [], []);
+    assert.deepStrictEqual(manifest.tools.codex.skills, ['documentation-steward', 'coding-standards', 'tdd-workflow', 'verification-loop', 'security-review', 'backend-patterns', 'frontend-patterns', 'e2e-testing']);
     assert.deepStrictEqual(manifest.requires, {});
   })) passed++; else failed++;
 
@@ -278,6 +278,7 @@ function runTests() {
     });
     assert.deepStrictEqual(manifest.tools.claude.skills, ['continuous-learning-automatic']);
     assert.deepStrictEqual(manifest.tools.cursor.skills, ['continuous-learning-automatic']);
+    assert.deepStrictEqual(manifest.tools.codex.skills, ['documentation-steward', 'continuous-learning-manual']);
     assert.deepStrictEqual(manifest.tools.cursor.commands, [
       'docs-health.md',
       'instinct-export.md',
@@ -483,6 +484,32 @@ function runTests() {
       installCodexSkills(resolveSelectedPackages(['typescript', 'continuous-learning']), tempDir, true);
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-setup-verifier', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
+    });
+  })) passed++; else failed++;
+
+  if (test('installCodexSkills does not inherit top-level shared package skills for codex', () => {
+    withTempDir('mdt-install-codex-explicit-', (tempDir) => {
+      const packagesDir = path.join(tempDir, 'packages');
+      fs.mkdirSync(path.join(packagesDir, 'explicit-codex'), { recursive: true });
+      fs.writeFileSync(path.join(packagesDir, 'explicit-codex', 'package.json'), JSON.stringify({
+        name: 'explicit-codex',
+        description: 'Codex explicit skill selection test',
+        ruleDirectory: 'typescript',
+        rules: [],
+        agents: [],
+        commands: [],
+        skills: ['coding-standards'],
+        tools: {
+          codex: {
+            skills: ['documentation-steward']
+          }
+        }
+      }), 'utf8');
+
+      installCodexSkills(resolveSelectedPackages(['explicit-codex'], { packagesDir }), tempDir);
+
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
+      assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'coding-standards', 'SKILL.md')));
     });
   })) passed++; else failed++;
 

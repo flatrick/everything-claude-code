@@ -357,7 +357,9 @@ function getPackageRequirementWarnings(target, selectedPackages) {
 }
 
 function getSelectedSkillNamesForTarget(target, selectedPackages, devMode = false) {
-  const sharedSkillNames = getManifestSelections(selectedPackages, 'skills');
+  const sharedSkillNames = target === 'codex'
+    ? []
+    : getManifestSelections(selectedPackages, 'skills');
   const toolSkillNames = getToolManifestSelections(selectedPackages, target, 'skills');
   const devSkillNames = devMode ? ['tool-doc-maintainer', 'tool-setup-verifier'] : [];
   return mergeUniqueOrdered(sharedSkillNames, toolSkillNames, devSkillNames);
@@ -1128,11 +1130,6 @@ function installCodexRules(selectedPackages, destDir) {
 
 function installCodexSkills(selectedPackages, destDir, devMode = false) {
   const skillsDest = path.join(destDir, 'skills');
-  const sharedSkillNames = getManifestSelections(selectedPackages, 'skills');
-  if (copySelectedDirectories(CODEX_SKILLS_SRC, skillsDest, sharedSkillNames, 'Codex package-selected skill') > 0) {
-    console.log('Installing Codex package-selected skills -> ' + skillsDest + '/');
-  }
-
   const codexSkillNames = getToolManifestSelections(selectedPackages, 'codex', 'skills');
   if (copySelectedDirectories(CODEX_SKILLS_SRC, skillsDest, codexSkillNames, 'Codex tool skill') > 0) {
     console.log('Installing Codex tool skills -> ' + skillsDest + '/');

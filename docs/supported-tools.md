@@ -31,7 +31,7 @@ Use this when you need to answer:
 
 - Claude Code is the closest match to MDT's current structure: hooks, slash commands, subagents, skills, and `CLAUDE.md`/memory are all native concepts.
 - Cursor officially supports rules, `AGENTS.md`, custom commands, memories, background agents, and a terminal agent/CLI. Local verification also confirms file-backed user-global rules under `~/.cursor/rules/*.mdc` for `cursor-agent`, even though the official docs still describe user rules differently. This may be a distinction between Cursor IDE behavior and the `cursor-agent` CLI. MDT's current `cursor-template/hooks.json` flow should be treated as `experimental` until Cursor documents that surface.
-- Codex officially supports layered `AGENTS.md`, rule files, skills, and built-in slash commands. MDT now installs package-selected Codex project surfaces under `.codex/` and only touches `~/.codex` when `--global` is explicit.
+- Codex officially supports layered `AGENTS.md`, rule files, skills, and built-in slash commands. MDT installs Codex globally by default: tool-facing assets land under `~/.codex/`, while MDT-owned helpers and learning state live under `~/.codex/mdt/`.
 
 ## Local Tool Versions Observed During This Audit
 
