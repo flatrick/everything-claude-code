@@ -146,7 +146,7 @@ node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js analyze
 node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
-That writes project-scoped learning state under `~/.codex/mdt/homunculus/projects/<project-id>/`.
+That writes project-scoped learning state under `~/.codex/mdt/homunculus/<project-id>/`.
 
 This is an intentional product choice, not a temporary documentation gap:
 
@@ -162,7 +162,7 @@ The weekly retrospective path is manual-first and writes one summary per ISO
 week under:
 
 ```text
-~/.codex/mdt/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
+~/.codex/mdt/homunculus/<project-id>/retrospectives/weekly/YYYY-Www.json
 ```
 
 The intended output is low-noise and automation-focused:

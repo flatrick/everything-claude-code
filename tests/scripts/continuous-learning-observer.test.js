@@ -8,6 +8,7 @@ const os = require('os');
 const path = require('path');
 const EventEmitter = require('events');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
+const { createInstalledContinuousLearningLayout } = require('../helpers/continuous-learning-install-layout');
 const {
   DEFAULT_CONFIG,
   analyzeObservations,
@@ -57,43 +58,48 @@ function runTests() {
   })) passed++; else failed++;
 
   if (test('inferInstalledConfigDir detects installed project-local Cursor config roots', () => {
-    const tempDir = createTestDir('observer-installed-config-');
+    const layout = createInstalledContinuousLearningLayout({
+      tool: 'cursor',
+      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+    });
     try {
-      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-manual');
-      fs.mkdirSync(skillDir, { recursive: true });
+      const skillDir = layout.skillDir;
       assert.strictEqual(
         inferInstalledConfigDir(skillDir),
-        path.join(tempDir, '.cursor')
+        layout.configDir
       );
     } finally {
-      cleanupTestDir(tempDir);
+      cleanupTestDir(layout.tempDir);
     }
   })) passed++; else failed++;
 
   if (test('inferInstalledConfigDir detects installed project-local Codex config roots', () => {
-    const tempDir = createTestDir('observer-installed-codex-config-');
+    const layout = createInstalledContinuousLearningLayout({
+      tool: 'codex',
+      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+    });
     try {
-      const skillDir = path.join(tempDir, '.codex', 'skills', 'continuous-learning-manual');
-      fs.mkdirSync(skillDir, { recursive: true });
+      const skillDir = layout.skillDir;
       assert.strictEqual(
         inferInstalledConfigDir(skillDir),
-        path.join(tempDir, '.codex')
+        layout.configDir
       );
     } finally {
-      cleanupTestDir(tempDir);
+      cleanupTestDir(layout.tempDir);
     }
   })) passed++; else failed++;
 
   if (test('buildObserverEnv anchors direct launches to installed Cursor config roots', () => {
-    const tempDir = createTestDir('observer-env-');
+    const layout = createInstalledContinuousLearningLayout({
+      tool: 'cursor',
+      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+    });
     try {
-      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-manual');
-      fs.mkdirSync(skillDir, { recursive: true });
-      const env = buildObserverEnv({}, { skillDir });
-      assert.strictEqual(env.CONFIG_DIR, path.join(tempDir, '.cursor'));
+      const env = buildObserverEnv({}, { skillDir: layout.skillDir });
+      assert.strictEqual(env.CONFIG_DIR, layout.configDir);
       assert.strictEqual(env.CURSOR_AGENT, '1');
     } finally {
-      cleanupTestDir(tempDir);
+      cleanupTestDir(layout.tempDir);
     }
   })) passed++; else failed++;
 
@@ -110,16 +116,17 @@ function runTests() {
       inferObserverTool({ ...DEFAULT_CONFIG, tool: 'claude' }, {}),
       'claude'
     );
-    const tempDir = createTestDir('observer-tool-infer-');
+    const layout = createInstalledContinuousLearningLayout({
+      tool: 'cursor',
+      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+    });
     try {
-      const skillDir = path.join(tempDir, '.cursor', 'skills', 'continuous-learning-manual');
-      fs.mkdirSync(skillDir, { recursive: true });
       assert.strictEqual(
-        inferObserverTool(DEFAULT_CONFIG, buildObserverEnv({}, { skillDir })),
+        inferObserverTool(DEFAULT_CONFIG, buildObserverEnv({}, { skillDir: layout.skillDir })),
         'cursor'
       );
     } finally {
-      cleanupTestDir(tempDir);
+      cleanupTestDir(layout.tempDir);
     }
   })) passed++; else failed++;
 

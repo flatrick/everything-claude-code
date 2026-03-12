@@ -686,6 +686,68 @@ Add focused tests for the new private runtime module as part of the extraction.
 Treat wrapper export compatibility and installed-layout fixture coverage as part
 of the required test surface, not optional cleanup.
 
+### Execution-surface compatibility suite
+Because hooks, skills, commands, and rules are executed by different tool
+runtimes, add a dedicated compatibility suite that exercises each supported
+execution surface through the same installed-layout contract.
+
+Recommended home:
+
+- `tests/compatibility-testing/`
+
+This folder should be treated as a first-class suite for tool-runtime
+compatibility rather than as an overflow location for script tests.
+
+This suite should explicitly cover:
+
+- direct module import of public wrappers
+- in-repo execution of public entrypoints
+- installed-layout execution from tool config roots
+- hook execution under Claude and Cursor-compatible environments
+- command execution under Codex, Claude Code, and `cursor-agent`-style env/cwd
+- rule materialization or wrapper flows where the tool uses repo-local rule
+  files rather than global config files
+
+The goal is not only to keep tests green. It is to surface tool-specific launch
+differences early enough that they can be documented as supported behavior,
+known limitations, or installer/wrapper requirements.
+
+Minimum first-pass matrix:
+
+- Codex:
+  - public manual script wrappers
+  - `scripts/codex-observer.js`
+  - installed command surfaces
+- Claude Code:
+  - public manual wrappers
+  - automatic hook path and observer path execution
+  - installed layout under `.claude`
+- Cursor Agent:
+  - public manual wrappers
+  - automatic hook-compatible execution where applicable
+  - command and rule flows under `~/.cursor/`
+
+Suggested initial files:
+
+- `tests/compatibility-testing/README.md`
+- `tests/compatibility-testing/codex-compatibility.test.js`
+- `tests/compatibility-testing/claude-code-compatibility.test.js`
+- `tests/compatibility-testing/cursor-agent-compatibility.test.js`
+- `tests/compatibility-testing/cursor-ide-compatibility.test.js`
+- `tests/compatibility-testing/shared-fixtures.js`
+
+Where useful, these tests should call the installed smoke surfaces as part of
+the check instead of only asserting file presence. For example:
+
+- Codex: installed `smoke` skill plus `smoke-tool-setups.js` and
+  `smoke-codex-workflows.js`
+- Claude Code: installed `/smoke` command plus `smoke-claude-workflows.js`
+- Cursor Agent: installed `/smoke` and `/install-rules` commands plus
+  rule-materialization checks
+
+Document any failures found by this suite in the relevant tool docs before
+changing ownership assumptions in later extraction PRs.
+
 ### Full suite
 Before considering the refactor complete:
 
@@ -738,6 +800,16 @@ override roots for each target:
   - runtime scripts under `mdt/scripts/lib/continuous-learning/`
 - Codex override root still contains any required overlay metadata files
 
+### Execution-surface acceptance rule
+No migrated hook, skill, command, rule bridge, or observer path should be
+considered stable until it has been verified through:
+
+- a direct import contract
+- an in-repo wrapper contract
+- an installed-layout contract
+- the relevant tool execution surface contract if launched by Codex, Claude
+  Code, or `cursor-agent`
+
 ## Risks And Mitigations
 
 ### Risk: Rewiring to private runtime breaks installed layouts
@@ -752,6 +824,18 @@ Mitigation:
 - add a context/resolution layer before relocating shared code
 - keep wrappers responsible for installed-layout inference
 
+### Risk: Wrapper location changes behavior across tools
+Hooks, commands, and skills often infer config roots, repo roots, or tool
+identity from `__dirname`, `process.argv[1]`, or sibling paths.
+
+Mitigation:
+
+- forbid private runtime code from inferring ownership from its own file
+  location
+- require wrappers to pass explicit context such as `entrypointDir`,
+  `configDir`, `configPath`, `cwd`, and tool identity where relevant
+- add tests that compare wrapper behavior before and after installed relocation
+
 ### Risk: Wrapper module exports regress even if CLI behavior stays green
 Mitigation:
 
@@ -763,6 +847,62 @@ Mitigation:
 
 - keep command docs pointed at stable public manual entrypoints
 - treat private runtime paths as internal-only
+
+### Risk: Installed-layout drift breaks delegation
+Wrappers may work in-repo but fail after install if private runtime files are
+not copied into the installed tree or if wrappers rely on the wrong relative
+layout.
+
+Mitigation:
+
+- treat installed-layout fixtures as first-class test infrastructure
+- verify that installer outputs include all delegated runtime files
+- keep extraction and install-layout validation in the same PR when wrappers
+  are rewired
+
+### Risk: Subprocess invocation differs between tools and operating systems
+Codex, Claude Code, and `cursor-agent` do not all launch child processes the
+same way. PATH, shell choice, Windows shims, and nested subprocess restrictions
+can break otherwise-correct JS logic.
+
+Mitigation:
+
+- preserve and extend subprocess-focused tests for observer and command flows
+- test Windows shim resolution and shell-neutral spawning behavior explicitly
+- treat restricted nested-subprocess environments as a known coverage gap to
+  document, not as proof that the tool surface is safe
+
+### Risk: Environment inheritance differs by hook, command, and agent surface
+Different launch surfaces may provide different `cwd`, PATH, HOME, and
+tool-specific environment variables.
+
+Mitigation:
+
+- pass explicit runtime context from public wrappers into private modules
+- add agent-surface tests that vary `cwd` and env for Codex, Claude Code, and
+  `cursor-agent`
+- document any launch assumptions that remain tool-specific after extraction
+
+### Risk: Tool adapters assume public-file ownership or colocated assets
+External tool adapters may point at public files that used to own the full
+implementation and may implicitly depend on nearby assets or relative docs.
+
+Mitigation:
+
+- audit hook, command, and rule entrypoints before moving their internals
+- keep public adapter paths stable while moving ownership behind wrappers
+- verify colocated asset access through installed-layout tests
+
+### Risk: Global and project-local surfaces diverge
+Some tools split behavior across global config roots and repo-local files. A
+wrapper that works for one surface may fail for the other.
+
+Mitigation:
+
+- test both global and repo-local install surfaces where the tool supports both
+- keep bridge flows explicit in docs and installer expectations
+- do not assume a working global wrapper implies repo-local rule or command
+  parity
 
 ### Risk: Automatic still owns a duplicated real implementation
 Mitigation:
@@ -800,6 +940,18 @@ Mitigation:
 - keep `config.json` public-surface-owned in this migration
 - have shared runtime consume config passed in by wrappers
 
+### Risk: Test environment skips hide real tool-runtime regressions
+Some command and subprocess tests may skip or behave differently in constrained
+Codex sessions even when the real tool surface would fail.
+
+Mitigation:
+
+- maintain an execution-surface suite that can run outside constrained
+  sandboxes
+- record which tests are skipped due to runner limitations
+- document uncovered launch paths until they are exercised by a less-restricted
+  harness
+
 ## Acceptance Checklist
 - [ ] no public `continuous-learning-core` skill exists
 - [ ] shared continuous-learning implementation lives in
@@ -813,8 +965,16 @@ Mitigation:
 - [ ] public command and script entrypoints remain stable during migration
 - [ ] current named exports from public wrappers remain compatible where tests
       depend on them
+- [ ] private runtime code does not depend on its own file location to infer
+      public ownership, config ownership, or tool identity
 - [ ] installed config-root inference still works for `.claude`, `.cursor`, and
       `.codex`
+- [ ] migrated hooks, commands, rules, and observers are verified through
+      direct import, in-repo wrapper, and installed-layout execution
+- [ ] execution-surface compatibility tests exist for Codex, Claude Code, and
+      `cursor-agent`-style launches where those surfaces are supported
+- [ ] discovered tool-runtime differences are documented in the relevant tool
+      docs before duplicate ownership is removed
 - [ ] `scripts/codex-observer.js` works with the extracted runtime
 - [ ] duplicate implementations are removed from automatic
 - [ ] duplicate shared implementations are removed from the Codex overlay

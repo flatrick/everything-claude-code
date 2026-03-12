@@ -84,6 +84,9 @@ try {
 const testFiles = [
   'helpers/test-env-profiles.test.js',
   'lib/detect-env.test.js',
+  'lib/continuous-learning-runtime-context.test.js',
+  'lib/continuous-learning-project-detection.test.js',
+  'lib/continuous-learning-observer-runtime.test.js',
   'lib/utils.test.js',
   'lib/utils-rounds.test.js',
   'lib/utils-rounds-2.test.js',

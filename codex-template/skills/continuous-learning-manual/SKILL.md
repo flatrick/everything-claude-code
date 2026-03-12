@@ -33,7 +33,7 @@ Codex is manual-first in this repo.
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`~/.codex/mdt/homunculus/`) | Project-scoped (`projects/<project-id>/` under homunculus) |
+| Storage | Global (`~/.codex/mdt/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
 | Promotion | N/A | Project -> global when seen in 2+ projects |
@@ -86,7 +86,7 @@ Session activity
       |
       | explicit/manual capture
       v
-projects/<project-id>/observations.jsonl
+<project-id>/observations.jsonl
       |
       | optional observer or explicit analysis
       v
@@ -94,12 +94,12 @@ pattern detection
       |
       | creates / updates
       v
-projects/<project-id>/instincts/personal/
+<project-id>/instincts/personal/
 instincts/personal/ (global)
       |
       | evolve / promote
       v
-projects/<project-id>/evolved/
+<project-id>/evolved/
 evolved/ (global)
 ```
 
@@ -110,13 +110,13 @@ The system detects project context in this order:
 1. explicit project/config environment variables such as `CLAUDE_PROJECT_DIR` or tool-agnostic `MDT_PROJECT_ROOT`
 2. git remote URL when available
 3. git repo root fallback when no remote is available
-4. global fallback when no git-backed project can be identified
+4. cwd-scoped fallback when no git-backed project can be identified
 
-Project IDs are stable 12-character hashes derived from the best available git identity:
+Project IDs use the current runtime contract:
 
-- **Remote available** → `sha256(remoteUrl).slice(0, 12)` — stable across re-clones
-- **Git repo, no remote** → `sha256(repoRoot).slice(0, 12)` — path-anchored local fallback
-- **No git project** → use the global homunculus scope instead of creating a project-specific folder
+- **Remote available** → `<repo-name>-git` — stable across re-clones of the same origin
+- **Git repo, no remote** → `<basename>-<md5(path)>` — path-anchored local fallback
+- **No git project** → `<basename>-<md5(path)>` using the current cwd instead of collapsing into a global project
 
 Only git is currently detected; other VCS systems are in the backlog. A registry file at `~/.codex/mdt/homunculus/projects.json` maps IDs to absolute paths, remotes, and human-readable names.
 
@@ -148,7 +148,7 @@ Run a weekly retrospective for one ISO week:
 node ~/.codex/skills/continuous-learning-manual/scripts/codex-learn.js weekly --week 2026-W11
 ```
 
-This writes Codex project learning state under `~/.codex/mdt/homunculus/projects/<project-id>/...`.
+This writes Codex project learning state under `~/.codex/mdt/homunculus/<project-id>/...`.
 
 Codex baseline:
 
@@ -226,7 +226,7 @@ Weekly retrospectives are intentionally low-noise.
 For Codex they are part of the recommended baseline:
 
 ```text
-~/.codex/mdt/homunculus/projects/<project-id>/retrospectives/weekly/YYYY-Www.json
+~/.codex/mdt/homunculus/<project-id>/retrospectives/weekly/YYYY-Www.json
 ```
 
 The goal is not to log more activity. The goal is to highlight:

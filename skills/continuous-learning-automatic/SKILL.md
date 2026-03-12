@@ -26,7 +26,7 @@ An advanced learning system that turns MDT tool sessions into reusable knowledge
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`<data>/homunculus/`) | Project-scoped (`projects/<project-id>/` under homunculus) |
+| Storage | Global (`<data>/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
 | Promotion | N/A | Project → global when seen in 2+ projects |
@@ -86,7 +86,7 @@ Session Activity (in a git repo)
       | + detect project context (git remote / repo path)
       v
 +---------------------------------------------+
-|  projects/<project-id>/observations.jsonl    |
+|  <project-id>/observations.jsonl             |
 |   (prompts, tool calls, outcomes, project)   |
 +---------------------------------------------+
       |
@@ -103,7 +103,7 @@ Session Activity (in a git repo)
       | Creates/updates
       v
 +---------------------------------------------+
-|  projects/<project-id>/instincts/personal/   |
+|  <project-id>/instincts/personal/            |
 |   * prefer-functional.yaml (0.7) [project]   |
 |   * use-react-hooks.yaml (0.9) [project]     |
 +---------------------------------------------+
@@ -115,7 +115,7 @@ Session Activity (in a git repo)
       | /evolve clusters + /promote
       v
 +---------------------------------------------+
-|  projects/<project-id>/evolved/              |
+|  <project-id>/evolved/                       |
 |  evolved/ (global)                           |
 |   * commands/new-feature.md                  |
 |   * skills/testing-workflow.md               |
@@ -130,13 +130,13 @@ The system automatically detects your current project:
 1. **Explicit project env vars** such as `CLAUDE_PROJECT_DIR` or tool-agnostic `MDT_PROJECT_ROOT` (highest priority when they point to a git-backed directory)
 2. **`git remote get-url origin`** when available — the remote URL becomes the stable project identity anchor
 3. **`git rev-parse --show-toplevel`** — fallback using the local git repo root when no remote is available
-4. **Global fallback** — if no git-backed project can be identified, observations stay in the global scope
+4. **cwd-scoped fallback** — if no git-backed project can be identified, observations stay anchored to the current working directory
 
-Project IDs are stable 12-character hashes derived from:
+Project IDs use the current runtime contract:
 
-- **Remote available** → `sha256(remoteUrl).slice(0, 12)` — stable across re-clones
-- **Git repo, no remote** → `sha256(repoRoot).slice(0, 12)` — path-anchored local fallback
-- **No git project** → use the global homunculus scope instead of creating a project-specific folder
+- **Remote available** → `<repo-name>-git` — stable across re-clones of the same origin
+- **Git repo, no remote** → `<basename>-<md5(path)>` — path-anchored local fallback
+- **No git project** → `<basename>-<md5(path)>` using the current cwd instead of collapsing into a global project
 
 Only git is currently detected; other VCS systems are in the backlog. A registry file at `<data>/homunculus/projects.json` maps project IDs to human-readable names, roots, and remotes.
 

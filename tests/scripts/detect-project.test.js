@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
+const { createInstalledContinuousLearningLayout } = require('../helpers/continuous-learning-install-layout');
 const {
   detectProject,
   findProjectRootFromFilesystem,
@@ -39,13 +40,15 @@ function runTests() {
   let failed = 0;
 
   if (test('inferInstalledConfigDir detects installed Codex config roots', () => {
-    const tempDir = createTestDir('detect-project-installed-');
+    const layout = createInstalledContinuousLearningLayout({
+      tool: 'codex',
+      files: ['skills/continuous-learning-manual/scripts/detect-project.js']
+    });
     try {
-      const scriptDir = path.join(tempDir, '.codex', 'skills', 'continuous-learning-manual', 'scripts');
-      fs.mkdirSync(scriptDir, { recursive: true });
-      assert.strictEqual(inferInstalledConfigDir(scriptDir), path.join(tempDir, '.codex'));
+      const scriptDir = path.join(layout.skillDir, 'scripts');
+      assert.strictEqual(inferInstalledConfigDir(scriptDir), layout.configDir);
     } finally {
-      cleanupTestDir(tempDir);
+      cleanupTestDir(layout.tempDir);
     }
   })) passed++; else failed++;
 

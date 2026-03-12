@@ -111,7 +111,7 @@ Run this inside Cursor desktop with an Agent session:
 
 Expected after the edit and shell command:
 - `~/.cursor/mdt/homunculus/projects.json` exists
-- `~/.cursor/mdt/homunculus/projects/<project-id>/observations.jsonl` exists
+- `~/.cursor/mdt/homunculus/<project-id>/observations.jsonl` exists
 - the observations file contains:
   - `"event":"tool_complete"`
   - `"tool":"Edit"` for file edits
@@ -175,8 +175,8 @@ node ~/.cursor/skills/continuous-learning-manual/agents/start-observer.js status
 
 Expected:
 - `Observations:` shows a non-zero line count before analysis
-- `~/.cursor/mdt/homunculus/projects/<project-id>/observations.archive/` is created after analysis runs
-- `~/.cursor/mdt/homunculus/projects/<project-id>/observer.log` includes `with cursor (auto)` by default
+- `~/.cursor/mdt/homunculus/<project-id>/observations.archive/` is created after analysis runs
+- `~/.cursor/mdt/homunculus/<project-id>/observer.log` includes `with cursor (auto)` by default
 
 5. Stop the observer when done:
 

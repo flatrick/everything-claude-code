@@ -19,24 +19,41 @@
 const fs = require('fs');
 const path = require('path');
 
-function resolveSkillRoot(scriptDir = __dirname) {
-  const candidates = [
-    path.join(scriptDir, '..', 'skills', 'continuous-learning-manual'),
-    path.join(scriptDir, '..', '..', 'skills', 'continuous-learning-manual')
-  ];
+const {
+  createContinuousLearningContext
+} = require(path.join(__dirname, 'lib', 'continuous-learning', 'runtime-context.js'));
+const {
+  createProjectDetection
+} = require(path.join(__dirname, 'lib', 'continuous-learning', 'project-detection.js'));
+const {
+  createObserverRuntime
+} = require(path.join(__dirname, 'lib', 'continuous-learning', 'observer-runtime.js'));
 
-  for (const candidate of candidates) {
-    if (fs.existsSync(path.join(candidate, 'scripts', 'detect-project.js'))) {
-      return candidate;
-    }
+function resolveSkillRoot(scriptDir = __dirname) {
+  const context = createContinuousLearningContext({
+    entrypointDir: scriptDir,
+    skillName: 'continuous-learning-manual'
+  });
+
+  if (context.skillDir) {
+    return context.skillDir;
   }
 
   throw new Error('Unable to locate continuous-learning-manual skill');
 }
 
 const skillRoot = resolveSkillRoot(__dirname);
-const { detectProject } = require(path.join(skillRoot, 'scripts', 'detect-project.js'));
-const { analyzeObservations, loadObserverConfig } = require(path.join(skillRoot, 'agents', 'start-observer.js'));
+const projectDetection = createProjectDetection({
+  entrypointDir: path.join(skillRoot, 'scripts')
+});
+const observerRuntime = createObserverRuntime({
+  entrypointDir: path.join(skillRoot, 'agents'),
+  skillDir: skillRoot,
+  configPath: path.join(skillRoot, 'config.json'),
+  detectProject: projectDetection.detectProject
+});
+const { detectProject } = projectDetection;
+const { analyzeObservations, loadObserverConfig } = observerRuntime;
 
 function parseArgs(argv) {
   let command = 'status';
