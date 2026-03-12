@@ -100,6 +100,13 @@ Do not assume that Cursor searching `.claude/` or `.codex/` proves the MDT
 install is still wrong. It can be a cache or agent-path-selection problem even
 when the on-disk Cursor install files are correct.
 
+Observer lifecycle note:
+- the observer lease file remains
+  `~/.cursor/mdt/homunculus/<project-id>/.observer.pid`
+- newer installs store JSON lease metadata there, not just a raw PID
+- stopping or replacing the observer should now invalidate that lease so stale
+  detached helpers self-terminate more reliably
+
 ## Continuous Learning
 
 ### Observation Capture
@@ -166,6 +173,7 @@ node ~/.cursor/skills/continuous-learning-manual/agents/start-observer.js start
 Expected:
 - output includes `Observer tool: cursor`
 - output includes `Observer started`
+- output includes `Lease: .../.observer.pid`
 
 4. After enough observations accumulate, inspect:
 
@@ -175,6 +183,7 @@ node ~/.cursor/skills/continuous-learning-manual/agents/start-observer.js status
 
 Expected:
 - `Observations:` shows a non-zero line count before analysis
+- `Lease:` points at `~/.cursor/mdt/homunculus/<project-id>/.observer.pid`
 - `~/.cursor/mdt/homunculus/<project-id>/observations.archive/` is created after analysis runs
 - `~/.cursor/mdt/homunculus/<project-id>/observer.log` includes `with cursor (auto)` by default
 

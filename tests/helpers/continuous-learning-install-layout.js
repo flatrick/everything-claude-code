@@ -7,6 +7,7 @@ const { createTestDir } = require('./test-runner');
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const REQUIRED_RUNTIME_FILES = [
   'scripts/lib/detect-env.js',
+  'scripts/lib/detached-process-lifecycle.js',
   'scripts/lib/continuous-learning/runtime-context.js',
   'scripts/lib/continuous-learning/project-detection.js',
   'scripts/lib/continuous-learning/observer-runtime.js',

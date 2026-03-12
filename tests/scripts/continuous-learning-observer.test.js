@@ -9,16 +9,20 @@ const path = require('path');
 const EventEmitter = require('events');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 const { createInstalledContinuousLearningLayout } = require('../helpers/continuous-learning-install-layout');
+const { createObserverRuntime } = require('../../scripts/lib/continuous-learning/observer-runtime');
 const {
   DEFAULT_CONFIG,
   analyzeObservations,
   buildObserverEnv,
   buildAnalyzerInvocation,
+  getLoopLeaseStatus,
   inferInstalledConfigDir,
   inferObserverTool,
   inferToolFromConfigDir,
   loadObserverConfig,
+  readObserverState,
   resolveWindowsSpawnInvocation,
+  resolveObserverStateFile,
   shouldResolveWindowsSpawnCommand
 } = require('../../skills/continuous-learning-manual/agents/start-observer.js');
 
@@ -257,6 +261,242 @@ function runTests() {
       assert.ok(archived.some((name) => name.startsWith('processed-')), 'Expected archived observations file');
       const logContent = fs.readFileSync(logFile, 'utf8');
       assert.ok(logContent.includes('with cursor (gpt-5-mini)'), `Unexpected log content: ${logContent}`);
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('status accepts legacy lease files and cleans stale leases', () => {
+    const tempDir = createTestDir('observer-status-legacy-');
+    try {
+      const projectDir = path.join(tempDir, 'homunculus', 'demo-project');
+      fs.mkdirSync(path.join(projectDir, 'instincts', 'personal'), { recursive: true });
+      const observationsFile = path.join(projectDir, 'observations.jsonl');
+      fs.writeFileSync(observationsFile, '{"event":"tool_complete"}\n', 'utf8');
+      const runtime = createObserverRuntime({
+        entrypointDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'agents'),
+        skillDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual'),
+        configPath: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'config.json'),
+        detectProject: () => ({
+          id: 'demo-project',
+          name: 'demo-project',
+          root: tempDir,
+          project_dir: projectDir,
+          observations_file: observationsFile
+        })
+      });
+      const pidFile = resolveObserverStateFile({ project_dir: projectDir });
+      fs.writeFileSync(pidFile, '54321', 'utf8');
+
+      const output = [];
+      let exitCode = null;
+      runtime.main(['status'], {
+        logImpl: (message) => output.push(String(message)),
+        exitImpl: (code) => {
+          exitCode = code;
+        },
+        isPidAliveImpl: () => false
+      });
+
+      assert.strictEqual(exitCode, 1);
+      assert.ok(output.some((line) => line.includes('stale lease removed for PID: 54321')));
+      assert.strictEqual(fs.existsSync(pidFile), false);
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('start writes JSON lease state and reports child PID', () => {
+    const tempDir = createTestDir('observer-start-json-');
+    try {
+      const skillDir = path.join(process.cwd(), 'skills', 'continuous-learning-manual');
+      const configPath = path.join(tempDir, 'config.json');
+      fs.writeFileSync(configPath, JSON.stringify({
+        observer: {
+          enabled: true,
+          run_interval_minutes: 5,
+          min_observations_to_analyze: 2
+        }
+      }), 'utf8');
+      const projectDir = path.join(tempDir, 'project');
+      fs.mkdirSync(path.join(projectDir, 'instincts', 'personal'), { recursive: true });
+      const observationsFile = path.join(projectDir, 'observations.jsonl');
+      const runtime = createObserverRuntime({
+        entrypointDir: path.join(skillDir, 'agents'),
+        skillDir,
+        configPath,
+        detectProject: () => ({
+          id: 'demo-project',
+          name: 'demo-project',
+          root: tempDir,
+          project_dir: projectDir,
+          observations_file: observationsFile
+        })
+      });
+
+      const output = [];
+      let exitCode = null;
+      let spawned = null;
+      const fakeChild = { pid: 67890, unref: () => {} };
+      runtime.main(['start'], {
+        env: process.env,
+        logImpl: (message) => output.push(String(message)),
+        exitImpl: (code) => {
+          exitCode = code;
+        },
+        isPidAliveImpl: (pid) => pid === 67890,
+        spawnImpl: (command, args, options) => {
+          spawned = { command, args, options };
+          return fakeChild;
+        },
+        setTimeoutImpl: (fn) => {
+          fn();
+          return 1;
+        }
+      });
+
+      const stateFile = path.join(projectDir, '.observer.pid');
+      const state = readObserverState(stateFile);
+      assert.ok(spawned, 'Expected detached child spawn');
+      assert.strictEqual(state.pid, 67890);
+      assert.ok(state.instanceId);
+      assert.strictEqual(state.format, 'json');
+      assert.strictEqual(spawned.options.env.MDT_HELPER_STATE_FILE, stateFile);
+      assert.strictEqual(spawned.options.env.MDT_HELPER_INSTANCE_ID, state.instanceId);
+      assert.ok(output.some((line) => line.includes('Observer started (PID: 67890)')));
+      assert.ok(output.some((line) => line.includes(`Lease: ${stateFile}`)));
+      assert.strictEqual(exitCode, null);
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('stop removes lease and reports clean shutdown path', () => {
+    const tempDir = createTestDir('observer-stop-json-');
+    try {
+      const skillDir = path.join(process.cwd(), 'skills', 'continuous-learning-manual');
+      const configPath = path.join(tempDir, 'config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ observer: { enabled: true } }), 'utf8');
+      const projectDir = path.join(tempDir, 'project');
+      fs.mkdirSync(projectDir, { recursive: true });
+      const runtime = createObserverRuntime({
+        entrypointDir: path.join(skillDir, 'agents'),
+        skillDir,
+        configPath,
+        detectProject: () => ({
+          id: 'demo-project',
+          name: 'demo-project',
+          root: tempDir,
+          project_dir: projectDir,
+          observations_file: path.join(projectDir, 'observations.jsonl')
+        })
+      });
+      const pidFile = path.join(projectDir, '.observer.pid');
+      fs.writeFileSync(pidFile, JSON.stringify({ pid: 2468, instanceId: 'instance-stop' }), 'utf8');
+
+      const output = [];
+      let exitCode = null;
+      let killArgs = null;
+      runtime.main(['stop'], {
+        logImpl: (message) => output.push(String(message)),
+        exitImpl: (code) => {
+          exitCode = code;
+        },
+        isPidAliveImpl: () => true,
+        killImpl: (pid, signal) => {
+          killArgs = { pid, signal };
+        }
+      });
+
+      assert.deepStrictEqual(killArgs, { pid: 2468, signal: 'SIGTERM' });
+      assert.ok(output.some((line) => line.includes('Observer stopped and lease removed.')));
+      assert.strictEqual(fs.existsSync(pidFile), false);
+      assert.strictEqual(exitCode, 0);
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('getLoopLeaseStatus exits when observer config is disabled after launch', () => {
+    const tempDir = createTestDir('observer-loop-disabled-');
+    try {
+      const stateFile = path.join(tempDir, '.observer.pid');
+      fs.writeFileSync(stateFile, JSON.stringify({
+        pid: 999,
+        instanceId: 'instance-live'
+      }), 'utf8');
+
+      const result = getLoopLeaseStatus({
+        env: {
+          MDT_HELPER_STATE_FILE: stateFile,
+          MDT_HELPER_INSTANCE_ID: 'instance-live',
+          MDT_HELPER_LEASE_GRACE_UNTIL: '0'
+        },
+        currentPid: 999,
+        loadConfigImpl: () => ({ enabled: false })
+      });
+
+      assert.strictEqual(result.shouldExit, true);
+      assert.strictEqual(result.reason, 'observer-disabled');
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('runLoop exits when lease is removed or replaced', () => {
+    const tempDir = createTestDir('observer-loop-lease-');
+    try {
+      const stateFile = path.join(tempDir, '.observer.pid');
+      fs.writeFileSync(stateFile, JSON.stringify({
+        pid: 777,
+        instanceId: 'instance-a'
+      }), 'utf8');
+
+      const runtime = createObserverRuntime({
+        entrypointDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'agents'),
+        skillDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual'),
+        configPath: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'config.json'),
+        detectProject: () => ({})
+      });
+
+      const intervalCallbacks = [];
+      const timeoutCallbacks = [];
+      const exitCodes = [];
+
+      runtime.runLoop({
+        env: {
+          ...process.env,
+          MDT_HELPER_STATE_FILE: stateFile,
+          MDT_HELPER_INSTANCE_ID: 'instance-a',
+          MDT_HELPER_LEASE_GRACE_UNTIL: '0',
+          CLV2_INTERVAL_SECONDS: '60',
+          CLV2_LOG_FILE: path.join(tempDir, 'observer.log')
+        },
+        currentPid: 777,
+        loadConfigImpl: () => ({ enabled: true }),
+        analyzeObservations: () => null,
+        setIntervalImpl: (fn) => {
+          intervalCallbacks.push(fn);
+          return intervalCallbacks.length;
+        },
+        clearIntervalImpl: () => {},
+        setTimeoutImpl: (fn) => {
+          timeoutCallbacks.push(fn);
+          return timeoutCallbacks.length;
+        },
+        clearTimeoutImpl: () => {},
+        exitImpl: (code) => {
+          exitCodes.push(code);
+        }
+      });
+
+      fs.writeFileSync(stateFile, JSON.stringify({
+        pid: 777,
+        instanceId: 'instance-b'
+      }), 'utf8');
+
+      intervalCallbacks[0]();
+      assert.deepStrictEqual(exitCodes, [0]);
     } finally {
       cleanupTestDir(tempDir);
     }

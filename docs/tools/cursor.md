@@ -155,7 +155,18 @@ Because of that, MDT guidance for Cursor should follow these rules:
 - When debugging surprising Cursor behavior, check:
   1. the live `.cursor/...` files
   2. stale detached `node.exe` helper/observer processes
-  3. `workspaceStorage` cache
+3. `workspaceStorage` cache
+
+Current observer lifecycle behavior:
+
+- the detached continuous-learning observer now uses a managed lease file at
+  `~/.cursor/mdt/homunculus/<project-id>/.observer.pid`
+- MDT still keeps that path stable for compatibility, but the preferred file
+  content is now JSON rather than a plain PID
+- `start-observer.js stop` removes the lease as well as sending a best-effort
+  `SIGTERM`
+- if an older detached observer outlives its lease or is replaced by a newer
+  instance, it should now self-terminate instead of lingering indefinitely
 
 Treat Cursor as an integration that benefits from strict, tool-local prompts and
 explicit troubleshooting steps. Do not assume it will remain path-faithful when
@@ -219,10 +230,10 @@ Look for:
 
 ## Source Links
 
-- Rules: https://docs.cursor.com/en/context/rules
-- AGENTS.md and rules together: https://docs.cursor.com/en/cli/using
-- Custom commands: https://docs.cursor.com/en/agent/chat/commands
-- Memories: https://docs.cursor.com/en/context/memories
-- Background agents: https://docs.cursor.com/en/background-agents/overview
-- Terminal agent / CLI: https://docs.cursor.com/en/cli/agent
-- Skills: https://cursor.com/docs/skills
+- Rules: [docs.cursor.com/en/context/rules](https://docs.cursor.com/en/context/rules)
+- AGENTS.md and rules together: [docs.cursor.com/en/cli/using](https://docs.cursor.com/en/cli/using)
+- Custom commands: [docs.cursor.com/en/agent/chat/commands](https://docs.cursor.com/en/agent/chat/commands)
+- Memories: [docs.cursor.com/en/context/memories](https://docs.cursor.com/en/context/memories)
+- Background agents: [docs.cursor.com/en/background-agents/overview](https://docs.cursor.com/en/background-agents/overview)
+- Terminal agent / CLI: [docs.cursor.com/en/cli/agent](https://docs.cursor.com/en/cli/agent)
+- Skills: [cursor.com/docs/skills](https://cursor.com/docs/skills)

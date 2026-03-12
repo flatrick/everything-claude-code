@@ -4,6 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const { spawn, execFileSync } = require('child_process');
 const {
+  cleanupStaleManagedProcessState,
+  evaluateManagedProcessLease,
+  readManagedProcessState,
+  stopManagedProcess,
+  writeManagedProcessState
+} = require('../detached-process-lifecycle');
+const {
   createContinuousLearningContext,
   inferInstalledConfigDir,
   inferToolFromConfigDir
@@ -211,6 +218,69 @@ function createObserverRuntime(options = {}) {
     return config;
   }
 
+  function resolveObserverStateFile(project) {
+    return path.join(project.project_dir, '.observer.pid');
+  }
+
+  function readObserverState(stateFile) {
+    return readManagedProcessState(stateFile);
+  }
+
+  function cleanupObserverStateIfStale(stateFile, runtimeOptions = {}) {
+    return cleanupStaleManagedProcessState(stateFile, {
+      isPidAliveImpl: runtimeOptions.isPidAliveImpl || isPidAlive
+    });
+  }
+
+  function stopObserverProcess(stateFile, runtimeOptions = {}) {
+    return stopManagedProcess(stateFile, {
+      isPidAliveImpl: runtimeOptions.isPidAliveImpl || isPidAlive,
+      killImpl: runtimeOptions.killImpl || process.kill
+    });
+  }
+
+  function getLoopLeaseStatus(loopOptions = {}) {
+    const env = loopOptions.env || process.env;
+    const stateFile = env.MDT_HELPER_STATE_FILE;
+    const instanceId = env.MDT_HELPER_INSTANCE_ID;
+    const startupGraceUntil = parseInt(String(env.MDT_HELPER_LEASE_GRACE_UNTIL || '0'), 10);
+    const pid = typeof loopOptions.currentPid === 'number' ? loopOptions.currentPid : process.pid;
+
+    if (stateFile) {
+      const leaseStatus = evaluateManagedProcessLease({
+        stateFilePath: stateFile,
+        pid,
+        instanceId
+      });
+
+      if (leaseStatus.shouldExit && leaseStatus.reason === 'lease-missing' && Date.now() < startupGraceUntil) {
+        return {
+          shouldExit: false,
+          reason: null
+        };
+      }
+
+      if (leaseStatus.shouldExit) {
+        return leaseStatus;
+      }
+    }
+
+    const config = (loopOptions.loadConfigImpl || loadObserverConfig)(configPath);
+    if (!config.enabled) {
+      return {
+        shouldExit: true,
+        reason: 'observer-disabled',
+        state: null
+      };
+    }
+
+    return {
+      shouldExit: false,
+      reason: null,
+      state: null
+    };
+  }
+
   function inferObserverTool(config, env = process.env) {
     const resolvedEnv = buildObserverEnv(env);
     if (resolvedEnv.MDT_OBSERVER_TOOL && resolvedEnv.MDT_OBSERVER_TOOL.trim()) {
@@ -290,18 +360,79 @@ function createObserverRuntime(options = {}) {
   }
 
   function runLoop(loopOptions = {}) {
-    const intervalSec = parseInt(process.env.CLV2_INTERVAL_SECONDS || '300', 10);
+    const env = loopOptions.env || process.env;
+    const intervalSec = parseInt(env.CLV2_INTERVAL_SECONDS || '300', 10);
+    const validateIntervalMs = parseInt(String(loopOptions.validateIntervalMs || Math.min(intervalSec * 1000, 5000)), 10);
+    const setIntervalImpl = loopOptions.setIntervalImpl || setInterval;
+    const clearIntervalImpl = loopOptions.clearIntervalImpl || clearInterval;
+    const setTimeoutImpl = loopOptions.setTimeoutImpl || setTimeout;
+    const clearTimeoutImpl = loopOptions.clearTimeoutImpl || clearTimeout;
+    const exitImpl = loopOptions.exitImpl || process.exit;
+    const logFile = env.CLV2_LOG_FILE;
+    let analysisTimer = null;
+    let validationTimer = null;
+    let startupTimer = null;
+    let stopped = false;
 
-    function analyze() {
-      analyzeObservations(loopOptions);
+    function stopLoop(reason) {
+      if (stopped) {
+        return;
+      }
+      stopped = true;
+      if (analysisTimer) {
+        clearIntervalImpl(analysisTimer);
+      }
+      if (validationTimer) {
+        clearIntervalImpl(validationTimer);
+      }
+      if (startupTimer) {
+        clearTimeoutImpl(startupTimer);
+      }
+      if (reason) {
+        appendLog(logFile, `Observer loop exiting: ${reason}`);
+      }
+      exitImpl(0);
     }
 
-    setInterval(analyze, intervalSec * 1000);
-    setTimeout(analyze, 5000);
+    function validateLease() {
+      const status = getLoopLeaseStatus(loopOptions);
+      if (status.shouldExit) {
+        stopLoop(status.reason);
+        return false;
+      }
+      return true;
+    }
+
+    function analyze() {
+      if (!validateLease()) {
+        return;
+      }
+      const analyzeImpl = loopOptions.analyzeObservations || analyzeObservations;
+      analyzeImpl({
+        ...loopOptions,
+        env,
+        config: (loopOptions.loadConfigImpl || loadObserverConfig)(configPath)
+      });
+    }
+
+    validationTimer = setIntervalImpl(validateLease, validateIntervalMs);
+    analysisTimer = setIntervalImpl(analyze, intervalSec * 1000);
+    startupTimer = setTimeoutImpl(analyze, 5000);
+
+    return {
+      stopLoop,
+      validateLease
+    };
   }
 
-  function main(argv = process.argv.slice(2)) {
-    const observerEnv = buildObserverEnv(process.env);
+  function main(argv = process.argv.slice(2), runtimeOptions = {}) {
+    const env = runtimeOptions.env || process.env;
+    const observerEnv = buildObserverEnv(env);
+    const log = runtimeOptions.logImpl || console.log;
+    const exitImpl = runtimeOptions.exitImpl || process.exit;
+    const spawnImpl = runtimeOptions.spawnImpl || spawn;
+    const isPidAliveImpl = runtimeOptions.isPidAliveImpl || isPidAlive;
+    const setTimeoutImpl = runtimeOptions.setTimeoutImpl || setTimeout;
     for (const [key, value] of Object.entries(observerEnv)) {
       if (process.env[key] === undefined && value !== undefined) {
         process.env[key] = value;
@@ -310,7 +441,7 @@ function createObserverRuntime(options = {}) {
 
     const project = detectProject(process.cwd());
     const config = loadObserverConfig();
-    const pidFile = path.join(project.project_dir, '.observer.pid');
+    const pidFile = resolveObserverStateFile(project);
     const logFile = path.join(project.project_dir, 'observer.log');
     const observationsFile = project.observations_file;
     const instinctsDir = path.join(project.project_dir, 'instincts', 'personal');
@@ -319,87 +450,87 @@ function createObserverRuntime(options = {}) {
     const cmd = argv[0] || 'start';
 
     if (cmd === '--loop') {
-      runLoop({ config });
+      runLoop({
+        env: observerEnv,
+        loadConfigImpl: loadObserverConfig
+      });
       return;
     }
 
-    console.log(`Project: ${project.name} (${project.id})`);
-    console.log(`Storage: ${project.project_dir}`);
-    console.log(`Observer tool: ${inferObserverTool(config)}`);
+    log(`Project: ${project.name} (${project.id})`);
+    log(`Storage: ${project.project_dir}`);
+    log(`Observer tool: ${inferObserverTool(config)}`);
 
     if (cmd === 'stop') {
-      if (fs.existsSync(pidFile)) {
-        const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
-        if (isPidAlive(pid)) {
-          console.log(`Stopping observer for ${project.name} (PID: ${pid})...`);
-          try {
-            process.kill(pid, 'SIGTERM');
-          } catch {
-            // Process may already be gone.
-          }
-          fs.unlinkSync(pidFile);
-          console.log('Observer stopped.');
-        } else {
-          console.log('Observer not running (stale PID file).');
-          fs.unlinkSync(pidFile);
-        }
+      const stopResult = stopObserverProcess(pidFile, runtimeOptions);
+      if (stopResult.state && stopResult.reason === 'signaled') {
+        log(`Stopping observer for ${project.name} (PID: ${stopResult.state.pid})...`);
+        log('Observer stopped and lease removed.');
+      } else if (stopResult.state && stopResult.reason === 'stale') {
+        log(`Observer not running (stale lease removed for PID: ${stopResult.state.pid}).`);
       } else {
-        console.log('Observer not running.');
+        log('Observer not running.');
       }
-      process.exit(0);
+      exitImpl(0);
       return;
     }
 
     if (cmd === 'status') {
-      if (fs.existsSync(pidFile)) {
-        const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
-        if (isPidAlive(pid)) {
-          console.log(`Observer is running (PID: ${pid})`);
-          console.log(`Log: ${logFile}`);
+      const state = readObserverState(pidFile);
+      if (state) {
+        if (isPidAliveImpl(state.pid)) {
+          log(`Observer is running (PID: ${state.pid})`);
+          log(`Lease: ${pidFile}`);
+          log(`Log: ${logFile}`);
           const lineCount = fs.existsSync(observationsFile)
             ? fs.readFileSync(observationsFile, 'utf8').split('\n').filter(Boolean).length
             : 0;
-          console.log(`Observations: ${lineCount} lines`);
+          log(`Observations: ${lineCount} lines`);
           const instinctCount = fs.existsSync(instinctsDir)
             ? fs.readdirSync(instinctsDir).filter(f => /\.(yaml|yml|md)$/i.test(f)).length
             : 0;
-          console.log(`Instincts: ${instinctCount}`);
-          process.exit(0);
+          log(`Instincts: ${instinctCount}`);
+          exitImpl(0);
         } else {
-          console.log('Observer not running (stale PID file)');
-          fs.unlinkSync(pidFile);
-          process.exit(1);
+          cleanupObserverStateIfStale(pidFile, runtimeOptions);
+          log(`Observer not running (stale lease removed for PID: ${state.pid})`);
+          exitImpl(1);
         }
       } else {
-        console.log('Observer not running');
-        process.exit(1);
+        log('Observer not running');
+        exitImpl(1);
       }
       return;
     }
 
     if (cmd !== 'start') {
-      console.log('Usage: node start-observer.js {start|stop|status}');
-      process.exit(1);
+      log('Usage: node start-observer.js {start|stop|status}');
+      exitImpl(1);
+      return;
     }
 
     if (!config.enabled) {
-      console.log('Observer is disabled in config.json (observer.enabled: false).');
-      console.log('Set observer.enabled to true in config.json to enable.');
-      process.exit(1);
+      log('Observer is disabled in config.json (observer.enabled: false).');
+      log('Set observer.enabled to true in config.json to enable.');
+      exitImpl(1);
+      return;
     }
 
-    if (fs.existsSync(pidFile)) {
-      const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
-      if (isPidAlive(pid)) {
-        console.log(`Observer already running for ${project.name} (PID: ${pid})`);
-        process.exit(0);
+    const existingState = readObserverState(pidFile);
+    if (existingState) {
+      if (isPidAliveImpl(existingState.pid)) {
+        log(`Observer already running for ${project.name} (PID: ${existingState.pid})`);
+        exitImpl(0);
+        return;
       }
-      fs.unlinkSync(pidFile);
+      cleanupObserverStateIfStale(pidFile, runtimeOptions);
     }
 
-    console.log(`Starting observer agent for ${project.name}...`);
+    log(`Starting observer agent for ${project.name}...`);
+    const instanceId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const entrypoint = path.join(entrypointDir, 'start-observer.js');
 
-    const child = spawn(process.execPath, [path.join(entrypointDir, 'start-observer.js'), '--loop'], {
+    const child = spawnImpl(process.execPath, [entrypoint, '--loop'], {
       stdio: ['ignore', 'ignore', 'ignore'],
       detached: true,
       cwd: project.root || process.cwd(),
@@ -412,27 +543,44 @@ function createObserverRuntime(options = {}) {
         CLV2_INTERVAL_SECONDS: String(intervalSeconds),
         CLV2_PROJECT_NAME: project.name,
         CLV2_PROJECT_ID: project.id,
-        CLV2_LOG_FILE: logFile
+        CLV2_LOG_FILE: logFile,
+        MDT_HELPER_STATE_FILE: pidFile,
+        MDT_HELPER_INSTANCE_ID: instanceId,
+        MDT_HELPER_LEASE_GRACE_UNTIL: String(Date.now() + 10000)
       }
     });
 
     child.unref();
 
-    fs.writeFileSync(pidFile, String(child.pid), 'utf8');
-    appendLog(logFile, `Observer started for ${project.name} (PID: ${child.pid})`);
+    writeManagedProcessState(pidFile, {
+      pid: child.pid,
+      instanceId,
+      cwd: project.root || process.cwd(),
+      entrypoint
+    });
+    appendLog(logFile, `Observer started for ${project.name} (PID: ${child.pid}, instance: ${instanceId})`);
 
-    setTimeout(() => {
-      if (isPidAlive(child.pid)) {
-        console.log(`Observer started (PID: ${child.pid})`);
-        console.log(`Log: ${logFile}`);
+    setTimeoutImpl(() => {
+      if (isPidAliveImpl(child.pid)) {
+        log(`Observer started (PID: ${child.pid})`);
+        log(`Lease: ${pidFile}`);
+        log(`Log: ${logFile}`);
       } else {
-        console.log(`Failed to start observer (process died, check ${logFile})`);
-        try {
-          fs.unlinkSync(pidFile);
-        } catch {
-          // Best-effort stale PID cleanup.
+        const leaseStatus = evaluateManagedProcessLease({
+          stateFilePath: pidFile,
+          pid: child.pid,
+          instanceId
+        });
+        log(`Failed to start observer (process died, check ${logFile})`);
+        if (!leaseStatus.shouldExit) {
+          stopObserverProcess(pidFile, runtimeOptions);
         }
-        process.exit(1);
+        try {
+          cleanupObserverStateIfStale(pidFile, runtimeOptions);
+        } catch {
+          // Best-effort stale lease cleanup.
+        }
+        exitImpl(1);
       }
     }, 2000);
   }
@@ -446,11 +594,15 @@ function createObserverRuntime(options = {}) {
     inferInstalledConfigDir,
     inferObserverTool,
     inferToolFromConfigDir,
+    getLoopLeaseStatus,
     loadObserverConfig,
     main,
     mergeObserverConfig,
+    readObserverState,
     resolveWindowsSpawnInvocation,
+    resolveObserverStateFile,
     shouldResolveWindowsSpawnCommand,
+    stopObserverProcess,
     runLoop
   };
 }

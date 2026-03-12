@@ -86,6 +86,7 @@ const testFiles = [
   'lib/detect-env.test.js',
   'lib/continuous-learning-runtime-context.test.js',
   'lib/continuous-learning-project-detection.test.js',
+  'lib/detached-process-lifecycle.test.js',
   'lib/continuous-learning-observer-runtime.test.js',
   'lib/utils.test.js',
   'lib/utils-rounds.test.js',
