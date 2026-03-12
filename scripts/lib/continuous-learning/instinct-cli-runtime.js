@@ -5,60 +5,50 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 
-function createInstinctCliRuntime(options = {}) {
-  const skillDir = path.resolve(options.skillDir || path.join(options.entrypointDir || process.cwd(), '..'));
-  const detectProject = options.detectProject;
-  const getHomunculusDir = options.getHomunculusDir;
-  const inferInstalledConfigDir = options.inferInstalledConfigDir;
+const TOOL_ENV_MAP = {
+  '.cursor': { envKey: 'CURSOR_AGENT', observerTool: 'cursor' },
+  '.claude': { envKey: 'CLAUDE_CODE', observerTool: 'claude' },
+  '.codex': { envKey: 'CODEX_AGENT', observerTool: 'codex' }
+};
+const ALLOWED_EXT = ['.yaml', '.yml', '.md'];
 
-  if (typeof detectProject !== 'function' || typeof getHomunculusDir !== 'function') {
-    throw new Error('createInstinctCliRuntime requires detectProject and getHomunculusDir');
-  }
+function resolveProjectRootFromSkillDir(skillDir) {
+  const candidates = [
+    path.resolve(skillDir, '..', '..'),
+    path.resolve(skillDir, '..', '..', '..')
+  ];
 
-  function resolveProjectRoot() {
-    const candidates = [
-      path.resolve(skillDir, '..', '..'),
-      path.resolve(skillDir, '..', '..', '..')
-    ];
-
-    for (const candidate of candidates) {
-      const baseName = path.basename(candidate).toLowerCase();
-      if (baseName === '.codex' || baseName === '.cursor' || baseName === '.claude' || baseName === '.agents') {
-        continue;
-      }
-      if (
-        fs.existsSync(path.join(candidate, '.git')) ||
-        fs.existsSync(path.join(candidate, 'package.json')) ||
-        fs.existsSync(path.join(candidate, 'AGENTS.md'))
-      ) {
-        return candidate;
-      }
+  for (const candidate of candidates) {
+    const baseName = path.basename(candidate).toLowerCase();
+    if (baseName === '.codex' || baseName === '.cursor' || baseName === '.claude' || baseName === '.agents') {
+      continue;
     }
-
-    return null;
+    if (
+      fs.existsSync(path.join(candidate, '.git')) ||
+      fs.existsSync(path.join(candidate, 'package.json')) ||
+      fs.existsSync(path.join(candidate, 'AGENTS.md'))
+    ) {
+      return candidate;
+    }
   }
 
-  const TOOL_ENV_MAP = {
-    '.cursor': { envKey: 'CURSOR_AGENT', observerTool: 'cursor' },
-    '.claude': { envKey: 'CLAUDE_CODE', observerTool: 'claude' },
-    '.codex': { envKey: 'CODEX_AGENT', observerTool: 'codex' }
-  };
+  return null;
+}
 
-  function buildToolEnv(env = process.env) {
-    const projectRoot = resolveProjectRoot();
+function createToolEnvBuilder(skillDir, inferInstalledConfigDir) {
+  const projectRoot = resolveProjectRootFromSkillDir(skillDir);
+
+  return function buildToolEnv(env = process.env) {
     const nextEnv = { ...env };
     const homeDir = nextEnv.HOME || nextEnv.USERPROFILE || process.env.HOME || process.env.USERPROFILE || '';
+    const { toolInfo, configDir, dataDir } = resolveToolRuntimeInfo(
+      nextEnv,
+      homeDir,
+      skillDir,
+      inferInstalledConfigDir
+    );
 
-    const installedDir = typeof inferInstalledConfigDir === 'function'
-      ? inferInstalledConfigDir(path.join(skillDir, 'scripts'))
-      : null;
-    const toolName = installedDir ? path.basename(installedDir).toLowerCase() : '.codex';
-    const toolInfo = TOOL_ENV_MAP[toolName] || TOOL_ENV_MAP['.codex'];
-
-    const configDir = nextEnv.CONFIG_DIR || (installedDir || path.join(homeDir, '.codex'));
-    const dataDir = nextEnv.DATA_DIR || path.join(configDir, 'mdt');
     fs.mkdirSync(dataDir, { recursive: true });
-
     nextEnv[toolInfo.envKey] = '1';
     nextEnv.MDT_OBSERVER_TOOL = toolInfo.observerTool;
     nextEnv.CONFIG_DIR = configDir;
@@ -68,13 +58,22 @@ function createInstinctCliRuntime(options = {}) {
     }
 
     return nextEnv;
-  }
+  };
+}
 
-  function buildCodexEnv(env) {
-    return buildToolEnv(env);
-  }
+function resolveToolRuntimeInfo(env, homeDir, skillDir, inferInstalledConfigDir) {
+  const installedDir = typeof inferInstalledConfigDir === 'function'
+    ? inferInstalledConfigDir(path.join(skillDir, 'scripts'))
+    : null;
+  const toolName = installedDir ? path.basename(installedDir).toLowerCase() : '.codex';
+  const toolInfo = TOOL_ENV_MAP[toolName] || TOOL_ENV_MAP['.codex'];
+  const configDir = env.CONFIG_DIR || (installedDir || path.join(homeDir, '.codex'));
+  const dataDir = env.DATA_DIR || path.join(configDir, 'mdt');
+  return { toolInfo, configDir, dataDir };
+}
 
-  function withToolEnv(fn) {
+function createWithToolEnv(buildToolEnv) {
+  return function withToolEnv(fn) {
     const nextEnv = buildToolEnv();
     const previous = {};
 
@@ -94,130 +93,191 @@ function createInstinctCliRuntime(options = {}) {
         }
       }
     }
-  }
+  };
+}
 
-  function getCliPaths() {
+function createCliPathsResolver(getHomunculusDir, withToolEnv) {
+  return function getCliPaths() {
     const homunculusDir = withToolEnv(() => getHomunculusDir());
     return {
-      // Project-scoped state now lives directly under homunculus/<project-id>/.
       PROJECTS_DIR: homunculusDir,
       REGISTRY_FILE: path.join(homunculusDir, 'projects.json'),
       GLOBAL_PERSONAL: path.join(homunculusDir, 'instincts', 'personal'),
       GLOBAL_INHERITED: path.join(homunculusDir, 'instincts', 'inherited')
     };
+  };
+}
+
+function finalizeFrontmatterBlock(current, contentLines, instincts) {
+  if (current && current.id) {
+    current.content = contentLines.join('\n').trim();
+    instincts.push(current);
+  }
+}
+
+function parseFrontmatterLine(current, line) {
+  const idx = line.indexOf(':');
+  const key = line.slice(0, idx).trim();
+  const value = line.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+  current[key] = key === 'confidence' ? parseFloat(value) || 0.5 : value;
+}
+
+function parseInstinctFile(content) {
+  const instincts = [];
+  let current = {};
+  let inFrontmatter = false;
+  const contentLines = [];
+
+  for (const line of content.split('\n')) {
+    if (line.trim() === '---') {
+      if (inFrontmatter) {
+        inFrontmatter = false;
+        finalizeFrontmatterBlock(current, contentLines, instincts);
+        current = {};
+        contentLines.length = 0;
+      } else {
+        inFrontmatter = true;
+        current = {};
+        contentLines.length = 0;
+      }
+      continue;
+    }
+    if (inFrontmatter && line.includes(':')) {
+      parseFrontmatterLine(current, line);
+    } else if (!inFrontmatter) {
+      contentLines.push(line);
+    }
   }
 
-  const ALLOWED_EXT = ['.yaml', '.yml', '.md'];
+  finalizeFrontmatterBlock(current, contentLines, instincts);
+  return instincts;
+}
 
-  function parseInstinctFile(content) {
-    const instincts = [];
-    let current = {};
-    let inFrontmatter = false;
-    const contentLines = [];
+function loadInstinctsFromDir(dirPath, sourceType, scopeLabel) {
+  const instincts = [];
+  if (!dirPath || !fs.existsSync(dirPath)) return instincts;
+  const files = fs.readdirSync(dirPath, { withFileTypes: true })
+    .filter((e) => e.isFile() && ALLOWED_EXT.some((ext) => e.name.toLowerCase().endsWith(ext)))
+    .map((e) => path.join(dirPath, e.name))
+    .sort();
 
-    for (const line of content.split('\n')) {
-      if (line.trim() === '---') {
-        if (inFrontmatter) {
-          inFrontmatter = false;
-          if (current && current.id) {
-            current.content = contentLines.join('\n').trim();
-            instincts.push(current);
-          }
-          current = {};
-          contentLines.length = 0;
-        } else {
-          inFrontmatter = true;
-          current = {};
-          contentLines.length = 0;
-        }
-        continue;
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(file, 'utf8');
+      const parsed = parseInstinctFile(content);
+      for (const inst of parsed) {
+        inst._source_file = file;
+        inst._source_type = sourceType;
+        inst._scope_label = scopeLabel;
+        if (!inst.scope) inst.scope = scopeLabel;
+        instincts.push(inst);
       }
-      if (inFrontmatter && line.includes(':')) {
-        const idx = line.indexOf(':');
-        const key = line.slice(0, idx).trim();
-        let value = line.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
-        if (key === 'confidence') current[key] = parseFloat(value) || 0.5;
-        else current[key] = value;
-      } else if (!inFrontmatter) {
-        contentLines.push(line);
-      }
+    } catch (err) {
+      console.error(`Warning: Failed to parse ${file}:`, err.message);
     }
-    if (current && current.id) {
-      current.content = contentLines.join('\n').trim();
-      instincts.push(current);
-    }
+  }
+  return instincts;
+}
+
+function loadAllInstincts(project, getCliPaths, includeGlobal = true) {
+  const { GLOBAL_PERSONAL, GLOBAL_INHERITED } = getCliPaths();
+  const instincts = [];
+
+  if (project.id !== 'global') {
+    instincts.push(...loadInstinctsFromDir(project.instincts_personal, 'personal', 'project'));
+    instincts.push(...loadInstinctsFromDir(project.instincts_inherited, 'inherited', 'project'));
+  }
+
+  if (!includeGlobal) {
     return instincts;
   }
 
-  function loadInstinctsFromDir(dirPath, sourceType, scopeLabel) {
-    const instincts = [];
-    if (!dirPath || !fs.existsSync(dirPath)) return instincts;
-    const files = fs.readdirSync(dirPath, { withFileTypes: true })
-      .filter(e => e.isFile() && ALLOWED_EXT.some(ext => e.name.toLowerCase().endsWith(ext)))
-      .map(e => path.join(dirPath, e.name))
-      .sort();
-
-    for (const file of files) {
-      try {
-        const content = fs.readFileSync(file, 'utf8');
-        const parsed = parseInstinctFile(content);
-        for (const inst of parsed) {
-          inst._source_file = file;
-          inst._source_type = sourceType;
-          inst._scope_label = scopeLabel;
-          if (!inst.scope) inst.scope = scopeLabel;
-          instincts.push(inst);
-        }
-      } catch (err) {
-        console.error(`Warning: Failed to parse ${file}:`, err.message);
-      }
-    }
-    return instincts;
+  const globalInstincts = [
+    ...loadInstinctsFromDir(GLOBAL_PERSONAL, 'personal', 'global'),
+    ...loadInstinctsFromDir(GLOBAL_INHERITED, 'inherited', 'global')
+  ];
+  const projectIds = new Set(instincts.map((i) => i.id));
+  for (const instinct of globalInstincts) {
+    if (!projectIds.has(instinct.id)) instincts.push(instinct);
   }
+  return instincts;
+}
 
-  function loadAllInstincts(project, includeGlobal = true) {
-    const { GLOBAL_PERSONAL, GLOBAL_INHERITED } = getCliPaths();
-    const instincts = [];
-
-    if (project.id !== 'global') {
-      instincts.push(...loadInstinctsFromDir(project.instincts_personal, 'personal', 'project'));
-      instincts.push(...loadInstinctsFromDir(project.instincts_inherited, 'inherited', 'project'));
-    }
-
-    if (includeGlobal) {
-      const globalInstincts = [];
-      globalInstincts.push(...loadInstinctsFromDir(GLOBAL_PERSONAL, 'personal', 'global'));
-      globalInstincts.push(...loadInstinctsFromDir(GLOBAL_INHERITED, 'inherited', 'global'));
-      const projectIds = new Set(instincts.map(i => i.id));
-      for (const gi of globalInstincts) {
-        if (!projectIds.has(gi.id)) instincts.push(gi);
-      }
-    }
-
-    return instincts;
+function loadProjectOnlyInstincts(project, getCliPaths) {
+  const { GLOBAL_PERSONAL, GLOBAL_INHERITED } = getCliPaths();
+  if (project.id === 'global') {
+    return [
+      ...loadInstinctsFromDir(GLOBAL_PERSONAL, 'personal', 'global'),
+      ...loadInstinctsFromDir(GLOBAL_INHERITED, 'inherited', 'global')
+    ];
   }
+  return loadAllInstincts(project, getCliPaths, false);
+}
 
-  function loadProjectOnlyInstincts(project) {
-    const { GLOBAL_PERSONAL, GLOBAL_INHERITED } = getCliPaths();
-    if (project.id === 'global') {
-      return [
-        ...loadInstinctsFromDir(GLOBAL_PERSONAL, 'personal', 'global'),
-        ...loadInstinctsFromDir(GLOBAL_INHERITED, 'inherited', 'global')
-      ];
-    }
-    return loadAllInstincts(project, false);
-  }
+function validateInstinctId(id) {
+  if (!id || id.length > 128) return false;
+  if (/[/\\.]\.|^\./.test(id) || id.includes('..')) return false;
+  return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id);
+}
 
-  function validateInstinctId(id) {
-    if (!id || id.length > 128) return false;
-    if (/[/\\.]\.|^\./.test(id) || id.includes('..')) return false;
-    return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id);
+function parseCliArgs(rest) {
+  const args = { scope: 'all', output: null, dry_run: false, source: rest[0], instinct_id: rest[0] };
+  for (let i = 0; i < rest.length; i++) {
+    i = applyCliOption(args, rest, i);
   }
+  return args;
+}
+
+function applyCliOption(args, rest, index) {
+  const arg = rest[index];
+  const nextArg = rest[index + 1];
+  if (arg === '--scope' && nextArg) {
+    args.scope = nextArg;
+    return index + 1;
+  }
+  if ((arg === '--output' || arg === '-o') && nextArg) {
+    args.output = nextArg;
+    return index + 1;
+  }
+  if (arg === '--domain' && nextArg) {
+    args.domain = nextArg;
+    return index + 1;
+  }
+  if (arg === '--dry-run') {
+    args.dry_run = true;
+    return index;
+  }
+  if (arg === '--force') {
+    args.force = true;
+    return index;
+  }
+  if (arg === '--min-confidence' && nextArg) {
+    args.min_confidence = parseFloat(nextArg);
+    return index + 1;
+  }
+  return index;
+}
+
+// The CLI exposes several command handlers from one factory; keep the factory
+// intact and lint the individual helpers instead of forcing a risky split.
+// eslint-disable-next-line max-lines-per-function
+function createInstinctCliRuntime(options = {}) {
+  const skillDir = path.resolve(options.skillDir || path.join(options.entrypointDir || process.cwd(), '..'));
+  const detectProject = options.detectProject;
+  const getHomunculusDir = options.getHomunculusDir;
+  const inferInstalledConfigDir = options.inferInstalledConfigDir;
+
+  if (typeof detectProject !== 'function' || typeof getHomunculusDir !== 'function') {
+    throw new Error('createInstinctCliRuntime requires detectProject and getHomunculusDir');
+  }
+  const buildToolEnv = createToolEnvBuilder(skillDir, inferInstalledConfigDir);
+  const withToolEnv = createWithToolEnv(buildToolEnv);
+  const getCliPaths = createCliPathsResolver(getHomunculusDir, withToolEnv);
 
   function cmdStatus() {
     const { GLOBAL_PERSONAL } = getCliPaths();
     const project = withToolEnv(() => detectProject(process.cwd()));
-    const instincts = loadAllInstincts(project);
+    const instincts = loadAllInstincts(project, getCliPaths);
 
     if (instincts.length === 0) {
       console.log('No instincts found.');
@@ -314,10 +374,10 @@ function createInstinctCliRuntime(options = {}) {
     const project = withToolEnv(() => detectProject(process.cwd()));
     const scope = args.scope || 'all';
     let instincts;
-    if (scope === 'project') instincts = loadProjectOnlyInstincts(project);
+    if (scope === 'project') instincts = loadProjectOnlyInstincts(project, getCliPaths);
     else if (scope === 'global') {
       instincts = [...loadInstinctsFromDir(GLOBAL_PERSONAL, 'personal', 'global'), ...loadInstinctsFromDir(GLOBAL_INHERITED, 'inherited', 'global')];
-    } else instincts = loadAllInstincts(project);
+    } else instincts = loadAllInstincts(project, getCliPaths);
 
     if (args.domain) instincts = instincts.filter(i => i.domain === args.domain);
     if (instincts.length === 0) {
@@ -346,7 +406,7 @@ function createInstinctCliRuntime(options = {}) {
 
   function cmdEvolve() {
     const project = withToolEnv(() => detectProject(process.cwd()));
-    const instincts = loadAllInstincts(project);
+    const instincts = loadAllInstincts(project, getCliPaths);
 
     if (instincts.length < 3) {
       console.log('Need at least 3 instincts to analyze patterns.');
@@ -429,7 +489,7 @@ function createInstinctCliRuntime(options = {}) {
       }
       const targetScope = args.scope || 'project';
       console.log(`\nFound ${newInstincts.length} instincts to import. Target scope: ${targetScope}`);
-      const existing = loadAllInstincts(project);
+      const existing = loadAllInstincts(project, getCliPaths);
       const existingIds = new Set(existing.map(i => i.id));
       const toAdd = newInstincts.filter(i => !existingIds.has(i.id));
       const toUpdate = newInstincts.filter(i => {
@@ -470,7 +530,7 @@ function createInstinctCliRuntime(options = {}) {
         console.error(`Invalid instinct ID: '${instinctId}'`);
         return 1;
       }
-      const projectInstincts = loadProjectOnlyInstincts(project);
+      const projectInstincts = loadProjectOnlyInstincts(project, getCliPaths);
       const target = projectInstincts.find(i => i.id === instinctId);
       if (!target) {
         console.error(`Instinct '${instinctId}' not found in project ${project.name}.`);
@@ -496,17 +556,7 @@ function createInstinctCliRuntime(options = {}) {
   function main(argv = process.argv.slice(2)) {
     const cmd = argv[0];
     const rest = argv.slice(1);
-
-    const args = { scope: 'all', output: null, dry_run: false, source: rest[0], instinct_id: rest[0] };
-    for (let i = 0; i < rest.length; i++) {
-      if (rest[i] === '--scope' && rest[i + 1]) args.scope = rest[i + 1];
-      if (rest[i] === '--output' && rest[i + 1]) args.output = rest[i + 1];
-      if (rest[i] === '-o' && rest[i + 1]) args.output = rest[i + 1];
-      if (rest[i] === '--domain' && rest[i + 1]) args.domain = rest[i + 1];
-      if (rest[i] === '--dry-run') args.dry_run = true;
-      if (rest[i] === '--force') args.force = true;
-      if (rest[i] === '--min-confidence' && rest[i + 1]) args.min_confidence = parseFloat(rest[i + 1]);
-    }
+    const args = parseCliArgs(rest);
 
     let exitCode = 0;
     switch (cmd) {
@@ -544,7 +594,7 @@ function createInstinctCliRuntime(options = {}) {
   }
 
   return {
-    buildCodexEnv,
+    buildCodexEnv: buildToolEnv,
     getCliPaths,
     main
   };

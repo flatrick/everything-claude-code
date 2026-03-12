@@ -7,6 +7,18 @@ module.exports = [
     },
     js.configs.recommended,
     {
+        files: ['**/*.mjs'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'module',
+            globals: {
+                ...globals.node,
+                ...globals.es2022
+            }
+        }
+    },
+    {
+        files: ['**/*.js', '**/*.cjs'],
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'commonjs',

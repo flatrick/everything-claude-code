@@ -144,6 +144,53 @@ function resolveTargetPath(filePath, repoRoot, targetPath) {
   return path.resolve(path.dirname(filePath), targetPath);
 }
 
+function loadAnchorSet(anchorFile, anchorCache) {
+  let anchors = anchorCache.get(anchorFile);
+  if (!anchors) {
+    anchors = buildAnchorSet(readMarkdownFile(anchorFile));
+    anchorCache.set(anchorFile, anchors);
+  }
+  return anchors;
+}
+
+function validateLinkInFile(filePath, link, repoRoot, io, anchorCache) {
+  const target = link.target;
+  if (!target || isExternalTarget(target)) {
+    return { hasErrors: false, checkedLinks: 0, skippedExternal: target ? 1 : 0 };
+  }
+
+  const { pathPart, anchorPart } = splitTarget(target);
+  const resolvedPath = resolveTargetPath(filePath, repoRoot, pathPart);
+  const displayFile = normalizeSlashes(path.relative(repoRoot, filePath));
+
+  if (pathPart && !fs.existsSync(resolvedPath)) {
+    io.error(`ERROR: ${displayFile}:${link.line} - broken local link target "${target}"`);
+    return { hasErrors: true, checkedLinks: 1, skippedExternal: 0 };
+  }
+
+  if (!anchorPart) {
+    return { hasErrors: false, checkedLinks: 1, skippedExternal: 0 };
+  }
+
+  const anchorFile = pathPart ? resolvedPath : filePath;
+  if (!MARKDOWN_EXT_RE.test(anchorFile)) {
+    return { hasErrors: false, checkedLinks: 1, skippedExternal: 0 };
+  }
+
+  try {
+    const anchors = loadAnchorSet(anchorFile, anchorCache);
+    if (!anchors.has(anchorPart.toLowerCase())) {
+      io.error(`ERROR: ${displayFile}:${link.line} - broken markdown anchor "${target}"`);
+      return { hasErrors: true, checkedLinks: 1, skippedExternal: 0 };
+    }
+  } catch (error) {
+    io.error(`ERROR: ${displayFile}:${link.line} - failed to read anchor target "${target}": ${error.message}`);
+    return { hasErrors: true, checkedLinks: 1, skippedExternal: 0 };
+  }
+
+  return { hasErrors: false, checkedLinks: 1, skippedExternal: 0 };
+}
+
 function validateMarkdownLinks(options = {}) {
   const repoRoot = options.repoRoot || ROOT_DIR;
   const io = options.io || DEFAULT_IO;
@@ -166,49 +213,10 @@ function validateMarkdownLinks(options = {}) {
 
     const links = extractMarkdownLinks(content);
     for (const link of links) {
-      const target = link.target;
-      if (!target) continue;
-      if (isExternalTarget(target)) {
-        skippedExternal++;
-        continue;
-      }
-
-      checkedLinks++;
-      const { pathPart, anchorPart } = splitTarget(target);
-      const resolvedPath = resolveTargetPath(filePath, repoRoot, pathPart);
-      const displayFile = normalizeSlashes(path.relative(repoRoot, filePath));
-
-      if (pathPart && !fs.existsSync(resolvedPath)) {
-        io.error(`ERROR: ${displayFile}:${link.line} - broken local link target "${target}"`);
-        hasErrors = true;
-        continue;
-      }
-
-      if (!anchorPart) {
-        continue;
-      }
-
-      const anchorFile = pathPart ? resolvedPath : filePath;
-      if (!MARKDOWN_EXT_RE.test(anchorFile)) {
-        continue;
-      }
-
-      let anchors = anchorCache.get(anchorFile);
-      if (!anchors) {
-        try {
-          anchors = buildAnchorSet(readMarkdownFile(anchorFile));
-        } catch (error) {
-          io.error(`ERROR: ${displayFile}:${link.line} - failed to read anchor target "${target}": ${error.message}`);
-          hasErrors = true;
-          continue;
-        }
-        anchorCache.set(anchorFile, anchors);
-      }
-
-      if (!anchors.has(anchorPart.toLowerCase())) {
-        io.error(`ERROR: ${displayFile}:${link.line} - broken markdown anchor "${target}"`);
-        hasErrors = true;
-      }
+      const result = validateLinkInFile(filePath, link, repoRoot, io, anchorCache);
+      hasErrors = result.hasErrors || hasErrors;
+      checkedLinks += result.checkedLinks;
+      skippedExternal += result.skippedExternal;
     }
   }
 

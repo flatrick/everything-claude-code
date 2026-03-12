@@ -7,25 +7,6 @@ const fs = require('fs');
 const path = require('path');
 const { test } = require('../helpers/test-runner');
 
-function listRelativeFiles(dirPath) {
-  const files = [];
-
-  function walk(currentDir) {
-    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(currentDir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-      } else if (entry.isFile()) {
-        files.push(path.relative(dirPath, fullPath));
-      }
-    }
-  }
-
-  walk(dirPath);
-  return files.sort();
-}
-
 function runTests() {
   console.log('\n=== Testing Hook Source Layout ===\n');
 

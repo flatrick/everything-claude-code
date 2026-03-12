@@ -22,6 +22,7 @@ const DEFAULT_CODEX_SKILLS_DIR = path.join(REPO_ROOT, 'codex-template', 'skills'
 const REQUIRED_PACKAGES = new Set(['typescript', 'sql', 'dotnet', 'rust', 'python', 'bash', 'powershell']);
 const PACKAGE_KINDS = new Set(['language', 'scaffolding', 'capability']);
 const PACKAGE_TARGETS = new Set(['claude', 'cursor', 'gemini', 'codex']);
+const REQUIRE_KEYS = ['hooks', 'runtimeScripts', 'sessionData'];
 
 function readJsonFile(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -52,7 +53,23 @@ function validateRequires(packageName, requires, io) {
     return true;
   }
 
-  const allowedKeys = new Set(['hooks', 'runtimeScripts', 'sessionData', 'tools']);
+  hasErrors = validateRequireKeys(packageName, requires, io) || hasErrors;
+  hasErrors = validateRequireFlags(packageName, requires, io) || hasErrors;
+  const declaresCapabilityFlags = REQUIRE_KEYS.some((key) => requires[key] === true);
+  if (requires.tools !== undefined) {
+    hasErrors = validateRequireTools(packageName, requires.tools, io) || hasErrors;
+  } else if (declaresCapabilityFlags) {
+    io.error(`ERROR: ${packageName}/package.json - requires.tools must be provided when capability flags are set`);
+    hasErrors = true;
+  }
+
+  return hasErrors;
+}
+
+function validateRequireKeys(packageName, requires, io) {
+  const allowedKeys = new Set([...REQUIRE_KEYS, 'tools']);
+  let hasErrors = false;
+
   for (const key of Object.keys(requires)) {
     if (!allowedKeys.has(key)) {
       io.error(`ERROR: ${packageName}/package.json - requires contains unsupported key: ${key}`);
@@ -60,30 +77,34 @@ function validateRequires(packageName, requires, io) {
     }
   }
 
-  for (const key of ['hooks', 'runtimeScripts', 'sessionData']) {
+  return hasErrors;
+}
+
+function validateRequireFlags(packageName, requires, io) {
+  let hasErrors = false;
+
+  for (const key of REQUIRE_KEYS) {
     if (requires[key] !== undefined && typeof requires[key] !== 'boolean') {
       io.error(`ERROR: ${packageName}/package.json - requires.${key} must be a boolean when provided`);
       hasErrors = true;
     }
   }
 
-  const declaresCapabilityFlags = ['hooks', 'runtimeScripts', 'sessionData'].some((key) => requires[key] === true);
+  return hasErrors;
+}
 
-  if (requires.tools !== undefined) {
-    if (!isStringArray(requires.tools)) {
-      io.error(`ERROR: ${packageName}/package.json - requires.tools must be an array of non-empty strings when provided`);
+function validateRequireTools(packageName, tools, io) {
+  let hasErrors = false;
+  if (!isStringArray(tools)) {
+    io.error(`ERROR: ${packageName}/package.json - requires.tools must be an array of non-empty strings when provided`);
+    return true;
+  }
+
+  for (const toolName of tools) {
+    if (!PACKAGE_TARGETS.has(toolName)) {
+      io.error(`ERROR: ${packageName}/package.json - requires.tools contains unsupported target: ${toolName}`);
       hasErrors = true;
-    } else {
-      for (const toolName of requires.tools) {
-        if (!PACKAGE_TARGETS.has(toolName)) {
-          io.error(`ERROR: ${packageName}/package.json - requires.tools contains unsupported target: ${toolName}`);
-          hasErrors = true;
-        }
-      }
     }
-  } else if (declaresCapabilityFlags) {
-    io.error(`ERROR: ${packageName}/package.json - requires.tools must be provided when capability flags are set`);
-    hasErrors = true;
   }
 
   return hasErrors;
@@ -131,18 +152,326 @@ function validateExtendsGraph(manifestsByName, io) {
   return hasErrors;
 }
 
+function getValidationDefaults() {
+  return {
+    packagesDir: DEFAULT_PACKAGES_DIR,
+    rulesDir: DEFAULT_RULES_DIR,
+    agentsDir: DEFAULT_AGENTS_DIR,
+    commandsDir: DEFAULT_COMMANDS_DIR,
+    skillsDir: DEFAULT_SKILLS_DIR,
+    cursorRulesDir: DEFAULT_CURSOR_RULES_DIR,
+    cursorSkillsDir: DEFAULT_CURSOR_SKILLS_DIR,
+    cursorCommandsDir: DEFAULT_CURSOR_COMMANDS_DIR,
+    codexRulesDir: DEFAULT_CODEX_RULES_DIR,
+    codexSkillsDir: DEFAULT_CODEX_SKILLS_DIR
+  };
+}
+
+function createValidationContext(options = {}) {
+  const context = { ...getValidationDefaults() };
+  for (const [key, value] of Object.entries(options)) {
+    if (value !== undefined && key !== 'io') {
+      context[key] = value;
+    }
+  }
+  context.io = options.io || { log: console.log, error: console.error };
+  return context;
+}
+
+function validateRequiredPackages(packageNames, io) {
+  let hasErrors = false;
+  for (const requiredName of REQUIRED_PACKAGES) {
+    if (!packageNames.includes(requiredName)) {
+      io.error(`ERROR: Missing required package manifest directory: ${requiredName}`);
+      hasErrors = true;
+    }
+  }
+  return hasErrors;
+}
+
+function loadManifestFromDisk(packagesDir, packageName, io) {
+  const manifestPath = path.join(packagesDir, packageName, 'package.json');
+  if (!fs.existsSync(manifestPath)) {
+    io.error(`ERROR: ${packageName}/ - Missing package.json`);
+    return null;
+  }
+
+  try {
+    const manifest = readJsonFile(manifestPath);
+    if (!manifest || typeof manifest !== 'object') {
+      io.error(`ERROR: ${packageName}/package.json - Manifest must be an object`);
+      return null;
+    }
+    return manifest;
+  } catch (error) {
+    io.error(`ERROR: ${packageName}/package.json - Invalid JSON: ${error.message}`);
+    return null;
+  }
+}
+
+function validateManifestBasics(packageName, manifest, context) {
+  const { io, rulesDir } = context;
+  let hasErrors = false;
+
+  if (manifest.name !== packageName) {
+    io.error(`ERROR: ${packageName}/package.json - name must equal directory name '${packageName}'`);
+    hasErrors = true;
+  }
+  if (typeof manifest.description !== 'string' || !manifest.description.trim()) {
+    io.error(`ERROR: ${packageName}/package.json - Missing non-empty description`);
+    hasErrors = true;
+  }
+  if (manifest.kind !== undefined && !PACKAGE_KINDS.has(manifest.kind)) {
+    io.error(`ERROR: ${packageName}/package.json - kind must be one of: ${[...PACKAGE_KINDS].join(', ')}`);
+    hasErrors = true;
+  }
+  if (typeof manifest.ruleDirectory !== 'string' || !manifest.ruleDirectory.trim()) {
+    io.error(`ERROR: ${packageName}/package.json - Missing non-empty ruleDirectory`);
+    hasErrors = true;
+  } else if (!fs.existsSync(path.join(rulesDir, manifest.ruleDirectory))) {
+    io.error(`ERROR: ${packageName}/package.json - ruleDirectory '${manifest.ruleDirectory}' does not exist under rules/`);
+    hasErrors = true;
+  }
+  if (manifest.extends !== undefined && !isStringArray(manifest.extends)) {
+    io.error(`ERROR: ${packageName}/package.json - extends must be an array of non-empty strings when provided`);
+    hasErrors = true;
+  }
+  if (validateRequires(packageName, manifest.requires, io)) {
+    hasErrors = true;
+  }
+
+  return hasErrors;
+}
+
+function validateSharedFileList(packageName, manifest, fieldName, baseDir, label, io) {
+  let hasErrors = false;
+  const values = manifest[fieldName];
+  if (!isStringArray(values)) {
+    io.error(`ERROR: ${packageName}/package.json - ${fieldName} must be an array of non-empty strings`);
+    return true;
+  }
+
+  for (const fileName of values) {
+    if (!fs.existsSync(path.join(baseDir, fileName))) {
+      io.error(`ERROR: ${packageName}/package.json - missing ${label} reference: ${fileName}`);
+      hasErrors = true;
+    }
+  }
+
+  return hasErrors;
+}
+
+function validateSharedRules(packageName, manifest, rulesDir, io) {
+  let hasErrors = false;
+  if (!isStringArray(manifest.rules)) {
+    io.error(`ERROR: ${packageName}/package.json - rules must be an array of non-empty strings`);
+    return true;
+  }
+
+  for (const rulePath of manifest.rules) {
+    const normalizedRulePath = rulePath.replace(/\\/g, '/');
+    if (normalizedRulePath.startsWith('/') || normalizedRulePath.includes('..')) {
+      io.error(`ERROR: ${packageName}/package.json - invalid shared rule reference: ${rulePath}`);
+      hasErrors = true;
+      continue;
+    }
+
+    if (!fs.existsSync(path.join(rulesDir, ...normalizedRulePath.split('/')))) {
+      io.error(`ERROR: ${packageName}/package.json - missing shared rule reference: ${rulePath}`);
+      hasErrors = true;
+    }
+  }
+
+  return hasErrors;
+}
+
+function validateSharedSkills(packageName, manifest, skillsDir, io) {
+  let hasErrors = false;
+  if (!isStringArray(manifest.skills)) {
+    io.error(`ERROR: ${packageName}/package.json - skills must be an array of non-empty strings`);
+    return true;
+  }
+
+  for (const skillName of manifest.skills) {
+    const skillDir = path.join(skillsDir, skillName);
+    if (!fs.existsSync(skillDir)) {
+      io.error(`ERROR: ${packageName}/package.json - missing shared skill reference: ${skillName}`);
+      hasErrors = true;
+      continue;
+    }
+    hasErrors = validateSkillMetadata(skillDir, packageName, `shared skill '${skillName}'`, io) || hasErrors;
+  }
+
+  return hasErrors;
+}
+
+function validateToolObject(packageName, tools, io) {
+  if (!tools || typeof tools !== 'object' || Array.isArray(tools)) {
+    io.error(`ERROR: ${packageName}/package.json - tools must be an object`);
+    return true;
+  }
+  return false;
+}
+
+function validateToolSkillSet(packageName, skillNames, primaryDir, fallbackDir, label, io) {
+  let hasErrors = false;
+  if (!isStringArray(skillNames)) {
+    io.error(`ERROR: ${packageName}/package.json - ${label} must be an array of non-empty strings when provided`);
+    return true;
+  }
+
+  for (const skillName of skillNames) {
+    const primarySkillDir = path.join(primaryDir, skillName);
+    const fallbackSkillDir = fallbackDir ? path.join(fallbackDir, skillName) : null;
+    const resolvedSkillDir = fs.existsSync(primarySkillDir)
+      ? primarySkillDir
+      : (fallbackSkillDir && fs.existsSync(fallbackSkillDir) ? fallbackSkillDir : null);
+
+    if (!resolvedSkillDir) {
+      io.error(`ERROR: ${packageName}/package.json - missing ${label.replace(/^tools\.[^.]+\./, '').replace(/ when provided$/, '')} reference: ${skillName}`);
+      hasErrors = true;
+      continue;
+    }
+
+    hasErrors = validateSkillMetadata(resolvedSkillDir, packageName, `${label.split(' ')[0]} '${skillName}'`, io) || hasErrors;
+  }
+
+  return hasErrors;
+}
+
+function normalizeReferenceLabel(label) {
+  const explicitLabels = {
+    'tools.cursor.rules': 'Cursor rule',
+    'tools.cursor.commands': 'Cursor command',
+    'tools.gemini.rules': 'Gemini rule',
+    'tools.codex.rules': 'Codex rule',
+    'tools.codex.scripts': 'Codex script'
+  };
+
+  if (explicitLabels[label]) {
+    return explicitLabels[label];
+  }
+
+  return label
+    .replace(/^tools\.[^.]+\./, '')
+    .replace(/ when provided$/, '')
+    .replace(/s$/, '');
+}
+
+function validateOptionalStringArray(packageName, values, label, baseDir, io) {
+  let hasErrors = false;
+  if (values === undefined) {
+    return false;
+  }
+  if (!isStringArray(values)) {
+    io.error(`ERROR: ${packageName}/package.json - ${label} must be an array of non-empty strings when provided`);
+    return true;
+  }
+
+  for (const value of values) {
+    if (!fs.existsSync(path.join(baseDir, value))) {
+      io.error(`ERROR: ${packageName}/package.json - missing ${normalizeReferenceLabel(label)} reference: ${value}`);
+      hasErrors = true;
+    }
+  }
+
+  return hasErrors;
+}
+
+function validateCursorTools(packageName, cursor, context) {
+  const { io, cursorRulesDir, cursorSkillsDir, cursorCommandsDir, skillsDir } = context;
+  let hasErrors = false;
+  if (cursor === undefined) {
+    return false;
+  }
+  if (!cursor || typeof cursor !== 'object' || Array.isArray(cursor)) {
+    io.error(`ERROR: ${packageName}/package.json - tools.cursor must be an object when provided`);
+    return true;
+  }
+
+  hasErrors = validateOptionalStringArray(packageName, cursor.rules, 'tools.cursor.rules', cursorRulesDir, io) || hasErrors;
+  hasErrors = validateToolSkillSet(packageName, cursor.skills, cursorSkillsDir, skillsDir, 'Cursor skill', io) || hasErrors;
+  hasErrors = validateOptionalStringArray(packageName, cursor.commands, 'tools.cursor.commands', cursorCommandsDir, io) || hasErrors;
+  return hasErrors;
+}
+
+function validateClaudeTools(packageName, claude, context) {
+  const { io, skillsDir } = context;
+  if (claude === undefined) {
+    return false;
+  }
+  if (!claude || typeof claude !== 'object' || Array.isArray(claude)) {
+    io.error(`ERROR: ${packageName}/package.json - tools.claude must be an object when provided`);
+    return true;
+  }
+  if (claude.skills === undefined) {
+    return false;
+  }
+  return validateToolSkillSet(packageName, claude.skills, skillsDir, null, 'Claude skill', io);
+}
+
+function validateGeminiTools(packageName, gemini, context) {
+  const { io, cursorRulesDir } = context;
+  if (gemini === undefined) {
+    return false;
+  }
+  if (!gemini || typeof gemini !== 'object' || Array.isArray(gemini)) {
+    io.error(`ERROR: ${packageName}/package.json - tools.gemini must be an object when provided`);
+    return true;
+  }
+  if (!isStringArray(gemini.rules)) {
+    io.error(`ERROR: ${packageName}/package.json - tools.gemini.rules must be an array of non-empty strings`);
+    return true;
+  }
+  return validateOptionalStringArray(packageName, gemini.rules, 'tools.gemini.rules', cursorRulesDir, io);
+}
+
+function validateCodexTools(packageName, codex, context) {
+  const { io, codexRulesDir, codexSkillsDir, skillsDir } = context;
+  let hasErrors = false;
+  if (codex === undefined) {
+    return false;
+  }
+  if (!codex || typeof codex !== 'object' || Array.isArray(codex)) {
+    io.error(`ERROR: ${packageName}/package.json - tools.codex must be an object when provided`);
+    return true;
+  }
+
+  hasErrors = validateOptionalStringArray(packageName, codex.rules, 'tools.codex.rules', codexRulesDir, io) || hasErrors;
+  if (codex.skills !== undefined) {
+    hasErrors = validateToolSkillSet(packageName, codex.skills, codexSkillsDir, skillsDir, 'Codex skill', io) || hasErrors;
+  }
+  if (codex.scripts !== undefined) {
+    hasErrors = validateOptionalStringArray(packageName, codex.scripts, 'tools.codex.scripts', path.join(REPO_ROOT, 'scripts'), io) || hasErrors;
+  }
+
+  return hasErrors;
+}
+
+function validatePackageManifest(packageName, manifest, context) {
+  let hasErrors = false;
+  const { io, rulesDir, agentsDir, commandsDir, skillsDir } = context;
+
+  hasErrors = validateManifestBasics(packageName, manifest, context) || hasErrors;
+  hasErrors = validateSharedRules(packageName, manifest, rulesDir, io) || hasErrors;
+  hasErrors = validateSharedFileList(packageName, manifest, 'agents', agentsDir, 'agent', io) || hasErrors;
+  hasErrors = validateSharedFileList(packageName, manifest, 'commands', commandsDir, 'command', io) || hasErrors;
+  hasErrors = validateSharedSkills(packageName, manifest, skillsDir, io) || hasErrors;
+
+  if (validateToolObject(packageName, manifest.tools, io)) {
+    return true;
+  }
+
+  hasErrors = validateCursorTools(packageName, manifest.tools.cursor, context) || hasErrors;
+  hasErrors = validateClaudeTools(packageName, manifest.tools.claude, context) || hasErrors;
+  hasErrors = validateGeminiTools(packageName, manifest.tools.gemini, context) || hasErrors;
+  hasErrors = validateCodexTools(packageName, manifest.tools.codex, context) || hasErrors;
+  return hasErrors;
+}
+
 function validateInstallPackages(options = {}) {
-  const packagesDir = options.packagesDir || DEFAULT_PACKAGES_DIR;
-  const rulesDir = options.rulesDir || DEFAULT_RULES_DIR;
-  const agentsDir = options.agentsDir || DEFAULT_AGENTS_DIR;
-  const commandsDir = options.commandsDir || DEFAULT_COMMANDS_DIR;
-  const skillsDir = options.skillsDir || DEFAULT_SKILLS_DIR;
-  const cursorRulesDir = options.cursorRulesDir || DEFAULT_CURSOR_RULES_DIR;
-  const cursorSkillsDir = options.cursorSkillsDir || DEFAULT_CURSOR_SKILLS_DIR;
-  const cursorCommandsDir = options.cursorCommandsDir || DEFAULT_CURSOR_COMMANDS_DIR;
-  const codexRulesDir = options.codexRulesDir || DEFAULT_CODEX_RULES_DIR;
-  const codexSkillsDir = options.codexSkillsDir || DEFAULT_CODEX_SKILLS_DIR;
-  const io = options.io || { log: console.log, error: console.error };
+  const context = createValidationContext(options);
+  const { packagesDir, io } = context;
 
   if (!fs.existsSync(packagesDir)) {
     io.error(`ERROR: Missing packages directory: ${packagesDir}`);
@@ -155,287 +484,17 @@ function validateInstallPackages(options = {}) {
   let hasErrors = false;
   let validCount = 0;
 
-  for (const requiredName of REQUIRED_PACKAGES) {
-    if (!packageNames.includes(requiredName)) {
-      io.error(`ERROR: Missing required package manifest directory: ${requiredName}`);
-      hasErrors = true;
-    }
-  }
+  hasErrors = validateRequiredPackages(packageNames, io) || hasErrors;
 
   for (const packageName of packageNames) {
-    const manifestPath = path.join(packagesDir, packageName, 'package.json');
-    if (!fs.existsSync(manifestPath)) {
-      io.error(`ERROR: ${packageName}/ - Missing package.json`);
-      hasErrors = true;
-      continue;
-    }
-
-    let manifest;
-    try {
-      manifest = readJsonFile(manifestPath);
-    } catch (error) {
-      io.error(`ERROR: ${packageName}/package.json - Invalid JSON: ${error.message}`);
-      hasErrors = true;
-      continue;
-    }
-
-    if (!manifest || typeof manifest !== 'object') {
-      io.error(`ERROR: ${packageName}/package.json - Manifest must be an object`);
+    const manifest = loadManifestFromDisk(packagesDir, packageName, io);
+    if (!manifest) {
       hasErrors = true;
       continue;
     }
 
     manifestsByName.set(packageName, manifest);
-
-    if (manifest.name !== packageName) {
-      io.error(`ERROR: ${packageName}/package.json - name must equal directory name '${packageName}'`);
-      hasErrors = true;
-    }
-
-    if (typeof manifest.description !== 'string' || !manifest.description.trim()) {
-      io.error(`ERROR: ${packageName}/package.json - Missing non-empty description`);
-      hasErrors = true;
-    }
-
-    if (manifest.kind !== undefined && !PACKAGE_KINDS.has(manifest.kind)) {
-      io.error(`ERROR: ${packageName}/package.json - kind must be one of: ${[...PACKAGE_KINDS].join(', ')}`);
-      hasErrors = true;
-    }
-
-    if (typeof manifest.ruleDirectory !== 'string' || !manifest.ruleDirectory.trim()) {
-      io.error(`ERROR: ${packageName}/package.json - Missing non-empty ruleDirectory`);
-      hasErrors = true;
-    } else if (!fs.existsSync(path.join(rulesDir, manifest.ruleDirectory))) {
-      io.error(`ERROR: ${packageName}/package.json - ruleDirectory '${manifest.ruleDirectory}' does not exist under rules/`);
-      hasErrors = true;
-    }
-
-    if (manifest.extends !== undefined && !isStringArray(manifest.extends)) {
-      io.error(`ERROR: ${packageName}/package.json - extends must be an array of non-empty strings when provided`);
-      hasErrors = true;
-    }
-
-    if (validateRequires(packageName, manifest.requires, io)) {
-      hasErrors = true;
-    }
-
-    if (!isStringArray(manifest.rules)) {
-      io.error(`ERROR: ${packageName}/package.json - rules must be an array of non-empty strings`);
-      hasErrors = true;
-    } else {
-      for (const rulePath of manifest.rules) {
-        const normalizedRulePath = rulePath.replace(/\\/g, '/');
-        if (normalizedRulePath.startsWith('/') || normalizedRulePath.includes('..')) {
-          io.error(`ERROR: ${packageName}/package.json - invalid shared rule reference: ${rulePath}`);
-          hasErrors = true;
-          continue;
-        }
-
-        const ruleSegments = normalizedRulePath.split('/');
-        if (!fs.existsSync(path.join(rulesDir, ...ruleSegments))) {
-          io.error(`ERROR: ${packageName}/package.json - missing shared rule reference: ${rulePath}`);
-          hasErrors = true;
-        }
-      }
-    }
-
-    if (!isStringArray(manifest.agents)) {
-      io.error(`ERROR: ${packageName}/package.json - agents must be an array of non-empty strings`);
-      hasErrors = true;
-    } else {
-      for (const agentFile of manifest.agents) {
-        if (!fs.existsSync(path.join(agentsDir, agentFile))) {
-          io.error(`ERROR: ${packageName}/package.json - missing agent reference: ${agentFile}`);
-          hasErrors = true;
-        }
-      }
-    }
-
-    if (!isStringArray(manifest.commands)) {
-      io.error(`ERROR: ${packageName}/package.json - commands must be an array of non-empty strings`);
-      hasErrors = true;
-    } else {
-      for (const commandFile of manifest.commands) {
-        if (!fs.existsSync(path.join(commandsDir, commandFile))) {
-          io.error(`ERROR: ${packageName}/package.json - missing command reference: ${commandFile}`);
-          hasErrors = true;
-        }
-      }
-    }
-
-    if (!isStringArray(manifest.skills)) {
-      io.error(`ERROR: ${packageName}/package.json - skills must be an array of non-empty strings`);
-      hasErrors = true;
-    } else {
-      for (const skillName of manifest.skills) {
-        const skillDir = path.join(skillsDir, skillName);
-        if (!fs.existsSync(skillDir)) {
-          io.error(`ERROR: ${packageName}/package.json - missing shared skill reference: ${skillName}`);
-          hasErrors = true;
-        } else if (validateSkillMetadata(skillDir, packageName, `shared skill '${skillName}'`, io)) {
-          hasErrors = true;
-        }
-      }
-    }
-
-    const tools = manifest.tools;
-    if (!tools || typeof tools !== 'object' || Array.isArray(tools)) {
-      io.error(`ERROR: ${packageName}/package.json - tools must be an object`);
-      hasErrors = true;
-      continue;
-    }
-
-    const cursor = tools.cursor;
-    if (cursor !== undefined) {
-      if (!cursor || typeof cursor !== 'object' || Array.isArray(cursor)) {
-        io.error(`ERROR: ${packageName}/package.json - tools.cursor must be an object when provided`);
-        hasErrors = true;
-      } else {
-        if (!isStringArray(cursor.rules)) {
-          io.error(`ERROR: ${packageName}/package.json - tools.cursor.rules must be an array of non-empty strings`);
-          hasErrors = true;
-        } else {
-          for (const ruleFile of cursor.rules) {
-            if (!fs.existsSync(path.join(cursorRulesDir, ruleFile))) {
-              io.error(`ERROR: ${packageName}/package.json - missing Cursor rule reference: ${ruleFile}`);
-              hasErrors = true;
-            }
-          }
-        }
-
-        if (!isStringArray(cursor.skills)) {
-          io.error(`ERROR: ${packageName}/package.json - tools.cursor.skills must be an array of non-empty strings`);
-          hasErrors = true;
-        } else {
-          for (const skillName of cursor.skills) {
-            const cursorSkillDir = path.join(cursorSkillsDir, skillName);
-            const sharedSkillDir = path.join(skillsDir, skillName);
-            if (!fs.existsSync(cursorSkillDir) && !fs.existsSync(sharedSkillDir)) {
-              io.error(`ERROR: ${packageName}/package.json - missing Cursor skill reference: ${skillName}`);
-              hasErrors = true;
-            } else {
-              const resolvedSkillDir = fs.existsSync(cursorSkillDir) ? cursorSkillDir : sharedSkillDir;
-              if (validateSkillMetadata(resolvedSkillDir, packageName, `Cursor skill '${skillName}'`, io)) {
-                hasErrors = true;
-              }
-            }
-          }
-        }
-
-        if (cursor.commands !== undefined) {
-          if (!isStringArray(cursor.commands)) {
-            io.error(`ERROR: ${packageName}/package.json - tools.cursor.commands must be an array of non-empty strings when provided`);
-            hasErrors = true;
-          } else {
-            for (const commandFile of cursor.commands) {
-              if (!fs.existsSync(path.join(cursorCommandsDir, commandFile))) {
-                io.error(`ERROR: ${packageName}/package.json - missing Cursor command reference: ${commandFile}`);
-                hasErrors = true;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    const claude = tools.claude;
-    if (claude !== undefined) {
-      if (!claude || typeof claude !== 'object' || Array.isArray(claude)) {
-        io.error(`ERROR: ${packageName}/package.json - tools.claude must be an object when provided`);
-        hasErrors = true;
-      } else if (claude.skills !== undefined) {
-        if (!isStringArray(claude.skills)) {
-          io.error(`ERROR: ${packageName}/package.json - tools.claude.skills must be an array of non-empty strings when provided`);
-          hasErrors = true;
-        } else {
-          for (const skillName of claude.skills) {
-            const skillDir = path.join(skillsDir, skillName);
-            if (!fs.existsSync(skillDir)) {
-              io.error(`ERROR: ${packageName}/package.json - missing Claude skill reference: ${skillName}`);
-              hasErrors = true;
-            } else if (validateSkillMetadata(skillDir, packageName, `Claude skill '${skillName}'`, io)) {
-              hasErrors = true;
-            }
-          }
-        }
-      }
-    }
-
-    const gemini = tools.gemini;
-    if (gemini !== undefined) {
-      if (!gemini || typeof gemini !== 'object' || Array.isArray(gemini)) {
-        io.error(`ERROR: ${packageName}/package.json - tools.gemini must be an object when provided`);
-        hasErrors = true;
-      } else if (!isStringArray(gemini.rules)) {
-        io.error(`ERROR: ${packageName}/package.json - tools.gemini.rules must be an array of non-empty strings`);
-        hasErrors = true;
-      } else {
-        for (const ruleFile of gemini.rules) {
-          if (!fs.existsSync(path.join(cursorRulesDir, ruleFile))) {
-            io.error(`ERROR: ${packageName}/package.json - missing Gemini rule reference: ${ruleFile}`);
-            hasErrors = true;
-          }
-        }
-      }
-    }
-
-    const codex = tools.codex;
-    if (codex !== undefined) {
-      if (!codex || typeof codex !== 'object' || Array.isArray(codex)) {
-        io.error(`ERROR: ${packageName}/package.json - tools.codex must be an object when provided`);
-        hasErrors = true;
-      } else {
-        if (codex.rules !== undefined) {
-          if (!isStringArray(codex.rules)) {
-            io.error(`ERROR: ${packageName}/package.json - tools.codex.rules must be an array of non-empty strings when provided`);
-            hasErrors = true;
-          } else {
-            for (const ruleFile of codex.rules) {
-              if (!fs.existsSync(path.join(codexRulesDir, ruleFile))) {
-                io.error(`ERROR: ${packageName}/package.json - missing Codex rule reference: ${ruleFile}`);
-                hasErrors = true;
-              }
-            }
-          }
-        }
-
-        if (codex.skills !== undefined) {
-          if (!isStringArray(codex.skills)) {
-            io.error(`ERROR: ${packageName}/package.json - tools.codex.skills must be an array of non-empty strings when provided`);
-            hasErrors = true;
-          } else {
-            for (const skillName of codex.skills) {
-              const codexSkillDir = path.join(codexSkillsDir, skillName);
-              const sharedSkillDir = path.join(skillsDir, skillName);
-              if (!fs.existsSync(codexSkillDir) && !fs.existsSync(sharedSkillDir)) {
-                io.error(`ERROR: ${packageName}/package.json - missing Codex skill reference: ${skillName}`);
-                hasErrors = true;
-              } else {
-                const resolvedSkillDir = fs.existsSync(codexSkillDir) ? codexSkillDir : sharedSkillDir;
-                if (validateSkillMetadata(resolvedSkillDir, packageName, `Codex skill '${skillName}'`, io)) {
-                  hasErrors = true;
-                }
-              }
-            }
-          }
-        }
-
-        if (codex.scripts !== undefined) {
-          if (!isStringArray(codex.scripts)) {
-            io.error(`ERROR: ${packageName}/package.json - tools.codex.scripts must be an array of non-empty strings when provided`);
-            hasErrors = true;
-          } else {
-            for (const scriptName of codex.scripts) {
-              if (!fs.existsSync(path.join(REPO_ROOT, 'scripts', scriptName))) {
-                io.error(`ERROR: ${packageName}/package.json - missing Codex script reference: ${scriptName}`);
-                hasErrors = true;
-              }
-            }
-          }
-        }
-      }
-    }
-
+    hasErrors = validatePackageManifest(packageName, manifest, context) || hasErrors;
     validCount++;
   }
 

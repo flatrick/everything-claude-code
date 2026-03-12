@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { getConfigDir, getDataDir } = require('./utils');
+const { getDataDir } = require('./utils');
 
 function getMdtDir() {
   return getDataDir();

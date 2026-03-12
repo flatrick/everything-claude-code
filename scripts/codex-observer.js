@@ -56,33 +56,58 @@ const { detectProject } = projectDetection;
 const { analyzeObservations, loadObserverConfig } = observerRuntime;
 
 function parseArgs(argv) {
-  let command = 'status';
-  let intervalSeconds = 15;
-  let minObservations = null;
-  let cwd = process.cwd();
+  const state = {
+    command: 'status',
+    intervalSeconds: 15,
+    minObservations: null,
+    cwd: process.cwd()
+  };
 
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === 'status' || arg === 'once' || arg === 'watch') {
-      command = arg;
-    } else if (arg === '--watch') {
-      command = 'watch';
-    } else if (arg === '--interval-seconds' && argv[i + 1]) {
-      intervalSeconds = parsePositiveInt(argv[++i], 15);
-    } else if (arg.startsWith('--interval-seconds=')) {
-      intervalSeconds = parsePositiveInt(arg.split('=')[1], 15);
-    } else if (arg === '--min-observations' && argv[i + 1]) {
-      minObservations = parsePositiveInt(argv[++i], null);
-    } else if (arg.startsWith('--min-observations=')) {
-      minObservations = parsePositiveInt(arg.split('=')[1], null);
-    } else if (arg === '--project-dir' && argv[i + 1]) {
-      cwd = path.resolve(argv[++i]);
-    } else if (arg.startsWith('--project-dir=')) {
-      cwd = path.resolve(arg.split('=')[1]);
-    }
+    i = applyArg(state, argv, i);
   }
 
-  return { command, intervalSeconds, minObservations, cwd };
+  return state;
+}
+
+function isObserverCommand(arg) {
+  return arg === 'status' || arg === 'once' || arg === 'watch';
+}
+
+function applyArg(state, argv, index) {
+  const arg = argv[index];
+  if (isObserverCommand(arg)) {
+    state.command = arg;
+    return index;
+  }
+  if (arg === '--watch') {
+    state.command = 'watch';
+    return index;
+  }
+  if (arg === '--interval-seconds' && argv[index + 1]) {
+    state.intervalSeconds = parsePositiveInt(argv[index + 1], 15);
+    return index + 1;
+  }
+  if (arg.startsWith('--interval-seconds=')) {
+    state.intervalSeconds = parsePositiveInt(arg.split('=')[1], 15);
+    return index;
+  }
+  if (arg === '--min-observations' && argv[index + 1]) {
+    state.minObservations = parsePositiveInt(argv[index + 1], null);
+    return index + 1;
+  }
+  if (arg.startsWith('--min-observations=')) {
+    state.minObservations = parsePositiveInt(arg.split('=')[1], null);
+    return index;
+  }
+  if (arg === '--project-dir' && argv[index + 1]) {
+    state.cwd = path.resolve(argv[index + 1]);
+    return index + 1;
+  }
+  if (arg.startsWith('--project-dir=')) {
+    state.cwd = path.resolve(arg.split('=')[1]);
+  }
+  return index;
 }
 
 function parsePositiveInt(value, fallback) {
@@ -90,18 +115,19 @@ function parsePositiveInt(value, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function withDefaultEnvPath(env, key, value) {
+  if (!env[key] || !String(env[key]).trim()) {
+    env[key] = value;
+  }
+}
+
 function buildCodexObserverEnv(env = process.env, options = {}) {
   const cwd = path.resolve(options.cwd || process.cwd());
   const nextEnv = { ...env };
   const homeDir = options.homeDir || nextEnv.HOME || nextEnv.USERPROFILE || process.env.HOME || process.env.USERPROFILE || '';
 
-  if (!nextEnv.CONFIG_DIR || !String(nextEnv.CONFIG_DIR).trim()) {
-    nextEnv.CONFIG_DIR = path.join(homeDir, '.codex');
-  }
-  if (!nextEnv.DATA_DIR || !String(nextEnv.DATA_DIR).trim()) {
-    nextEnv.DATA_DIR = path.join(nextEnv.CONFIG_DIR, 'mdt');
-  }
-
+  withDefaultEnvPath(nextEnv, 'CONFIG_DIR', path.join(homeDir, '.codex'));
+  withDefaultEnvPath(nextEnv, 'DATA_DIR', path.join(nextEnv.CONFIG_DIR, 'mdt'));
   nextEnv.CODEX_AGENT = '1';
   nextEnv.MDT_OBSERVER_TOOL = 'codex';
   nextEnv.MDT_PROJECT_ROOT = nextEnv.MDT_PROJECT_ROOT || cwd;

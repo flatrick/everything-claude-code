@@ -7,7 +7,6 @@ const fs = require('fs');
 const path = require('path');
 const { asyncTest, createTestDir, cleanupTestDir, test } = require('../helpers/test-runner');
 const { withEnv } = require('../helpers/env-test-utils');
-const { ensureSubprocessCapability, probeNodeSubprocess } = require('../helpers/subprocess-capability');
 const { getDateString } = require('../../scripts/lib/utils');
 const { buildHookEnv, getPluginRoot, runExistingHook } = require('../../hooks/cursor/scripts/adapter');
 const { processCursorAfterFileEdit } = require('../../hooks/cursor/scripts/after-file-edit');

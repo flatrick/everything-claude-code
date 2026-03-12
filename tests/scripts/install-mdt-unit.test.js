@@ -17,7 +17,6 @@ const {
   resolveSelectedPackages,
   assertPackageRequirements,
   assertSkillRequirements,
-  assertInstallRequirements,
   getSkillRequirementWarnings,
   installClaudeContentDirs,
   installCursorCoreDirs,

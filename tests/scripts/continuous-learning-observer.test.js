@@ -502,6 +502,56 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('start removes lease when detached child dies before startup confirmation', () => {
+    const tempDir = createTestDir('observer-start-failed-');
+    try {
+      const skillDir = path.join(process.cwd(), 'skills', 'continuous-learning-manual');
+      const configPath = path.join(tempDir, 'config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ observer: { enabled: true } }), 'utf8');
+      const projectDir = path.join(tempDir, 'project');
+      fs.mkdirSync(projectDir, { recursive: true });
+      const observationsFile = path.join(projectDir, 'observations.jsonl');
+      const runtime = createObserverRuntime({
+        entrypointDir: path.join(skillDir, 'agents'),
+        skillDir,
+        configPath,
+        detectProject: () => ({
+          id: 'demo-project',
+          name: 'demo-project',
+          root: tempDir,
+          project_dir: projectDir,
+          observations_file: observationsFile
+        })
+      });
+
+      const output = [];
+      let exitCode = null;
+      runtime.main(['start'], {
+        env: process.env,
+        logImpl: (message) => output.push(String(message)),
+        exitImpl: (code) => {
+          exitCode = code;
+        },
+        isPidAliveImpl: () => false,
+        spawnImpl: () => ({
+          pid: 67891,
+          unref: () => {}
+        }),
+        setTimeoutImpl: (fn) => {
+          fn();
+          return 1;
+        }
+      });
+
+      const stateFile = path.join(projectDir, '.observer.pid');
+      assert.strictEqual(fs.existsSync(stateFile), false, 'Expected startup failure to remove lease file');
+      assert.strictEqual(exitCode, 1);
+      assert.ok(output.some((line) => line.includes('Failed to start observer')));
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }

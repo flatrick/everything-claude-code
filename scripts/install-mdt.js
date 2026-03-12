@@ -42,7 +42,7 @@ const RUNTIME_CI_FILES = [
 ];
 const CLAUDE_WORKFLOW_SCRIPTS = ['smoke-claude-workflows.js'];
 const DEV_SMOKE_SCRIPT_FILES = ['smoke-tool-setups.js'];
-const CURSOR_WORKFLOW_SCRIPT_FILES = ['materialize-mdt-local.js'];
+const CURSOR_WORKFLOW_SCRIPT_FILES = ['materialize-mdt-local.js', 'smoke-cursor-workflows.js'];
 const CODEX_DEV_SKILL_NAMES = ['tool-setup-verifier', 'smoke'];
 const BASELINE_SHARED_SKILL_NAMES = [
   'api-design',
@@ -66,7 +66,6 @@ const BASELINE_SHARED_SKILL_NAMES = [
   'verification-loop'
 ];
 const WORKFLOW_CONTRACTS_DIR = path.join(REPO_ROOT, 'workflow-contracts');
-const SUPPORTED_PACKAGE_TARGETS = new Set(['claude', 'cursor', 'gemini', 'codex']);
 const TARGET_CAPABILITIES = {
   claude: { hooks: 'official', runtimeScripts: true, sessionData: true },
   cursor: { hooks: 'experimental', runtimeScripts: true, sessionData: true },
@@ -99,54 +98,66 @@ function parseArgs() {
   return parseArgsFrom(args);
 }
 
-function parseArgsFrom(args) {
-  let target = 'claude';
-  let globalScope = false;
-  let listMode = false;
-  let dryRun = false;
-  let devMode = false;
-  let projectDir = null;
-  let overrideDir = null;
-  const packageNames = [];
-
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--target' && args[i + 1]) {
-      target = args[++i];
-      if (target === 'antigravity') target = 'gemini';
-    } else if (args[i] === '--project-dir' && args[i + 1]) {
-      projectDir = path.resolve(args[++i]);
-    } else if (args[i] === '--override' && args[i + 1]) {
-      overrideDir = path.resolve(args[++i]);
-    } else if (args[i] === '--global') {
-      globalScope = true;
-    } else if (args[i] === '--list') {
-      listMode = true;
-    } else if (args[i] === '--dry-run') {
-      dryRun = true;
-    } else if (args[i] === '--dev') {
-      devMode = true;
-    } else if (!args[i].startsWith('-')) {
-      packageNames.push(args[i]);
-    }
-  }
-
-  return { target, globalScope, listMode, dryRun, devMode, projectDir, overrideDir, packageNames };
+function createDefaultCliArgs() {
+  return {
+    target: 'claude',
+    globalScope: false,
+    listMode: false,
+    dryRun: false,
+    devMode: false,
+    projectDir: null,
+    overrideDir: null,
+    packageNames: []
+  };
 }
 
-function assertProjectDir(projectDir) {
-  if (!projectDir) {
-    throw new Error('Missing project directory');
+const SIMPLE_CLI_FLAGS = {
+  '--global': 'globalScope',
+  '--list': 'listMode',
+  '--dry-run': 'dryRun',
+  '--dev': 'devMode'
+};
+
+function applyCliPairArg(state, arg, nextArg) {
+  if (arg === '--target' && nextArg) {
+    state.target = nextArg === 'antigravity' ? 'gemini' : nextArg;
+    return true;
+  }
+  if (arg === '--project-dir' && nextArg) {
+    state.projectDir = path.resolve(nextArg);
+    return true;
+  }
+  if (arg === '--override' && nextArg) {
+    state.overrideDir = path.resolve(nextArg);
+    return true;
+  }
+  return false;
+}
+
+function applyCliArg(state, args, index) {
+  const arg = args[index];
+  const nextArg = args[index + 1];
+
+  if (applyCliPairArg(state, arg, nextArg)) {
+    return index + 1;
   }
 
-  if (!fs.existsSync(projectDir)) {
-    throw new Error(`Project directory does not exist: ${projectDir}`);
+  if (SIMPLE_CLI_FLAGS[arg]) {
+    state[SIMPLE_CLI_FLAGS[arg]] = true;
+    return index;
   }
-
-  if (!fs.statSync(projectDir).isDirectory()) {
-    throw new Error(`Project directory is not a folder: ${projectDir}`);
+  if (!arg.startsWith('-')) {
+    state.packageNames.push(arg);
   }
+  return index;
+}
 
-  return projectDir;
+function parseArgsFrom(args) {
+  const state = createDefaultCliArgs();
+  for (let i = 0; i < args.length; i++) {
+    i = applyCliArg(state, args, i);
+  }
+  return state;
 }
 
 function normalizePackageRequires(requiresValue) {
@@ -179,6 +190,18 @@ function getAvailablePackages() {
     .sort();
 }
 
+function normalizeManifestList(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeManifestTools(parsed) {
+  return typeof parsed.tools === 'object' && parsed.tools ? parsed.tools : {};
+}
+
+function isObject(value) {
+  return Boolean(value) && typeof value === 'object';
+}
+
 function loadPackageManifest(packageName, options = {}) {
   const packagesDir = options.packagesDir || PACKAGES_DIR;
   const packagePath = path.join(packagesDir, packageName, 'package.json');
@@ -195,15 +218,40 @@ function loadPackageManifest(packageName, options = {}) {
     name: parsed.name || packageName,
     description: parsed.description || '',
     ruleDirectory: parsed.ruleDirectory || packageName,
-    extends: Array.isArray(parsed.extends) ? parsed.extends : [],
+    extends: normalizeManifestList(parsed.extends),
     kind: typeof parsed.kind === 'string' ? parsed.kind : 'language',
-    rules: Array.isArray(parsed.rules) ? parsed.rules : [],
-    agents: Array.isArray(parsed.agents) ? parsed.agents : [],
-    commands: Array.isArray(parsed.commands) ? parsed.commands : [],
-    skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+    rules: normalizeManifestList(parsed.rules),
+    agents: normalizeManifestList(parsed.agents),
+    commands: normalizeManifestList(parsed.commands),
+    skills: normalizeManifestList(parsed.skills),
     requires: normalizePackageRequires(parsed.requires),
-    tools: typeof parsed.tools === 'object' && parsed.tools ? parsed.tools : {}
+    tools: normalizeManifestTools(parsed)
   };
+}
+
+function mergeToolConfigEntry(parentConfig, childConfig) {
+  if (!parentConfig && childConfig) {
+    return childConfig;
+  }
+  if (parentConfig && !childConfig) {
+    return parentConfig;
+  }
+  if (!(isObject(parentConfig) && isObject(childConfig))) {
+    return childConfig !== undefined ? childConfig : parentConfig;
+  }
+
+  const mergedConfig = {};
+  const configKeys = mergeUniqueOrdered(Object.keys(parentConfig), Object.keys(childConfig));
+  for (const key of configKeys) {
+    const parentValue = parentConfig[key];
+    const childValue = childConfig[key];
+    if (Array.isArray(parentValue) || Array.isArray(childValue)) {
+      mergedConfig[key] = mergeUniqueOrdered(parentValue, childValue);
+    } else {
+      mergedConfig[key] = childValue !== undefined ? childValue : parentValue;
+    }
+  }
+  return mergedConfig;
 }
 
 function mergeToolConfigs(parentTools, childTools) {
@@ -214,42 +262,23 @@ function mergeToolConfigs(parentTools, childTools) {
   );
 
   for (const toolName of toolNames) {
-    const parentConfig = parentTools?.[toolName];
-    const childConfig = childTools?.[toolName];
-
-    if (!parentConfig && childConfig) {
-      mergedTools[toolName] = childConfig;
-      continue;
-    }
-
-    if (parentConfig && !childConfig) {
-      mergedTools[toolName] = parentConfig;
-      continue;
-    }
-
-    if (parentConfig && childConfig && typeof parentConfig === 'object' && typeof childConfig === 'object') {
-      const mergedConfig = {};
-      const configKeys = mergeUniqueOrdered(Object.keys(parentConfig), Object.keys(childConfig));
-      for (const key of configKeys) {
-        const parentValue = parentConfig[key];
-        const childValue = childConfig[key];
-
-        if (Array.isArray(parentValue) || Array.isArray(childValue)) {
-          mergedConfig[key] = mergeUniqueOrdered(parentValue, childValue);
-        } else if (childValue !== undefined) {
-          mergedConfig[key] = childValue;
-        } else {
-          mergedConfig[key] = parentValue;
-        }
-      }
-      mergedTools[toolName] = mergedConfig;
-      continue;
-    }
-
-    mergedTools[toolName] = childConfig !== undefined ? childConfig : parentConfig;
+    mergedTools[toolName] = mergeToolConfigEntry(parentTools?.[toolName], childTools?.[toolName]);
   }
 
   return mergedTools;
+}
+
+function mergeRequiredToolLists(parentTools, childTools) {
+  if (parentTools && childTools) {
+    return parentTools.filter((toolName) => childTools.includes(toolName));
+  }
+  if (parentTools) {
+    return [...parentTools];
+  }
+  if (childTools) {
+    return [...childTools];
+  }
+  return null;
 }
 
 function mergePackageRequires(parentRequires, childRequires) {
@@ -263,12 +292,9 @@ function mergePackageRequires(parentRequires, childRequires) {
 
   const parentTools = Array.isArray(parentRequires?.tools) ? parentRequires.tools : null;
   const childTools = Array.isArray(childRequires?.tools) ? childRequires.tools : null;
-  if (parentTools && childTools) {
-    merged.tools = parentTools.filter((toolName) => childTools.includes(toolName));
-  } else if (parentTools) {
-    merged.tools = [...parentTools];
-  } else if (childTools) {
-    merged.tools = [...childTools];
+  const mergedTools = mergeRequiredToolLists(parentTools, childTools);
+  if (mergedTools) {
+    merged.tools = mergedTools;
   }
 
   return merged;
@@ -334,13 +360,6 @@ function getSelectedPackageSummary(selectedPackages) {
   }
 
   return selectedPackages.map((pkg) => pkg.name).join(', ');
-}
-
-function getPackageRuleDirectories(selectedPackages) {
-  return selectedPackages
-    .map((pkg) => pkg.ruleDirectory)
-    .filter(Boolean)
-    .sort();
 }
 
 function getManifestRuleSelections(selectedPackages) {
@@ -441,6 +460,72 @@ function getSelectedRuleNamesForTarget(target, selectedPackages) {
   return getManifestRuleSelections(selectedPackages);
 }
 
+function collectSkillDependencyErrors(skillName, skillMetadata, selectedRuleNames, selectedSkillNames) {
+  const errors = [];
+  for (const requiredRule of skillMetadata.requires.rules) {
+    if (!selectedRuleNames.has(requiredRule)) {
+      errors.push(`skill '${skillName}' declares rule dependency '${requiredRule}', but the selected package set does not include it`);
+    }
+  }
+  for (const companionSkill of skillMetadata.requires.skills) {
+    if (!selectedSkillNames.has(companionSkill)) {
+      errors.push(`skill '${skillName}' declares companion skill '${companionSkill}', but it is not part of this install selection`);
+    }
+  }
+  return errors;
+}
+
+function collectSkillCapabilityErrors(skillName, skillMetadata, target, capabilities) {
+  const errors = [];
+  if (skillMetadata.requires.runtime.runtimeScripts && !capabilities.runtimeScripts) {
+    errors.push(`skill '${skillName}' expects runtime scripts, but target '${target}' does not install MDT runtime scripts`);
+  }
+  if (skillMetadata.requires.runtime.sessionData && !capabilities.sessionData) {
+    errors.push(`skill '${skillName}' expects session data support, but target '${target}' does not provide it`);
+  }
+  return errors;
+}
+
+function collectSkillHookWarnings(skillName, skillMetadata, target, capabilities) {
+  const errors = [];
+  const warnings = [];
+  const hookMode = skillMetadata.requires.runtime.hooks.mode;
+  const hookTools = skillMetadata.requires.runtime.hooks.tools;
+
+  if (!hookTools.includes(target)) {
+    return { errors, warnings };
+  }
+  if (hookMode === 'required' && !capabilities.hooks) {
+    errors.push(`skill '${skillName}' requires hooks for target '${target}', but that target does not support MDT hook installs`);
+  } else if (hookMode === 'required' && capabilities.hooks === 'experimental') {
+    warnings.push(`skill '${skillName}' depends on hooks for target '${target}', but that hook support is experimental in this repo`);
+  }
+  return { errors, warnings };
+}
+
+function validateSelectedSkillMetadata(target, skillName, selectedRuleNames, selectedSkillNames, capabilities) {
+  const skillMetadata = loadSelectedSkillMetadata(target, skillName);
+  const errors = [];
+  const warnings = [];
+
+  if (!skillMetadata) {
+    errors.push(`skill '${skillName}' is selected for target '${target}', but no skill directory exists under skills/`);
+    return { errors, warnings };
+  }
+
+  if (!skillMetadata.hasMetaFile) {
+    errors.push(`skill '${skillName}' is selected for target '${target}', but ${path.relative(REPO_ROOT, skillMetadata.skillDir).replace(/\\/g, '/')} is missing skill.meta.json`);
+    return { errors, warnings };
+  }
+  errors.push(...collectSkillDependencyErrors(skillName, skillMetadata, selectedRuleNames, selectedSkillNames));
+  errors.push(...collectSkillCapabilityErrors(skillName, skillMetadata, target, capabilities));
+  const hookResult = collectSkillHookWarnings(skillName, skillMetadata, target, capabilities);
+  errors.push(...hookResult.errors);
+  warnings.push(...hookResult.warnings);
+
+  return { errors, warnings };
+}
+
 function evaluateSkillRequirements(target, selectedPackages, devMode = false) {
   const capabilities = TARGET_CAPABILITIES[target];
   if (!capabilities) {
@@ -453,48 +538,9 @@ function evaluateSkillRequirements(target, selectedPackages, devMode = false) {
   const warnings = [];
 
   for (const skillName of selectedSkillNames) {
-    const skillMetadata = loadSelectedSkillMetadata(target, skillName);
-    if (!skillMetadata) {
-      errors.push(`skill '${skillName}' is selected for target '${target}', but no skill directory exists under skills/`);
-      continue;
-    }
-
-    if (!skillMetadata.hasMetaFile) {
-      errors.push(`skill '${skillName}' is selected for target '${target}', but ${path.relative(REPO_ROOT, skillMetadata.skillDir).replace(/\\/g, '/')} is missing skill.meta.json`);
-      continue;
-    }
-
-    for (const requiredRule of skillMetadata.requires.rules) {
-      if (!selectedRuleNames.has(requiredRule)) {
-        errors.push(`skill '${skillName}' declares rule dependency '${requiredRule}', but the selected package set does not include it`);
-      }
-    }
-
-    for (const companionSkill of skillMetadata.requires.skills) {
-      if (!selectedSkillNames.has(companionSkill)) {
-        errors.push(`skill '${skillName}' declares companion skill '${companionSkill}', but it is not part of this install selection`);
-      }
-    }
-
-    if (skillMetadata.requires.runtime.runtimeScripts && !capabilities.runtimeScripts) {
-      errors.push(`skill '${skillName}' expects runtime scripts, but target '${target}' does not install MDT runtime scripts`);
-    }
-
-    if (skillMetadata.requires.runtime.sessionData && !capabilities.sessionData) {
-      errors.push(`skill '${skillName}' expects session data support, but target '${target}' does not provide it`);
-    }
-
-    const hookMode = skillMetadata.requires.runtime.hooks.mode;
-    const hookTools = skillMetadata.requires.runtime.hooks.tools;
-    if (!hookTools.includes(target)) {
-      continue;
-    }
-
-    if (hookMode === 'required' && !capabilities.hooks) {
-      errors.push(`skill '${skillName}' requires hooks for target '${target}', but that target does not support MDT hook installs`);
-    } else if (hookMode === 'required' && capabilities.hooks === 'experimental') {
-      warnings.push(`skill '${skillName}' depends on hooks for target '${target}', but that hook support is experimental in this repo`);
-    }
+    const result = validateSelectedSkillMetadata(target, skillName, selectedRuleNames, selectedSkillNames, capabilities);
+    errors.push(...result.errors);
+    warnings.push(...result.warnings);
   }
 
   return { errors, warnings };
@@ -526,26 +572,30 @@ function assertPackageRequirements(target, selectedPackages) {
   }
 
   for (const selectedPackage of selectedPackages) {
-    const requires = selectedPackage.requires || {};
-    const allowedTools = Array.isArray(requires.tools) ? requires.tools : null;
-    if (allowedTools && !allowedTools.includes(target)) {
-      throw new Error(`Package '${selectedPackage.name}' does not support target '${target}'`);
-    }
-    if (requires.hooks && !capabilities.hooks) {
-      throw new Error(`Package '${selectedPackage.name}' requires hooks, but target '${target}' does not support MDT hook installs`);
-    }
-    if (requires.runtimeScripts && !capabilities.runtimeScripts) {
-      throw new Error(`Package '${selectedPackage.name}' requires runtime scripts, but target '${target}' does not install MDT runtime scripts`);
-    }
-    if (requires.sessionData && !capabilities.sessionData) {
-      throw new Error(`Package '${selectedPackage.name}' requires session data support, but target '${target}' does not provide it`);
-    }
+    assertSinglePackageRequirements(target, selectedPackage, capabilities);
   }
 
   return getPackageRequirementWarnings(target, selectedPackages);
 }
 
-function printAvailableOptions(target) {
+function assertSinglePackageRequirements(target, selectedPackage, capabilities) {
+  const requires = selectedPackage.requires || {};
+  const allowedTools = Array.isArray(requires.tools) ? requires.tools : null;
+  if (allowedTools && !allowedTools.includes(target)) {
+    throw new Error(`Package '${selectedPackage.name}' does not support target '${target}'`);
+  }
+  if (requires.hooks && !capabilities.hooks) {
+    throw new Error(`Package '${selectedPackage.name}' requires hooks, but target '${target}' does not support MDT hook installs`);
+  }
+  if (requires.runtimeScripts && !capabilities.runtimeScripts) {
+    throw new Error(`Package '${selectedPackage.name}' requires runtime scripts, but target '${target}' does not install MDT runtime scripts`);
+  }
+  if (requires.sessionData && !capabilities.sessionData) {
+    throw new Error(`Package '${selectedPackage.name}' requires session data support, but target '${target}' does not provide it`);
+  }
+}
+
+function printAvailableOptions(_target) {
   console.log('Available targets: claude, cursor, codex, gemini');
   const packages = getAvailablePackages();
   console.log('Available packages:');
@@ -744,7 +794,7 @@ function copyRuntimeScriptsToMdtRoot(installRoot) {
   return scriptsDest;
 }
 
-function usage(target) {
+function usage(_target) {
   console.error('Usage: node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--override <tool-config-dir>] [--list] [--dry-run] [package ...]');
   console.error('');
   console.error('Targets:');
@@ -762,20 +812,6 @@ function usage(target) {
   console.error('Available packages:');
   getAvailablePackages().forEach((packageName) => console.error('  - ' + packageName));
   process.exit(1);
-}
-
-function isValidLanguageName(language) {
-  return /^[a-zA-Z0-9_-]+$/.test(language);
-}
-
-function copyMarkdownFiles(srcDir, destDir) {
-  if (!fs.existsSync(srcDir)) return;
-  fs.mkdirSync(destDir, { recursive: true });
-  fs.readdirSync(srcDir).forEach(fileName => {
-    if (fileName.endsWith('.md')) {
-      copyFileAtomicSync(path.join(srcDir, fileName), path.join(destDir, fileName));
-    }
-  });
 }
 
 function copySelectedMarkdownFiles(srcDir, destDir, fileNames, missingContext = '') {
@@ -939,6 +975,12 @@ function installBaselineSharedSkills(destDir) {
 }
 
 function installClaudeContentDirs(claudeBase, selectedPackages, devMode = false) {
+  installClaudeAgents(claudeBase, selectedPackages);
+  installClaudeCommands(claudeBase, selectedPackages, devMode);
+  installClaudeSkills(claudeBase, selectedPackages, devMode);
+}
+
+function installClaudeAgents(claudeBase, selectedPackages) {
   const agentsSrc = path.join(REPO_ROOT, 'agents');
   const agentsDest = path.join(claudeBase, 'agents');
   if (fs.existsSync(agentsSrc) && path.resolve(agentsSrc) !== path.resolve(agentsDest)) {
@@ -947,39 +989,39 @@ function installClaudeContentDirs(claudeBase, selectedPackages, devMode = false)
       console.log('Installing package-selected agents -> ' + agentsDest + '/');
     }
   }
+}
 
-  const commandsSrc = SHARED_COMMANDS_SRC;
+function installClaudeCommands(claudeBase, selectedPackages, devMode) {
   const commandsDest = path.join(claudeBase, 'commands');
-  if (fs.existsSync(commandsSrc) && path.resolve(commandsSrc) !== path.resolve(commandsDest)) {
+  if (fs.existsSync(SHARED_COMMANDS_SRC) && path.resolve(SHARED_COMMANDS_SRC) !== path.resolve(commandsDest)) {
     const commandFiles = mergeUniqueOrdered(
       getManifestSelections(selectedPackages, 'commands'),
       devMode ? ['smoke.md'] : []
     );
-    if (copySelectedMarkdownFiles(commandsSrc, commandsDest, commandFiles, 'Package-selected command') > 0) {
+    if (copySelectedMarkdownFiles(SHARED_COMMANDS_SRC, commandsDest, commandFiles, 'Package-selected command') > 0) {
       console.log('Installing package-selected commands -> ' + commandsDest + '/');
     }
   }
+}
 
-  const skillsSrc = SHARED_SKILLS_SRC;
+function installClaudeSkills(claudeBase, selectedPackages, devMode) {
   const skillsDest = path.join(claudeBase, 'skills');
-  if (fs.existsSync(skillsSrc) && path.resolve(skillsSrc) !== path.resolve(skillsDest)) {
-    if (installBaselineSharedSkills(claudeBase) > 0) {
-      console.log('Installing baseline shared skills -> ' + skillsDest + '/');
-    }
-
-    const skillNames = getManifestSelections(selectedPackages, 'skills');
-    if (copySelectedDirectories(skillsSrc, skillsDest, skillNames, 'Package-selected skill') > 0) {
-      console.log('Installing package-selected skills -> ' + skillsDest + '/');
-    }
-
-    const claudeSkillNames = getToolManifestSelections(selectedPackages, 'claude', 'skills');
-    if (copySelectedDirectories(skillsSrc, skillsDest, claudeSkillNames, 'Claude package-selected skill') > 0) {
-      console.log('Installing Claude package skills -> ' + skillsDest + '/');
-    }
-
-    if (devMode && installDevSharedSkills(claudeBase) > 0) {
-      console.log('Installing dev-only shared skills -> ' + skillsDest + '/');
-    }
+  if (!(fs.existsSync(SHARED_SKILLS_SRC) && path.resolve(SHARED_SKILLS_SRC) !== path.resolve(skillsDest))) {
+    return;
+  }
+  if (installBaselineSharedSkills(claudeBase) > 0) {
+    console.log('Installing baseline shared skills -> ' + skillsDest + '/');
+  }
+  const skillNames = getManifestSelections(selectedPackages, 'skills');
+  if (copySelectedDirectories(SHARED_SKILLS_SRC, skillsDest, skillNames, 'Package-selected skill') > 0) {
+    console.log('Installing package-selected skills -> ' + skillsDest + '/');
+  }
+  const claudeSkillNames = getToolManifestSelections(selectedPackages, 'claude', 'skills');
+  if (copySelectedDirectories(SHARED_SKILLS_SRC, skillsDest, claudeSkillNames, 'Claude package-selected skill') > 0) {
+    console.log('Installing Claude package skills -> ' + skillsDest + '/');
+  }
+  if (devMode && installDevSharedSkills(claudeBase) > 0) {
+    console.log('Installing dev-only shared skills -> ' + skillsDest + '/');
   }
 }
 
@@ -1184,6 +1226,15 @@ function installCursorSkills(destDir, selectedPackages) {
 }
 
 function installCursorCoreDirs(destDir, selectedPackages, devMode = false) {
+  installCursorAgents(destDir, selectedPackages);
+  installCursorSkills(destDir, selectedPackages);
+  installCursorCommands(destDir, selectedPackages, devMode);
+  if (devMode && installDevSharedSkills(destDir) > 0) {
+    console.log('Installing dev-only shared skills -> ' + path.join(destDir, 'skills') + '/');
+  }
+}
+
+function installCursorAgents(destDir, selectedPackages) {
   const agentsSrc = path.join(REPO_ROOT, 'agents');
   const agentsDest = path.join(destDir, 'agents');
   if (fs.existsSync(agentsSrc)) {
@@ -1192,57 +1243,58 @@ function installCursorCoreDirs(destDir, selectedPackages, devMode = false) {
       console.log('Installing package-selected agents -> ' + agentsDest + '/');
     }
   }
+}
 
-  installCursorSkills(destDir, selectedPackages);
-
-  const commandsDest = path.join(destDir, 'commands');
-  const sharedCommandsSrc = SHARED_COMMANDS_SRC;
-  if (fs.existsSync(sharedCommandsSrc)) {
-    const sharedCommandFiles = mergeUniqueOrdered(
-      getManifestSelections(selectedPackages, 'commands'),
-      devMode ? ['smoke.md'] : []
-    );
-    if (copySelectedMarkdownFiles(sharedCommandsSrc, commandsDest, sharedCommandFiles, 'Package-selected command') > 0) {
-      console.log('Installing package-selected commands -> ' + commandsDest + '/');
-    }
+function installCursorSharedCommands(commandsDest, selectedPackages, devMode) {
+  if (!fs.existsSync(SHARED_COMMANDS_SRC)) {
+    return;
   }
+  const sharedCommandFiles = mergeUniqueOrdered(
+    getManifestSelections(selectedPackages, 'commands'),
+    devMode ? ['smoke.md'] : []
+  );
+  if (copySelectedMarkdownFiles(SHARED_COMMANDS_SRC, commandsDest, sharedCommandFiles, 'Package-selected command') > 0) {
+    console.log('Installing package-selected commands -> ' + commandsDest + '/');
+  }
+}
 
+function installCursorToolCommands(commandsDest, selectedPackages) {
   const commandsSrc = path.join(CURSOR_SRC, 'commands');
-  if (fs.existsSync(commandsSrc)) {
-    const alwaysCursorCommands = ['install-rules.md'];
-    if (copySelectedMarkdownFiles(commandsSrc, commandsDest, alwaysCursorCommands, 'Cursor utility command') > 0) {
-      console.log('Installing Cursor utility commands -> ' + commandsDest + '/');
-    }
+  if (!fs.existsSync(commandsSrc)) {
+    return;
+  }
+  if (copySelectedMarkdownFiles(commandsSrc, commandsDest, ['install-rules.md'], 'Cursor utility command') > 0) {
+    console.log('Installing Cursor utility commands -> ' + commandsDest + '/');
+  }
 
-    let copiedCursorCommands = 0;
-    for (const selectedPackage of selectedPackages) {
-      const cursorCommands = Array.isArray(selectedPackage.tools.cursor?.commands)
-        ? selectedPackage.tools.cursor.commands
-        : [];
-
-      for (const commandFile of cursorCommands) {
-        const cursorCommandSrc = path.join(commandsSrc, commandFile);
-        const sharedCommandSrc = path.join(sharedCommandsSrc, commandFile);
-        const commandSrc = fs.existsSync(cursorCommandSrc) ? cursorCommandSrc : sharedCommandSrc;
-        const commandDest = path.join(commandsDest, commandFile);
-        if (!fs.existsSync(commandSrc)) {
-          console.error(`Warning: Cursor command '${commandFile}' for package '${selectedPackage.name}' does not exist, skipping.`);
-          continue;
-        }
-        fs.mkdirSync(path.dirname(commandDest), { recursive: true });
-        fs.copyFileSync(commandSrc, commandDest);
-        copiedCursorCommands++;
+  let copiedCursorCommands = 0;
+  for (const selectedPackage of selectedPackages) {
+    const cursorCommands = Array.isArray(selectedPackage.tools.cursor?.commands)
+      ? selectedPackage.tools.cursor.commands
+      : [];
+    for (const commandFile of cursorCommands) {
+      const cursorCommandSrc = path.join(commandsSrc, commandFile);
+      const sharedCommandSrc = path.join(SHARED_COMMANDS_SRC, commandFile);
+      const commandSrc = fs.existsSync(cursorCommandSrc) ? cursorCommandSrc : sharedCommandSrc;
+      const commandDest = path.join(commandsDest, commandFile);
+      if (!fs.existsSync(commandSrc)) {
+        console.error(`Warning: Cursor command '${commandFile}' for package '${selectedPackage.name}' does not exist, skipping.`);
+        continue;
       }
-    }
-
-    if (copiedCursorCommands > 0) {
-      console.log('Installing Cursor package commands -> ' + commandsDest + '/');
+      fs.mkdirSync(path.dirname(commandDest), { recursive: true });
+      fs.copyFileSync(commandSrc, commandDest);
+      copiedCursorCommands++;
     }
   }
-
-  if (devMode && installDevSharedSkills(destDir) > 0) {
-    console.log('Installing dev-only shared skills -> ' + path.join(destDir, 'skills') + '/');
+  if (copiedCursorCommands > 0) {
+    console.log('Installing Cursor package commands -> ' + commandsDest + '/');
   }
+}
+
+function installCursorCommands(destDir, selectedPackages, devMode) {
+  const commandsDest = path.join(destDir, 'commands');
+  installCursorSharedCommands(commandsDest, selectedPackages, devMode);
+  installCursorToolCommands(commandsDest, selectedPackages);
 }
 
 function installCursorHooksConfig(destDir) {
@@ -1493,27 +1545,6 @@ function appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini) {
   console.log('Appended rules for ' + selectedPackages.map((pkg) => pkg.name).join(', ') + ' to ' + geminiMdPath);
 }
 
-function copyGeminiLocalRules(cursorRules, selectedPackages, destDirAgent) {
-  const rulesDest = path.join(destDirAgent, 'rules');
-  const selectedRules = getGeminiRuleSelections(selectedPackages);
-  let foundRules = false;
-
-  fs.mkdirSync(rulesDest, { recursive: true });
-  for (const ruleFile of selectedRules) {
-    const srcPath = path.join(cursorRules, ruleFile);
-    if (!fs.existsSync(srcPath)) {
-      console.error(`Warning: Gemini rule '${ruleFile}' does not exist, skipping.`);
-      continue;
-    }
-    fs.copyFileSync(srcPath, path.join(rulesDest, ruleFile));
-    foundRules = true;
-  }
-
-  if (foundRules) {
-    console.log('Installing package-selected Gemini rules -> ' + rulesDest + '/');
-  }
-}
-
 function installGeminiRules(selectedPackages, destDirAgent, destDirGemini) {
   const cursorRules = path.join(CURSOR_SRC, 'rules');
   if (selectedPackages.length === 0) {
@@ -1584,24 +1615,34 @@ function installGemini(packageNames, overrideDir, devMode = false) {
   console.log('Done. Gemini configs installed.');
 }
 
-function main() {
-  const { target, globalScope, listMode, dryRun, devMode, projectDir, overrideDir, packageNames } = parseArgs();
+function isSupportedTarget(target) {
+  return target === 'claude' || target === 'cursor' || target === 'codex' || target === 'gemini';
+}
 
+function handleRetiredProjectDir(projectDir) {
   if (projectDir !== null) {
     console.error('Error: --project-dir is retired. MDT installs are global-only now.');
     console.error('Use node scripts/materialize-mdt-local.js for repo-local exception bridges when a tool needs them.');
     console.error('For Cursor specifically: use install-mdt.js --target cursor for the global cursor-agent surface, and materialize-mdt-local.js --target cursor --surface rules for Cursor IDE repo-local rules.');
     process.exit(1);
   }
+}
 
-  if (target !== 'claude' && target !== 'cursor' && target !== 'codex' && target !== 'gemini') {
+function assertSupportedTarget(target) {
+  if (!isSupportedTarget(target)) {
     console.error("Error: unknown target '" + target + "'. Must be claude, cursor, codex, or gemini.");
     process.exit(1);
   }
+}
+
+function handleListMode(target, listMode) {
   if (listMode) {
     printAvailableOptions(target);
     process.exit(0);
   }
+}
+
+function handleDryRun(target, dryRun, devMode, overrideDir, packageNames) {
   if (dryRun) {
     try {
       const plan = buildInstallPlan({ target, devMode, overrideDir, packageNames });
@@ -1612,14 +1653,26 @@ function main() {
       usage(target);
     }
   }
+}
+
+function runInstallForTarget(target, packageNames, overrideDir, devMode) {
+  if (target === 'claude') installClaude(packageNames, overrideDir, devMode);
+  else if (target === 'cursor') installCursor(packageNames, overrideDir, devMode);
+  else if (target === 'gemini') installGemini(packageNames, overrideDir, devMode);
+  else installCodex(packageNames, overrideDir, devMode);
+}
+
+function main() {
+  const { target, globalScope, listMode, dryRun, devMode, projectDir, overrideDir, packageNames } = parseArgs();
+  handleRetiredProjectDir(projectDir);
+  assertSupportedTarget(target);
+  handleListMode(target, listMode);
+  handleDryRun(target, dryRun, devMode, overrideDir, packageNames);
   try {
     if (globalScope) {
       console.log('Note: --global is now optional; MDT installs globally by default.');
     }
-    if (target === 'claude') installClaude(packageNames, overrideDir, devMode);
-    else if (target === 'cursor') installCursor(packageNames, overrideDir, devMode);
-    else if (target === 'gemini') installGemini(packageNames, overrideDir, devMode);
-    else installCodex(packageNames, overrideDir, devMode);
+    runInstallForTarget(target, packageNames, overrideDir, devMode);
   } catch (error) {
     console.error(`Error: ${error.message}`);
     usage(target);

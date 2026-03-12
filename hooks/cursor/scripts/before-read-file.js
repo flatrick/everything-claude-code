@@ -8,6 +8,9 @@ readStdin().then(raw => {
       console.error('[MDT] WARNING: Reading sensitive file: ' + filePath);
       console.error('[MDT] Ensure this data is not exposed in outputs');
     }
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

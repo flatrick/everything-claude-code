@@ -7,6 +7,9 @@ readStdin().then(raw => {
       tool_input: { file_path: input.path || input.file || '' }
     });
     runExistingHook('post-edit-format.js', JSON.stringify(claudeInput));
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

@@ -6,6 +6,9 @@ readStdin().then(raw => {
     const server = input.server || input.mcp_server || 'unknown';
     const tool = input.tool || input.mcp_tool || 'unknown';
     console.error(`[MDT] MCP invocation: ${server}/${tool}`);
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

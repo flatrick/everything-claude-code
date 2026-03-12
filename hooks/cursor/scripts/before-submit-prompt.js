@@ -19,6 +19,9 @@ readStdin().then(raw => {
         break;
       }
     }
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

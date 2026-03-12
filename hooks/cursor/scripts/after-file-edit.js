@@ -35,7 +35,9 @@ async function processCursorAfterFileEdit(raw, options = {}) {
       env,
       scriptPath: getObserveScriptPath(env)
     });
-  } catch {}
+  } catch (_error) {
+    return raw;
+  }
 
   return raw;
 }

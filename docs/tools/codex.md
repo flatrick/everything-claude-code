@@ -246,8 +246,8 @@ opt-in layer when a concrete workflow needs it.
 
 ## Source Links
 
-- AGENTS.md: https://developers.openai.com/codex/guides/agents-md
-- Skills: https://developers.openai.com/codex/skills
-- Rules: https://developers.openai.com/codex/rules
-- CLI slash commands: https://developers.openai.com/codex/cli/slash-commands
-- App automations: https://developers.openai.com/codex/app/automations
+- AGENTS.md: [developers.openai.com/codex/guides/agents-md](https://developers.openai.com/codex/guides/agents-md)
+- Skills: [developers.openai.com/codex/skills](https://developers.openai.com/codex/skills)
+- Rules: [developers.openai.com/codex/rules](https://developers.openai.com/codex/rules)
+- CLI slash commands: [developers.openai.com/codex/cli/slash-commands](https://developers.openai.com/codex/cli/slash-commands)
+- App automations: [developers.openai.com/codex/app/automations](https://developers.openai.com/codex/app/automations)

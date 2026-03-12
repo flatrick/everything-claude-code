@@ -44,6 +44,18 @@ Expected:
 Run the installed Cursor `smoke` command from Agent chat when you want a fast
 sanity check before doing deeper runtime verification.
 
+For deterministic local verification outside Cursor chat, run:
+
+```bash
+node scripts/smoke-cursor-workflows.js
+```
+
+From an installed Cursor dev setup, run:
+
+```bash
+node ~/.cursor/mdt/scripts/smoke-cursor-workflows.js
+```
+
 Expected:
 - it reports whether `~/.cursor/` is installed
 - it checks for rules, skills, commands, and `AGENTS.md`

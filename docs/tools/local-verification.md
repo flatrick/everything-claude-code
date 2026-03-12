@@ -31,6 +31,7 @@ Use this when you need to refresh or challenge any claim in the MDT tool docs.
 node scripts/verify-tool-setups.js
 node scripts/smoke-tool-setups.js
 node scripts/smoke-claude-workflows.js
+node scripts/smoke-cursor-workflows.js
 node scripts/smoke-codex-workflows.js
 ```
 
@@ -47,6 +48,10 @@ Use `smoke-tool-setups.js` as an optional local CLI probe. Missing tools should 
 Use `smoke-claude-workflows.js` when you want a deeper Claude-specific check for
 the current `plan`, `tdd`, `code-review`, `verify`, `smoke`, `security`, and
 `e2e` workflows without requiring a live Claude session.
+
+Use `smoke-cursor-workflows.js` when you want a deeper Cursor-specific check for
+the current `plan`, `tdd`, `code-review`, `verify`, `smoke`, `security`, and
+`e2e` workflows without requiring a live Cursor desktop session.
 
 Use `smoke-codex-workflows.js` when you want a deeper Codex-specific check for
 the current `plan`, `tdd`, `code-review`, `verify`, `smoke`, `security`, and

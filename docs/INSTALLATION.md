@@ -116,6 +116,14 @@ node scripts/verify-tool-setups.js
 node scripts/smoke-tool-setups.js
 ```
 
+Tool-specific deeper smoke checks:
+
+```bash
+node scripts/smoke-claude-workflows.js
+node scripts/smoke-cursor-workflows.js
+node scripts/smoke-codex-workflows.js
+```
+
 Tool-specific manual checks live under:
 
 - [docs/testing/manual-verification/claude-code.md](./testing/manual-verification/claude-code.md)

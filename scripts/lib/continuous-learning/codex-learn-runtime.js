@@ -3,6 +3,126 @@
 const fs = require('fs');
 const path = require('path');
 
+const TOOL_ENV_MAP = {
+  '.cursor': { envKey: 'CURSOR_AGENT', observerTool: 'cursor' },
+  '.claude': { envKey: 'CLAUDE_CODE', observerTool: 'claude' },
+  '.codex': { envKey: 'CODEX_AGENT', observerTool: 'codex' }
+};
+
+function loadStdin() {
+  return new Promise((resolve) => {
+    let data = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (chunk) => { data += chunk; });
+    process.stdin.on('end', () => resolve(data));
+  });
+}
+
+function countLines(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return 0;
+  }
+  return fs.readFileSync(filePath, 'utf8').split('\n').filter(Boolean).length;
+}
+
+function appendSummaryObservation(summaryText, project, env) {
+  const tool = env.MDT_OBSERVER_TOOL || 'codex';
+  const observation = {
+    timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+    event: 'session_summary',
+    tool,
+    session: env.CODEX_SESSION_ID || env.CLAUDE_SESSION_ID || env.CURSOR_SESSION_ID || `${tool}-${Date.now()}`,
+    project_id: project.id,
+    project_name: project.name,
+    input: summaryText.trim()
+  };
+
+  fs.mkdirSync(path.dirname(project.observations_file), { recursive: true });
+  fs.appendFileSync(project.observations_file, `${JSON.stringify(observation)}\n`, 'utf8');
+}
+
+function buildAnalyzeEnv(env, project) {
+  return {
+    ...env,
+    CLV2_PROJECT_DIR: project.project_dir,
+    CLV2_OBSERVATIONS_FILE: project.observations_file,
+    CLV2_INSTINCTS_DIR: path.join(project.project_dir, 'instincts', 'personal'),
+    CLV2_MIN_OBSERVATIONS: '1',
+    CLV2_PROJECT_NAME: project.name,
+    CLV2_PROJECT_ID: project.id,
+    CLV2_LOG_FILE: path.join(project.project_dir, 'observer.log')
+  };
+}
+
+function waitForChild(child) {
+  return new Promise((resolve, reject) => {
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Codex analysis exited with code ${code}`));
+      }
+    });
+    child.on('error', reject);
+  });
+}
+
+function applyEnvToProcess(env) {
+  for (const [key, value] of Object.entries(env)) {
+    if (value !== undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
+function createCodexEnvBuilder(inferInstalledConfigDir, entrypointDir) {
+  return function buildCodexEnv(env = process.env) {
+    const nextEnv = { ...env };
+    const homeDir = nextEnv.HOME || nextEnv.USERPROFILE || process.env.HOME || process.env.USERPROFILE || '';
+    const installedDir = inferInstalledConfigDir(entrypointDir);
+    const toolName = installedDir ? path.basename(installedDir).toLowerCase() : '.codex';
+    const toolInfo = TOOL_ENV_MAP[toolName] || TOOL_ENV_MAP['.codex'];
+    const configDir = nextEnv.CONFIG_DIR || (installedDir || path.join(homeDir, '.codex'));
+    const dataDir = nextEnv.DATA_DIR || path.join(configDir, 'mdt');
+
+    fs.mkdirSync(dataDir, { recursive: true });
+    nextEnv[toolInfo.envKey] = '1';
+    nextEnv.MDT_OBSERVER_TOOL = toolInfo.observerTool;
+    nextEnv.CONFIG_DIR = configDir;
+    nextEnv.DATA_DIR = dataDir;
+    return nextEnv;
+  };
+}
+
+async function handleAnalyze(project, env, analyzeObservations, loadObserverConfig) {
+  const config = {
+    ...loadObserverConfig(),
+    tool: 'codex',
+    min_observations_to_analyze: 1
+  };
+  const child = analyzeObservations({
+    env: buildAnalyzeEnv(env, project),
+    config
+  });
+
+  if (!child) {
+    console.log('No observations available to analyze.');
+    return;
+  }
+
+  await waitForChild(child);
+  console.log(`Analyzed observations for ${project.name}`);
+}
+
+function parseWeeklyArg(argv) {
+  for (let i = 1; i < argv.length; i++) {
+    if (argv[i] === '--week' && argv[i + 1]) {
+      return argv[i + 1];
+    }
+  }
+  return null;
+}
+
 function createCodexLearnRuntime(options = {}) {
   const {
     detectProject,
@@ -28,73 +148,12 @@ function createCodexLearnRuntime(options = {}) {
   if (typeof generateWeeklyRetrospective !== 'function') {
     throw new Error('createCodexLearnRuntime requires generateWeeklyRetrospective');
   }
-
-  function loadStdin() {
-    return new Promise((resolve) => {
-      let data = '';
-      process.stdin.setEncoding('utf8');
-      process.stdin.on('data', (chunk) => { data += chunk; });
-      process.stdin.on('end', () => resolve(data));
-    });
-  }
-
-  const TOOL_ENV_MAP = {
-    '.cursor': { envKey: 'CURSOR_AGENT', observerTool: 'cursor' },
-    '.claude': { envKey: 'CLAUDE_CODE', observerTool: 'claude' },
-    '.codex': { envKey: 'CODEX_AGENT', observerTool: 'codex' }
-  };
-
-  function buildCodexEnv(env = process.env) {
-    const nextEnv = { ...env };
-    const homeDir = nextEnv.HOME || nextEnv.USERPROFILE || process.env.HOME || process.env.USERPROFILE || '';
-
-    const installedDir = inferInstalledConfigDir(entrypointDir);
-    const toolName = installedDir ? path.basename(installedDir).toLowerCase() : '.codex';
-    const toolInfo = TOOL_ENV_MAP[toolName] || TOOL_ENV_MAP['.codex'];
-
-    const configDir = nextEnv.CONFIG_DIR || (installedDir || path.join(homeDir, '.codex'));
-    const dataDir = nextEnv.DATA_DIR || path.join(configDir, 'mdt');
-    fs.mkdirSync(dataDir, { recursive: true });
-
-    nextEnv[toolInfo.envKey] = '1';
-    nextEnv.MDT_OBSERVER_TOOL = toolInfo.observerTool;
-    nextEnv.CONFIG_DIR = configDir;
-    nextEnv.DATA_DIR = dataDir;
-
-    return nextEnv;
-  }
-
-  function countLines(filePath) {
-    if (!fs.existsSync(filePath)) {
-      return 0;
-    }
-    return fs.readFileSync(filePath, 'utf8').split('\n').filter(Boolean).length;
-  }
-
-  function appendSummaryObservation(summaryText, project, env) {
-    const tool = env.MDT_OBSERVER_TOOL || 'codex';
-    const observation = {
-      timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
-      event: 'session_summary',
-      tool,
-      session: env.CODEX_SESSION_ID || env.CLAUDE_SESSION_ID || env.CURSOR_SESSION_ID || `${tool}-${Date.now()}`,
-      project_id: project.id,
-      project_name: project.name,
-      input: summaryText.trim()
-    };
-
-    fs.mkdirSync(path.dirname(project.observations_file), { recursive: true });
-    fs.appendFileSync(project.observations_file, `${JSON.stringify(observation)}\n`, 'utf8');
-  }
+  const buildCodexEnv = createCodexEnvBuilder(inferInstalledConfigDir, entrypointDir);
 
   async function run(argv = process.argv.slice(2)) {
     const cmd = argv[0] || 'status';
     const env = buildCodexEnv();
-    for (const [key, value] of Object.entries(env)) {
-      if (value !== undefined) {
-        process.env[key] = value;
-      }
-    }
+    applyEnvToProcess(env);
     const project = detectProject(process.cwd());
 
     if (cmd === 'status') {
@@ -118,54 +177,12 @@ function createCodexLearnRuntime(options = {}) {
     }
 
     if (cmd === 'analyze') {
-      const config = {
-        ...loadObserverConfig(),
-        tool: 'codex',
-        min_observations_to_analyze: 1
-      };
-
-      const child = analyzeObservations({
-        env: {
-          ...env,
-          CLV2_PROJECT_DIR: project.project_dir,
-          CLV2_OBSERVATIONS_FILE: project.observations_file,
-          CLV2_INSTINCTS_DIR: path.join(project.project_dir, 'instincts', 'personal'),
-          CLV2_MIN_OBSERVATIONS: '1',
-          CLV2_PROJECT_NAME: project.name,
-          CLV2_PROJECT_ID: project.id,
-          CLV2_LOG_FILE: path.join(project.project_dir, 'observer.log')
-        },
-        config
-      });
-
-      if (!child) {
-        console.log('No observations available to analyze.');
-        return;
-      }
-
-      await new Promise((resolve, reject) => {
-        child.on('close', (code) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject(new Error(`Codex analysis exited with code ${code}`));
-          }
-        });
-        child.on('error', reject);
-      });
-
-      console.log(`Analyzed observations for ${project.name}`);
+      await handleAnalyze(project, env, analyzeObservations, loadObserverConfig);
       return;
     }
 
     if (cmd === 'weekly') {
-      let week = null;
-      for (let i = 1; i < argv.length; i++) {
-        if (argv[i] === '--week' && argv[i + 1]) {
-          week = argv[++i];
-        }
-      }
-
+      const week = parseWeeklyArg(argv);
       const retrospective = generateWeeklyRetrospective({
         cwd: project.root || process.cwd(),
         project,

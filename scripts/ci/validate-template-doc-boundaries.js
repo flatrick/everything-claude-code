@@ -61,6 +61,57 @@ function lineNumberForIndex(content, index) {
   return line;
 }
 
+function reportPatternMatches(content, relativePath, pattern, messageFactory, io) {
+  let hasErrors = false;
+  pattern.lastIndex = 0;
+  let match;
+
+  while ((match = pattern.exec(content)) !== null) {
+    const line = lineNumberForIndex(content, match.index);
+    io.error(messageFactory(match[0], line, relativePath));
+    hasErrors = true;
+  }
+
+  return hasErrors;
+}
+
+function validateOtherToolReferences(content, relativePath, owningTool, io) {
+  let hasErrors = false;
+
+  for (const [toolName, pattern] of Object.entries(TOOL_PATTERNS)) {
+    if (toolName === owningTool) continue;
+    hasErrors = reportPatternMatches(
+      content,
+      relativePath,
+      pattern,
+      (matchText, line) => `ERROR: ${relativePath}:${line} - ${owningTool}-template document references other tool "${matchText}"`,
+      io
+    ) || hasErrors;
+  }
+
+  return hasErrors;
+}
+
+function validateCodexContinuousLearningDoc(content, relativePath, io) {
+  const forbiddenPatterns = [
+    { pattern: /<data>\/homunculus\//g, label: '<data>/homunculus/' },
+    { pattern: /\$\{MDT_ROOT\}/g, label: '${MDT_ROOT}' }
+  ];
+  let hasErrors = false;
+
+  for (const { pattern, label } of forbiddenPatterns) {
+    hasErrors = reportPatternMatches(
+      content,
+      relativePath,
+      pattern,
+      (_matchText, line) => `ERROR: ${relativePath}:${line} - codex-template continuous-learning-manual must use concrete Codex paths, not '${label}'`,
+      io
+    ) || hasErrors;
+  }
+
+  return hasErrors;
+}
+
 function validateTemplateDocBoundaries(options = {}) {
   const repoRoot = options.repoRoot || ROOT_DIR;
   const io = options.io || DEFAULT_IO;
@@ -75,38 +126,9 @@ function validateTemplateDocBoundaries(options = {}) {
     const owningTool = getToolFromRelativePath(relativePath);
     const content = stripCodeBlocks(fs.readFileSync(filePath, 'utf8'));
     checkedFiles++;
-
-    for (const [toolName, pattern] of Object.entries(TOOL_PATTERNS)) {
-      if (toolName === owningTool) continue;
-
-      pattern.lastIndex = 0;
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const line = lineNumberForIndex(content, match.index);
-        io.error(
-          `ERROR: ${relativePath}:${line} - ${owningTool}-template document references other tool "${match[0]}"`
-        );
-        hasErrors = true;
-      }
-    }
-
+    hasErrors = validateOtherToolReferences(content, relativePath, owningTool, io) || hasErrors;
     if (relativePath === CODEX_CONTINUOUS_LEARNING_DOC) {
-      const forbiddenPatterns = [
-        { pattern: /<data>\/homunculus\//g, label: '<data>/homunculus/' },
-        { pattern: /\$\{MDT_ROOT\}/g, label: '${MDT_ROOT}' }
-      ];
-
-      for (const { pattern, label } of forbiddenPatterns) {
-        pattern.lastIndex = 0;
-        let match;
-        while ((match = pattern.exec(content)) !== null) {
-          const line = lineNumberForIndex(content, match.index);
-          io.error(
-            `ERROR: ${relativePath}:${line} - codex-template continuous-learning-manual must use concrete Codex paths, not '${label}'`
-          );
-          hasErrors = true;
-        }
-      }
+      hasErrors = validateCodexContinuousLearningDoc(content, relativePath, io) || hasErrors;
     }
   }
 

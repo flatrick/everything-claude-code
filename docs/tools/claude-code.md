@@ -100,8 +100,8 @@ Useful local checks:
 
 ## Source Links
 
-- Hooks: https://docs.anthropic.com/en/docs/claude-code/hooks
-- Slash commands: https://docs.anthropic.com/en/docs/claude-code/slash-commands
-- Subagents: https://docs.anthropic.com/en/docs/claude-code/sub-agents
-- Memory: https://docs.anthropic.com/en/docs/claude-code/memory
-- Skills: https://docs.anthropic.com/en/docs/claude-code/skills
+- Hooks: [docs.anthropic.com/en/docs/claude-code/hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- Slash commands: [docs.anthropic.com/en/docs/claude-code/slash-commands](https://docs.anthropic.com/en/docs/claude-code/slash-commands)
+- Subagents: [docs.anthropic.com/en/docs/claude-code/sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- Memory: [docs.anthropic.com/en/docs/claude-code/memory](https://docs.anthropic.com/en/docs/claude-code/memory)
+- Skills: [docs.anthropic.com/en/docs/claude-code/skills](https://docs.anthropic.com/en/docs/claude-code/skills)

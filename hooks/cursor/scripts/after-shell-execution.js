@@ -42,7 +42,9 @@ async function processCursorAfterShellExecution(raw, options = {}) {
       env,
       scriptPath: getObserveScriptPath(env)
     });
-  } catch {}
+  } catch (_error) {
+    return raw;
+  }
 
   return raw;
 }

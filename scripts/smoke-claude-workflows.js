@@ -390,11 +390,22 @@ function buildInstalledWorkflowChecks(files, options = {}) {
   ];
 }
 
-function smokeClaudeWorkflows(options = {}) {
-  const rootDir = options.rootDir || resolveWorkspaceRoot(__dirname);
-  const io = options.io || console;
-  const installedRepoMode = !fs.existsSync(path.join(rootDir, 'commands')) && fs.existsSync(path.join(rootDir, '.claude'));
-  const files = installedRepoMode
+function buildWorkflowsResult(workflowChecks) {
+  return workflowChecks.map((entry) => {
+    const failures = entry.checks.filter((check) => !check.ok);
+    const skips = entry.checks.filter((check) => check.statusOverride === 'SKIP');
+    return {
+      workflow: entry.workflow,
+      status: entry.statusOverride || (failures.length === 0 ? (skips.length > 0 ? 'SKIP' : 'PASS') : 'FAIL'),
+      checks: entry.checks,
+      failures,
+      skips
+    };
+  });
+}
+
+function createClaudeFiles(rootDir, installedRepoMode) {
+  return installedRepoMode
     ? {
         '.claude/commands/plan.md': readRepoFile(rootDir, path.join('.claude', 'commands', 'plan.md')),
         '.claude/agents/planner.md': readRepoFile(rootDir, path.join('.claude', 'agents', 'planner.md')),
@@ -434,18 +445,15 @@ function smokeClaudeWorkflows(options = {}) {
         'agents/e2e-runner.md': readRepoFile(rootDir, path.join('agents', 'e2e-runner.md')),
         'skills/e2e-testing/SKILL.md': readRepoFile(rootDir, path.join('skills', 'e2e-testing', 'SKILL.md'))
       };
+}
 
-  const workflows = (installedRepoMode ? buildInstalledWorkflowChecks(files, options) : buildWorkflowChecks(files, options)).map(entry => {
-    const failures = entry.checks.filter(check => !check.ok);
-    const skips = entry.checks.filter(check => check.statusOverride === 'SKIP');
-    return {
-      workflow: entry.workflow,
-      status: entry.statusOverride || (failures.length === 0 ? (skips.length > 0 ? 'SKIP' : 'PASS') : 'FAIL'),
-      checks: entry.checks,
-      failures,
-      skips
-    };
-  });
+function smokeClaudeWorkflows(options = {}) {
+  const rootDir = options.rootDir || resolveWorkspaceRoot(__dirname);
+  const io = options.io || console;
+  const installedRepoMode = !fs.existsSync(path.join(rootDir, 'commands')) && fs.existsSync(path.join(rootDir, '.claude'));
+  const files = createClaudeFiles(rootDir, installedRepoMode);
+  const workflowChecks = installedRepoMode ? buildInstalledWorkflowChecks(files, options) : buildWorkflowChecks(files, options);
+  const workflows = buildWorkflowsResult(workflowChecks);
 
   const result = {
     ok: workflows.every(workflow => workflow.status !== 'FAIL'),

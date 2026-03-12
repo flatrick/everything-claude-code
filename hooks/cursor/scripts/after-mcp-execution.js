@@ -7,6 +7,9 @@ readStdin().then(raw => {
     const tool = input.tool || input.mcp_tool || 'unknown';
     const success = input.error ? 'FAILED' : 'OK';
     console.error(`[MDT] MCP result: ${server}/${tool} - ${success}`);
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

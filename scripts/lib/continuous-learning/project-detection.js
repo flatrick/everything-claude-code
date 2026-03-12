@@ -57,123 +57,144 @@ function findGitRepo(startDir) {
   return { root, remote };
 }
 
+function getPathSet(entrypointDir) {
+  const context = createContinuousLearningContext({ entrypointDir });
+  const homunculusDir = path.join(context.dataDir, 'homunculus');
+  return {
+    dataDir: context.dataDir,
+    homunculusDir,
+    projectsDir: homunculusDir,
+    registryFile: path.join(homunculusDir, 'projects.json')
+  };
+}
+
+function findAncestor(startDir, predicate) {
+  let current = path.resolve(startDir || process.cwd());
+
+  while (true) {
+    if (predicate(current)) {
+      return current;
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) {
+      return null;
+    }
+    current = parent;
+  }
+}
+
+function updateRegistry(registryFile, projectId, projectName, projectRoot, remoteUrl) {
+  ensureDir(path.dirname(registryFile));
+  let registry = {};
+  try {
+    if (fs.existsSync(registryFile)) {
+      registry = JSON.parse(fs.readFileSync(registryFile, 'utf8'));
+    }
+  } catch {
+    registry = {};
+  }
+  registry[projectId] = {
+    name: projectName,
+    root: projectRoot,
+    remote: remoteUrl || '',
+    last_seen: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
+  };
+  const tmpFile = registryFile + '.tmp.' + process.pid;
+  fs.writeFileSync(tmpFile, JSON.stringify(registry, null, 2), 'utf8');
+  fs.renameSync(tmpFile, registryFile);
+}
+
+function ensureProjectSubdirs(projectDir) {
+  const subdirs = [
+    path.join(projectDir, 'instincts', 'personal'),
+    path.join(projectDir, 'instincts', 'inherited'),
+    path.join(projectDir, 'observations.archive'),
+    path.join(projectDir, 'evolved', 'skills'),
+    path.join(projectDir, 'evolved', 'commands'),
+    path.join(projectDir, 'evolved', 'agents')
+  ];
+  for (const dir of subdirs) {
+    ensureDir(dir);
+  }
+}
+
+function buildProjectResult(projectsDir, registryFile, projectRoot, remoteUrl) {
+  const projectName = path.basename(projectRoot);
+  const projectId = remoteUrl
+    ? `${repoNameFromUrl(remoteUrl)}-git`
+    : `${projectName}-${md5_8(projectRoot)}`;
+  const projectDir = path.join(projectsDir, projectId);
+  ensureProjectSubdirs(projectDir);
+  updateRegistry(registryFile, projectId, projectName, projectRoot, remoteUrl);
+
+  return {
+    id: projectId,
+    name: projectName,
+    root: projectRoot,
+    remote: remoteUrl,
+    project_dir: projectDir,
+    instincts_personal: path.join(projectDir, 'instincts', 'personal'),
+    instincts_inherited: path.join(projectDir, 'instincts', 'inherited'),
+    evolved_dir: path.join(projectDir, 'evolved'),
+    observations_file: path.join(projectDir, 'observations.jsonl')
+  };
+}
+
+function getExplicitProjectRoot() {
+  for (const envKey of ['CLAUDE_PROJECT_DIR', 'MDT_PROJECT_ROOT']) {
+    const value = (process.env[envKey] || '').trim();
+    if (value && fs.existsSync(value)) {
+      return path.resolve(value);
+    }
+  }
+  return null;
+}
+
+function resolveProjectRootWithGit(projectsDir, registryFile, rootDir) {
+  const repo = findGitRepo(rootDir);
+  if (repo) return buildProjectResult(projectsDir, registryFile, repo.root, repo.remote);
+  if (fs.existsSync(path.join(rootDir, '.git'))) {
+    return buildProjectResult(projectsDir, registryFile, rootDir, '');
+  }
+  return null;
+}
+
 function createProjectDetection(options = {}) {
   const entrypointDir = path.resolve(options.entrypointDir || process.cwd());
 
-  function getPathSet() {
-    const context = createContinuousLearningContext({ entrypointDir });
-    const homunculusDir = path.join(context.dataDir, 'homunculus');
-    return {
-      dataDir: context.dataDir,
-      homunculusDir,
-      projectsDir: homunculusDir,
-      registryFile: path.join(homunculusDir, 'projects.json')
-    };
-  }
-
   function findProjectRootFromFilesystem(startDir) {
-    let current = path.resolve(startDir || process.cwd());
-
-    while (true) {
-      if (hasRepoMarker(current)) {
-        return current;
-      }
-
-      const parent = path.dirname(current);
-      if (parent === current) {
-        return null;
-      }
-      current = parent;
-    }
-  }
-
-  function updateRegistry(projectId, projectName, projectRoot, remoteUrl) {
-    const { registryFile } = getPathSet();
-    ensureDir(path.dirname(registryFile));
-    let registry = {};
-    try {
-      if (fs.existsSync(registryFile)) {
-        registry = JSON.parse(fs.readFileSync(registryFile, 'utf8'));
-      }
-    } catch {
-      registry = {};
-    }
-    registry[projectId] = {
-      name: projectName,
-      root: projectRoot,
-      remote: remoteUrl || '',
-      last_seen: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
-    };
-    const tmpFile = registryFile + '.tmp.' + process.pid;
-    fs.writeFileSync(tmpFile, JSON.stringify(registry, null, 2), 'utf8');
-    fs.renameSync(tmpFile, registryFile);
-  }
-
-  function buildProjectResult(projectsDir, projectRoot, remoteUrl) {
-    const projectName = path.basename(projectRoot);
-    const projectId = remoteUrl
-      ? `${repoNameFromUrl(remoteUrl)}-git`
-      : `${projectName}-${md5_8(projectRoot)}`;
-    const projectDir = path.join(projectsDir, projectId);
-
-    const subdirs = [
-      path.join(projectDir, 'instincts', 'personal'),
-      path.join(projectDir, 'instincts', 'inherited'),
-      path.join(projectDir, 'observations.archive'),
-      path.join(projectDir, 'evolved', 'skills'),
-      path.join(projectDir, 'evolved', 'commands'),
-      path.join(projectDir, 'evolved', 'agents')
-    ];
-    for (const dir of subdirs) {
-      ensureDir(dir);
-    }
-
-    updateRegistry(projectId, projectName, projectRoot, remoteUrl);
-
-    return {
-      id: projectId,
-      name: projectName,
-      root: projectRoot,
-      remote: remoteUrl,
-      project_dir: projectDir,
-      instincts_personal: path.join(projectDir, 'instincts', 'personal'),
-      instincts_inherited: path.join(projectDir, 'instincts', 'inherited'),
-      evolved_dir: path.join(projectDir, 'evolved'),
-      observations_file: path.join(projectDir, 'observations.jsonl')
-    };
+    return findAncestor(startDir, hasRepoMarker);
   }
 
   function detectProject(cwd) {
-    const { projectsDir } = getPathSet();
+    const { projectsDir, registryFile } = getPathSet(entrypointDir);
     const effectiveCwd = path.resolve(cwd || process.cwd());
 
-    for (const envKey of ['CLAUDE_PROJECT_DIR', 'MDT_PROJECT_ROOT']) {
-      const val = (process.env[envKey] || '').trim();
-      if (!val || !fs.existsSync(val)) continue;
-      const resolved = path.resolve(val);
-      const repo = findGitRepo(resolved);
-      if (repo) return buildProjectResult(projectsDir, repo.root, repo.remote);
-      if (fs.existsSync(path.join(resolved, '.git'))) {
-        return buildProjectResult(projectsDir, resolved, '');
+    const explicitRoot = getExplicitProjectRoot();
+    if (explicitRoot) {
+      const explicitProject = resolveProjectRootWithGit(projectsDir, registryFile, explicitRoot);
+      if (explicitProject) {
+        return explicitProject;
       }
     }
 
     const repo = findGitRepo(effectiveCwd);
-    if (repo) return buildProjectResult(projectsDir, repo.root, repo.remote);
+    if (repo) return buildProjectResult(projectsDir, registryFile, repo.root, repo.remote);
 
-    return buildProjectResult(projectsDir, effectiveCwd, '');
+    return buildProjectResult(projectsDir, registryFile, effectiveCwd, '');
   }
 
   function getHomunculusDir() {
-    return getPathSet().homunculusDir;
+    return getPathSet(entrypointDir).homunculusDir;
   }
 
   function getProjectsDir() {
-    return getPathSet().projectsDir;
+    return getPathSet(entrypointDir).projectsDir;
   }
 
   function getRegistryFile() {
-    return getPathSet().registryFile;
+    return getPathSet(entrypointDir).registryFile;
   }
 
   return {

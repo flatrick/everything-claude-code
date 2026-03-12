@@ -22,6 +22,9 @@ readStdin().then(raw => {
     if (/git push/.test(cmd)) {
       console.error('[MDT] Review changes before push: git diff origin/main...HEAD');
     }
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

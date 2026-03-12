@@ -77,25 +77,32 @@ function applyInstalledToolEnv(env, configDir) {
   return nextEnv;
 }
 
-function resolveContinuousLearningSkillRoot(options = {}) {
+function getSkillRootCandidates(options) {
   const skillName = options.skillName || 'continuous-learning-manual';
   const entrypointDir = path.resolve(options.entrypointDir || process.cwd());
   const explicitSkillDir = options.skillDir ? path.resolve(options.skillDir) : null;
   const configDir = options.configDir ? path.resolve(options.configDir) : inferInstalledConfigDir(entrypointDir);
   const repoRoot = options.repoRoot ? path.resolve(options.repoRoot) : resolveRepoRootFromEntrypoint(entrypointDir);
-  const candidates = [
+
+  return [
     explicitSkillDir,
     configDir ? path.join(configDir, 'skills', skillName) : null,
     repoRoot ? path.join(repoRoot, 'skills', skillName) : null
   ].filter(Boolean);
+}
 
-  for (const candidate of candidates) {
-    if (
-      fs.existsSync(path.join(candidate, 'SKILL.md')) ||
-      fs.existsSync(path.join(candidate, 'skill.meta.json')) ||
-      fs.existsSync(path.join(candidate, 'scripts', 'detect-project.js')) ||
-      fs.existsSync(path.join(candidate, 'agents', 'start-observer.js'))
-    ) {
+function isContinuousLearningSkillDir(candidate) {
+  return (
+    fs.existsSync(path.join(candidate, 'SKILL.md')) ||
+    fs.existsSync(path.join(candidate, 'skill.meta.json')) ||
+    fs.existsSync(path.join(candidate, 'scripts', 'detect-project.js')) ||
+    fs.existsSync(path.join(candidate, 'agents', 'start-observer.js'))
+  );
+}
+
+function resolveContinuousLearningSkillRoot(options = {}) {
+  for (const candidate of getSkillRootCandidates(options)) {
+    if (isContinuousLearningSkillDir(candidate)) {
       return candidate;
     }
   }
@@ -103,22 +110,16 @@ function resolveContinuousLearningSkillRoot(options = {}) {
   return null;
 }
 
-function createContinuousLearningContext(options = {}) {
-  const entrypointDir = path.resolve(options.entrypointDir || process.cwd());
-  const repoRoot = options.repoRoot
-    ? path.resolve(options.repoRoot)
-    : resolveRepoRootFromEntrypoint(entrypointDir);
-  const env = { ...process.env, ...(options.env || {}) };
-  const inferredConfigDir = options.configDir
-    ? path.resolve(options.configDir)
-    : inferInstalledConfigDir(options.skillDir || entrypointDir);
+function getSeededEnv(env, inferredConfigDir) {
   const seededEnv = inferredConfigDir && (!env.CONFIG_DIR || !String(env.CONFIG_DIR).trim())
     ? { ...env, CONFIG_DIR: inferredConfigDir }
     : env;
-  const toolSeededEnv = inferredConfigDir
+  return inferredConfigDir
     ? applyInstalledToolEnv(seededEnv, inferredConfigDir)
     : seededEnv;
-  const detectEnv = createDetectEnv({ env: toolSeededEnv });
+}
+
+function resolveContextPaths(options, entrypointDir, detectEnv, repoRoot) {
   const configDir = options.configDir
     ? path.resolve(options.configDir)
     : detectEnv.getConfigDir();
@@ -135,6 +136,27 @@ function createContinuousLearningContext(options = {}) {
   const configPath = options.configPath
     ? path.resolve(options.configPath)
     : (skillDir ? path.join(skillDir, 'config.json') : null);
+
+  return { configDir, dataDir, skillDir, configPath };
+}
+
+function createContinuousLearningContext(options = {}) {
+  const entrypointDir = path.resolve(options.entrypointDir || process.cwd());
+  const repoRoot = options.repoRoot
+    ? path.resolve(options.repoRoot)
+    : resolveRepoRootFromEntrypoint(entrypointDir);
+  const env = { ...process.env, ...(options.env || {}) };
+  const inferredConfigDir = options.configDir
+    ? path.resolve(options.configDir)
+    : inferInstalledConfigDir(options.skillDir || entrypointDir);
+  const toolSeededEnv = getSeededEnv(env, inferredConfigDir);
+  const detectEnv = createDetectEnv({ env: toolSeededEnv });
+  const { configDir, dataDir, skillDir, configPath } = resolveContextPaths(
+    options,
+    entrypointDir,
+    detectEnv,
+    repoRoot
+  );
   const tool = detectEnv.getTool();
   const inferredTool = inferToolFromConfigDir(configDir);
   const mdtRoot = repoRoot || path.join(configDir, 'mdt');

@@ -8,6 +8,9 @@ readStdin().then(raw => {
       console.error('[MDT] BLOCKED: Tab cannot read sensitive file: ' + filePath);
       process.exit(2);
     }
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

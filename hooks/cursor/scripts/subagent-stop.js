@@ -5,6 +5,9 @@ readStdin().then(raw => {
     const input = JSON.parse(raw);
     const agent = input.agent_name || input.agent || 'unknown';
     console.error(`[MDT] Agent completed: ${agent}`);
-  } catch {}
+  } catch (_error) {
+    process.stdout.write(raw);
+    return;
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

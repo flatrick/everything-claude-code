@@ -85,6 +85,7 @@
     "test:gemini": "node tests/run-all.js --profile gemini",
     "verify:tool-setups": "node scripts/verify-tool-setups.js",
     "smoke:tool-setups": "node scripts/smoke-tool-setups.js",
+    "smoke:cursor-workflows": "node scripts/smoke-cursor-workflows.js",
     "smoke:codex-workflows": "node scripts/smoke-codex-workflows.js"
   },
   "devDependencies": {
