@@ -17,7 +17,8 @@ A background observer that analyzes observations from MDT tool sessions to detec
 ## Input
 
 Reads observations from the **project-scoped** observations file:
-- Project: `<data>/homunculus/projects/<project-hash>/observations.jsonl`
+- Project: `<data>/homunculus/<project-id>/observations.jsonl`
+- Registry: `<data>/homunculus/projects.json`
 - Global fallback: `<data>/homunculus/observations.jsonl`
 
 ```jsonl
@@ -66,7 +67,10 @@ When certain tools are consistently preferred:
 ## Output
 
 Creates/updates instincts in the **project-scoped** instincts directory:
-- Project: `<data>/homunculus/projects/<project-hash>/instincts/personal/`
+- Project: `<data>/homunculus/<project-id>/instincts/personal/`
+- Additional project artifacts such as `observer.log`, archived observations,
+  and weekly retrospectives live alongside that directory under
+  `<data>/homunculus/<project-id>/`
 - Global: `<data>/homunculus/instincts/personal/` (for universal patterns)
 
 ### Project-Scoped Instinct (default)

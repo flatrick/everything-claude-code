@@ -120,7 +120,7 @@ Expected after the edit and shell command:
 Helpful local check:
 
 ```bash
-node -e "const fs=require('fs');const path=require('path');const root=path.join(process.env.HOME||process.env.USERPROFILE,'.cursor','mdt','homunculus');const projects=JSON.parse(fs.readFileSync(path.join(root,'projects.json'),'utf8'));const id=Object.keys(projects)[0];console.log(fs.readFileSync(path.join(root,'projects',id,'observations.jsonl'),'utf8'));"
+node -e "const fs=require('fs');const path=require('path');const root=path.join(process.env.HOME||process.env.USERPROFILE,'.cursor','mdt','homunculus');const projects=JSON.parse(fs.readFileSync(path.join(root,'projects.json'),'utf8'));const id=Object.keys(projects)[0];console.log(fs.readFileSync(path.join(root,id,'observations.jsonl'),'utf8'));"
 ```
 
 ### Observer Tool Selection
