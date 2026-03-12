@@ -84,6 +84,31 @@ function runTests() {
     assert.strictEqual(typeof overlayCli.getCliPaths, 'function');
   })) passed++; else failed++;
 
+  if (test('codex-learn wrappers export buildCodexEnv from the shared runtime', () => {
+    const manualCodexLearn = require(path.join(
+      __dirname,
+      '..',
+      '..',
+      'skills',
+      'continuous-learning-manual',
+      'scripts',
+      'codex-learn.js'
+    ));
+    const overlayCodexLearn = require(path.join(
+      __dirname,
+      '..',
+      '..',
+      'codex-template',
+      'skills',
+      'continuous-learning-manual',
+      'scripts',
+      'codex-learn.js'
+    ));
+
+    assert.strictEqual(typeof manualCodexLearn.buildCodexEnv, 'function');
+    assert.strictEqual(typeof overlayCodexLearn.buildCodexEnv, 'function');
+  })) passed++; else failed++;
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }
