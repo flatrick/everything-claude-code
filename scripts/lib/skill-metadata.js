@@ -4,7 +4,7 @@ const path = require('path');
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const DEFAULT_SKILLS_DIR = path.join(REPO_ROOT, 'skills');
 const VALID_HOOK_MODES = new Set(['none', 'optional', 'required']);
-const ACTIVE_TOOL_TARGETS = new Set(['claude', 'cursor', 'codex', 'gemini']);
+const ACTIVE_TOOL_TARGETS = new Set(['claude', 'cursor', 'codex']);
 
 function readUtf8IfExists(filePath) {
   if (!fs.existsSync(filePath)) {

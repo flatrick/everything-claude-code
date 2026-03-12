@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/**
+ * Backing implementation for `mdt bridge materialize`.
+ *
+ * Today this script exists for the Cursor repo-local rules bridge. Keep the
+ * public contract in `scripts/mdt.js`; this file should stay focused on bridge
+ * mechanics.
+ */
 const fs = require('fs');
 const path = require('path');
 const {
@@ -18,13 +25,13 @@ function parseArgs(args) {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--target' && args[i + 1]) {
+    if ((arg === '--target' || arg === '--tool') && args[i + 1]) {
       target = args[++i];
     } else if (arg === '--surface' && args[i + 1]) {
       surface = args[++i];
-    } else if (arg === '--repo' && args[i + 1]) {
+    } else if ((arg === '--repo' || arg === '--cwd') && args[i + 1]) {
       repoDir = path.resolve(args[++i]);
-    } else if (arg === '--override' && args[i + 1]) {
+    } else if ((arg === '--override' || arg === '--config-root') && args[i + 1]) {
       overrideDir = path.resolve(args[++i]);
     } else if (!arg.startsWith('-')) {
       packageNames.push(arg);
@@ -35,10 +42,11 @@ function parseArgs(args) {
 }
 
 function usage() {
-  console.error('Usage: node scripts/materialize-mdt-local.js --target cursor --surface rules [--repo <path>] [--override <tool-config-dir>] [package ...]');
+  console.error('Usage: mdt bridge materialize --tool cursor --surface rules [package ...] [--cwd <path>] [--config-root <tool-config-dir>]');
+  console.error('Internal fallback: node scripts/materialize-mdt-local.js --target cursor --surface rules [--repo <path>] [--override <tool-config-dir>] [package ...]');
   console.error('');
   console.error('Purpose: materialize repo-local .cursor/rules/ files for Cursor IDE.');
-  console.error('Use install-mdt.js --target cursor for the global ~/.cursor/ install used by cursor-agent.');
+  console.error('Use mdt install --tool cursor for the global ~/.cursor/ install used by cursor-agent.');
   console.error('If package names are omitted, the script copies the currently installed global Cursor rules from ~/.cursor/rules/ into the current repo.');
   process.exit(1);
 }
@@ -110,7 +118,7 @@ function materializeCursorRules(repoDir, packageNames) {
   } catch (error) {
     if (error && error.code === 'MODULE_NOT_FOUND') {
       throw new Error(
-        'Package-selection mode requires scripts/install-mdt.js. Use the no-package installed-global mode from ~/.cursor/rules/ when running from an installed Cursor bridge.'
+        'Package-selection mode requires the installer module. Use the no-package installed-global mode from ~/.cursor/rules/ when running from an installed Cursor bridge.'
       );
     }
     throw error;

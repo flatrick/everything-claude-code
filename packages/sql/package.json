@@ -45,19 +45,6 @@
       "commands": [
         "docs-health.md"
       ]
-    },
-    "gemini": {
-      "rules": [
-        "common-agents.md",
-        "common-coding-style.md",
-        "common-development-workflow.md",
-        "common-git-workflow.md",
-        "common-hooks.md",
-        "common-patterns.md",
-        "common-performance.md",
-        "common-security.md",
-        "common-testing.md"
-      ]
     }
   }
 }

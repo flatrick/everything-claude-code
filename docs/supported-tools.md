@@ -29,16 +29,23 @@ Use this when you need to answer:
 
 ## Current Audit Summary
 
-- Claude Code is the closest match to MDT's current structure: hooks, slash commands, subagents, skills, and `CLAUDE.md`/memory are all native concepts.
-- Cursor officially supports rules, `AGENTS.md`, custom commands, memories, background agents, and a terminal agent/CLI. Local verification last confirmed on `2026-03-12` shows a real split between Cursor surfaces: Cursor IDE reads project rules from the opened repo and still appears to keep user-global rules in Cursor-managed app storage, while `cursor-agent` accepts file-backed user-global rules under `~/.cursor/rules/*.mdc`. MDT's current `cursor-template/hooks.json` flow should be treated as `experimental` until Cursor documents that surface.
-- Codex officially supports layered `AGENTS.md`, rule files, skills, and built-in slash commands. MDT installs Codex globally by default: tool-facing assets land under `~/.codex/`, while MDT-owned helpers and learning state live under `~/.codex/mdt/`.
+- Audit date: `2026-03-12`
+- Claude Code remains the closest native match to MDT's current structure.
+- Cursor remains a first-class MDT target, but Cursor IDE verification is manual and human-operated.
+- Codex remains a first-class MDT target for layered guidance, rules, skills, and explicit verification flows.
 
 ## Local Tool Versions Observed During This Audit
 
-- Claude Code: `2.1.71`
-- Cursor IDE: `2.6.13`
-- Cursor terminal agent present: `agent` (with `cursor-agent` also installed locally here)
-- Codex CLI: `0.111.0`
+- Claude Code: `2.1.73`
+- Cursor Agent CLI: `2026.03.11-6dfa30c`
+- Cursor IDE: `not-locally-verified` in this audit; use the manual verification page and stamp the human-tested version there
+- Codex CLI: `0.114.0`
+
+## Verification Method
+
+- Local CLI probes were run for `claude`, `agent`, `cursor-agent`, and `codex`.
+- Cursor IDE was not re-verified by CLI in this audit and should be treated as a manual verification surface.
+- Exact tool-specific behavior lives in the tool docs pack under `docs/tools/`.
 
 ## Source Policy
 

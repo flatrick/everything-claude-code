@@ -9,9 +9,7 @@ const TOOL_DETECTION_KEYS = Object.freeze([
   'CURSOR_AGENT',
   'CURSOR_TRACE_ID',
   'CODEX_SESSION_ID',
-  'CODEX_TRACE_ID',
-  'GEMINI_SESSION_ID',
-  'GEMINI_TRACE_ID'
+  'CODEX_TRACE_ID'
 ]);
 
 const NEUTRAL_TOOL_ENV = Object.freeze(
@@ -32,10 +30,6 @@ const TEST_ENV_PROFILES = Object.freeze({
   codex: Object.freeze({
     ...NEUTRAL_TOOL_ENV,
     CODEX_SESSION_ID: 'test-codex-session'
-  }),
-  gemini: Object.freeze({
-    ...NEUTRAL_TOOL_ENV,
-    GEMINI_SESSION_ID: 'test-gemini-session'
   }),
   neutral: Object.freeze({
     ...NEUTRAL_TOOL_ENV

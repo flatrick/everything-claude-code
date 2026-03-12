@@ -5,9 +5,7 @@ This page documents the current MDT package-manifest contract implemented by:
 - `scripts/install-mdt.js`
 - `scripts/ci/validate-install-packages.js`
 
-Use this page for current truth. Historical design context lives in
-[docs/package-manifest-v1.md](./package-manifest-v1.md) and
-[docs/packages-install-model.md](./packages-install-model.md).
+Use this page for current truth.
 
 ## Summary
 
@@ -43,9 +41,6 @@ per-tool template directories.
       "rules": ["common-testing.md"],
       "skills": ["continuous-learning-manual"],
       "scripts": ["codex-observer.js"]
-    },
-    "gemini": {
-      "rules": ["common-testing.mdc"]
     }
   },
   "requires": {
@@ -122,7 +117,6 @@ Supported subfields today:
 - `tools.codex.rules`
 - `tools.codex.skills`
 - `tools.codex.scripts`
-- `tools.gemini.rules`
 
 Validation is intentionally asymmetric by tool because MDT does not ship the
 same native surface everywhere.

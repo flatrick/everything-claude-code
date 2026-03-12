@@ -21,6 +21,7 @@ const CI_VALIDATORS = [
   'install-packages',
   'markdown-links',
   'markdown-path-refs',
+  'docs-consistency',
   'frontmatter-format',
   'template-doc-boundaries'
 ];
@@ -34,7 +35,8 @@ const WORKFLOW_SMOKE_SCRIPTS = {
 function createIo(io = {}) {
   return {
     log: io.log || ((message = '') => process.stdout.write(`${message}\n`)),
-    error: io.error || ((message = '') => process.stderr.write(`${message}\n`))
+    error: io.error || ((message = '') => process.stderr.write(`${message}\n`)),
+    warn: io.warn || ((message = '') => process.stderr.write(`${message}\n`))
   };
 }
 
@@ -200,13 +202,16 @@ function summarizeOutput(stdout, stderr, fallback) {
 function collectIoOutput() {
   const stdout = [];
   const stderr = [];
+  const warnings = [];
   return {
     io: {
       log: (message = '') => stdout.push(String(message)),
-      error: (message = '') => stderr.push(String(message))
+      error: (message = '') => stderr.push(String(message)),
+      warn: (message = '') => warnings.push(String(message))
     },
     stdout,
-    stderr
+    stderr,
+    warnings
   };
 }
 
@@ -276,7 +281,7 @@ function runInProcess(executor, options = {}) {
   const collected = collectIoOutput();
   const exitCode = executor(collected.io);
   const stdout = collected.stdout.join('\n');
-  const stderr = collected.stderr.join('\n');
+  const stderr = [...collected.warnings, ...collected.stderr].join('\n');
 
   if (options.format === 'json') {
     return {
@@ -295,6 +300,56 @@ function runInProcess(executor, options = {}) {
     stdout,
     stderr
   };
+}
+
+function toPascalCase(value) {
+  return value
+    .split('-')
+    .filter(Boolean)
+    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join('');
+}
+
+function runCiValidatorInProcess(validatorName, options = {}) {
+  const validatorModule = require(path.join(SCRIPTS_ROOT, 'ci', `validate-${validatorName}.js`));
+  if (typeof validatorModule.runCli === 'function') {
+    return runInProcess(
+      (io) => validatorModule.runCli({
+        io,
+        rootDir: options.cwd || REPO_ROOT,
+        repoRoot: options.cwd || REPO_ROOT
+      }).exitCode,
+      {
+        format: options.format,
+        commandName: `ci validate ${validatorName}`
+      }
+    );
+  }
+
+  const functionName = `validate${toPascalCase(validatorName)}`;
+  const validator = validatorModule[functionName];
+
+  if (typeof validator !== 'function') {
+    throw new Error(`Validator module validate-${validatorName}.js does not export ${functionName}`);
+  }
+
+  return runInProcess(
+    (io) => {
+      const result = validator({
+        io,
+        rootDir: options.cwd || REPO_ROOT,
+        repoRoot: options.cwd || REPO_ROOT
+      });
+      if (!result || typeof result.exitCode !== 'number') {
+        throw new Error(`Validator ${functionName} must return an object with exitCode`);
+      }
+      return result.exitCode;
+    },
+    {
+      format: options.format,
+      commandName: `ci validate ${validatorName}`
+    }
+  );
 }
 
 function buildInstallCommand(argv) {
@@ -559,11 +614,7 @@ function buildCiValidateAllCommand(common, execScript) {
   const outputs = [];
   let exitCode = 0;
   for (const validatorName of CI_VALIDATORS) {
-    const result = execScript(path.join(SCRIPTS_ROOT, 'ci', `validate-${validatorName}.js`), [], {
-      cwd: common.cwd || REPO_ROOT,
-      format: common.format,
-      commandName: `ci validate ${validatorName}`
-    });
+    const result = execScript(validatorName, common);
     outputs.push(result.stdout || '');
     if (result.exitCode !== 0) {
       exitCode = result.exitCode;
@@ -587,19 +638,18 @@ function buildCiValidateCommand(common, execScript) {
   if (!CI_VALIDATORS.includes(validator)) {
     throw createUsageError(`Unknown validator: ${validator}`);
   }
-  return execScript(path.join(SCRIPTS_ROOT, 'ci', `validate-${validator}.js`), [], {
-    cwd: common.cwd || REPO_ROOT,
-    format: common.format,
-    commandName: `ci validate ${validator}`
-  });
+  return execScript(validator, common);
 }
 
 function buildCiCommand(argv, options = {}) {
   const action = argv[0];
   const common = parseCommonOptions(argv.slice(1));
-  const execScript = options.execScript || runNodeScript;
-  if (action === 'check-dependencies') return buildCiCheckDependenciesCommand(common, execScript);
-  if (action === 'validate') return buildCiValidateCommand(common, execScript);
+  if (action === 'check-dependencies') {
+    return buildCiCheckDependenciesCommand(common, options.execScript || runNodeScript);
+  }
+  if (action === 'validate') {
+    return buildCiValidateCommand(common, options.execScript || runCiValidatorInProcess);
+  }
   throw createUsageError('Unknown ci command');
 }
 
@@ -678,5 +728,6 @@ module.exports = {
   main,
   normalizeJsonResult,
   parseCommonOptions,
+  runCiValidatorInProcess,
   runNodeScript
 };

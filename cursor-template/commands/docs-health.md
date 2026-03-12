@@ -1,74 +1,35 @@
 ---
 name: docs-health
-description: Audit MDT documentation health in this Cursor workspace.
+description: Audit MDT docs for current-truth drift, stale links, and plan/backlog mismatches.
 
 ---
 
 # Docs Health
 
-Use this command for a quick documentation quality pass in the current
-workspace.
+Use this command to audit MDT documentation health without guessing.
 
-## Goal
+## Check These Surfaces
 
-Confirm that MDT docs are:
+- current-state docs under `docs/`
+- root fast-find docs
+- active plans under `docs/plans/`
+- backlog items in `BACKLOG.md`
+- runtime prompt Markdown that teaches MDT behavior
 
-- linked correctly
-- placed in the right part of the repo
-- honest about current support
-- easy to follow for both humans and LLMs
+## Current Rules
 
-## Required Workflow
+- `docs/` is the current-truth surface
+- `docs/plans/` is the planning surface
+- `BACKLOG.md` is the active gap/deferred work surface
+- `docs/upstream-rename-map.md` is the ECC comparison surface
+- current-state docs should use `mdt ...` as the public entrypoint
+- environment-specific verification claims should be version-stamped
 
-1. Run:
+## Suggested Checks
 
-```bash
-node scripts/ci/validate-markdown-links.js
-node scripts/ci/validate-markdown-path-refs.js
-```
-
-If this workspace is using an installed MDT Cursor surface and the repo itself
-does not contain `scripts/ci/`, use:
-
-```bash
-node ~/.cursor/mdt/scripts/ci/validate-markdown-links.js
-node ~/.cursor/mdt/scripts/ci/validate-markdown-path-refs.js
-```
-
-2. Use the `documentation-steward` skill.
-
-3. If the task touches cross-tool capability claims and `tool-doc-maintainer` is
-available, use that skill as well and verify against `docs/tools/`.
-
-4. Review whether the relevant docs are correctly split across:
-
-- `README.md`
-- `docs/`
-- `docs/tools/`
-- `NEXT-STEPS.md`
-- `docs/history/`
-
-## Preferred Output
-
-```text
-DOCS HEALTH: PASS|PARTIAL|FAIL
-
-Validators: OK|FAIL
-Current truth: OK|DRIFT
-Placement: OK|DRIFT
-Readability: OK|DRIFT
-
-Fix now:
-- ...
-
-Follow-up:
-- ...
-```
-
-## Rules
-
-- do not guess about tool support
-- do not report a broken link or missing path unless you checked it
-- if `README.md` duplicates detailed docs, recommend shrinking it and linking to
-  `docs/`
-- if a page mixes current truth and future intent, recommend separating them
+- compare root docs against `docs/`
+- compare runtime prompt assets against current docs
+- look for stale version strings
+- look for bare `node scripts/mdt.js` in current-state docs
+- look for tool-specific assumptions presented as base MDT behavior
+- look for active plans that are not reflected in `docs/plans/active.md`

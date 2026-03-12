@@ -1,17 +1,10 @@
 #!/usr/bin/env node
 /**
- * Optional external observer for Codex continuous learning.
+ * Backing implementation for `mdt learning observer ...` on Codex installs.
  *
- * This runs outside the Codex session and watches project-scoped MDT observations
- * under ~/.codex/mdt/homunculus/<id>/observations.jsonl. When enough new
- * observations exist, it triggers the existing observer analysis pipeline using
- * the native Codex CLI from a normal shell environment.
- *
- * Usage:
- *   node scripts/codex-observer.js status
- *   node scripts/codex-observer.js once
- *   node scripts/codex-observer.js watch [--interval-seconds 15]
- *   node scripts/codex-observer.js --watch
+ * This runs outside the Codex session and watches project-scoped MDT
+ * observations under `~/.codex/mdt/homunculus/<id>/observations.jsonl`. It is
+ * an optional analysis helper, not the baseline Codex learning flow.
  */
 
 'use strict';
@@ -71,13 +64,13 @@ function parseArgs(argv) {
 }
 
 function isObserverCommand(arg) {
-  return arg === 'status' || arg === 'once' || arg === 'watch';
+  return arg === 'status' || arg === 'once' || arg === 'run' || arg === 'watch';
 }
 
 function applyArg(state, argv, index) {
   const arg = argv[index];
   if (isObserverCommand(arg)) {
-    state.command = arg;
+    state.command = arg === 'run' ? 'once' : arg;
     return index;
   }
   if (arg === '--watch') {
@@ -100,11 +93,11 @@ function applyArg(state, argv, index) {
     state.minObservations = parsePositiveInt(arg.split('=')[1], null);
     return index;
   }
-  if (arg === '--project-dir' && argv[index + 1]) {
+  if ((arg === '--project-dir' || arg === '--cwd') && argv[index + 1]) {
     state.cwd = path.resolve(argv[index + 1]);
     return index + 1;
   }
-  if (arg.startsWith('--project-dir=')) {
+  if (arg.startsWith('--project-dir=') || arg.startsWith('--cwd=')) {
     state.cwd = path.resolve(arg.split('=')[1]);
   }
   return index;
@@ -353,7 +346,8 @@ async function main() {
     return;
   }
 
-  console.log('Usage: node scripts/codex-observer.js {status|once|watch} [--interval-seconds N] [--min-observations N] [--project-dir PATH]');
+  console.log('Usage: mdt learning observer {status|run|watch} [--interval-seconds N] [--min-observations N] [--cwd PATH]');
+  console.log('Internal fallback: node scripts/codex-observer.js {status|once|watch} [--interval-seconds N] [--min-observations N] [--project-dir PATH]');
   process.exit(1);
 }
 

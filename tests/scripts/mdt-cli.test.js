@@ -1,5 +1,4 @@
 const assert = require('assert');
-const path = require('path');
 const { test } = require('../helpers/test-runner');
 const {
   buildCiCommand,
@@ -89,20 +88,20 @@ function runTests() {
   if (test('ci validate all runs validators through the shared dispatcher', () => {
     const invoked = [];
     const result = buildCiCommand(['validate', 'all'], {
-      execScript: (scriptPath, scriptArgs, options) => {
+      execScript: (validatorName, options) => {
         invoked.push({
-          scriptPath: path.relative(path.join(__dirname, '..', '..'), scriptPath).replace(/\\/g, '/'),
-          scriptArgs,
-          commandName: options.commandName
+          validatorName,
+          commandName: `ci validate ${validatorName}`
         });
-        return { exitCode: 0, stdout: options.commandName, stderr: '' };
+        return { exitCode: 0, stdout: `ci validate ${validatorName}`, stderr: '' };
       }
     });
 
     assert.strictEqual(result.exitCode, 0);
     assert.strictEqual(invoked.length >= 5, true);
-    assert.ok(invoked.some((entry) => entry.scriptPath === 'scripts/ci/validate-agents.js'));
-    assert.ok(invoked.some((entry) => entry.scriptPath === 'scripts/ci/validate-install-packages.js'));
+    assert.ok(invoked.some((entry) => entry.validatorName === 'agents'));
+    assert.ok(invoked.some((entry) => entry.validatorName === 'install-packages'));
+    assert.ok(invoked.some((entry) => entry.validatorName === 'docs-consistency'));
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

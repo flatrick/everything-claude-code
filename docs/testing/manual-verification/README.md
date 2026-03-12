@@ -6,6 +6,7 @@ Purpose:
 - confirm behavior that cannot be proven well by static validation or unit tests
 - record expected outputs and artifacts for local installs
 - keep verification steps under `docs/` instead of in chat history
+- record the exact version used for the last successful manual verification
 
 Current checklists:
 - [Claude Code](./claude-code.md)

@@ -11,8 +11,7 @@ const SKIP_DIRS = new Set(['.git', 'node_modules']);
 const TOOL_PATTERNS = {
   claude: /\bClaude Code\b|\bClaude\b/g,
   cursor: /\bCursor\b/g,
-  codex: /\bCodex\b/g,
-  gemini: /\bGemini\b/g
+  codex: /\bCodex\b/g
 };
 const ALLOWLIST = new Set();
 const CODEX_CONTINUOUS_LEARNING_DOC =

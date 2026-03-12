@@ -23,7 +23,6 @@ function runTests() {
     assert.ok(TEST_ENV_PROFILES.claude);
     assert.ok(TEST_ENV_PROFILES.cursor);
     assert.ok(TEST_ENV_PROFILES.codex);
-    assert.ok(TEST_ENV_PROFILES.gemini);
     assert.ok(TEST_ENV_PROFILES.neutral);
   })) passed++; else failed++;
 
@@ -43,19 +42,13 @@ function runTests() {
     assert.ok(!('CLAUDE_CODE' in env));
   })) passed++; else failed++;
 
-  if (test('builds codex and gemini profile signals', () => {
+  if (test('builds codex profile signals', () => {
     const codexEnv = buildTestEnv('codex');
-    const geminiEnv = buildTestEnv('gemini');
 
     assert.strictEqual(codexEnv.CODEX_SESSION_ID, 'test-codex-session');
     assert.ok(!('CLAUDE_SESSION_ID' in codexEnv));
     assert.ok(!('CURSOR_AGENT' in codexEnv));
-
-    assert.strictEqual(geminiEnv.GEMINI_SESSION_ID, 'test-gemini-session');
-    assert.ok(!('CLAUDE_SESSION_ID' in geminiEnv));
-    assert.ok(!('CURSOR_AGENT' in geminiEnv));
   })) passed++; else failed++;
-
 
   if (test('defaults to neutral profile when omitted', () => {
     const env = buildTestEnv();

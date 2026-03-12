@@ -1,23 +1,10 @@
 #!/usr/bin/env node
 /**
- * ModelDev Toolkit installer.
- * Node-only installer for rules, agents, skills, commands, hooks, and configs.
+ * Backing implementation for `mdt install`.
  *
- * Usage:
- *   node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--override <tool-config-dir>] [--dev] [package ...]
- *
- * Examples:
- *   node scripts/install-mdt.js typescript
- *   node scripts/install-mdt.js --target cursor typescript
- *   node scripts/install-mdt.js --target cursor --override C:\temp\.cursor typescript
- *   node scripts/install-mdt.js --target cursor --global typescript
- *   node scripts/install-mdt.js --target codex typescript continuous-learning
- *
- * Targets:
- *   claude (default) — Install to ~/.claude/
- *   cursor           — Install to ~/.cursor/
- *   codex            — Install to ~/.codex/
- *   gemini           — Install to ~/.gemini/
+ * Keep this script aligned with the umbrella CLI contract. It still accepts the
+ * legacy internal flag names (`--target`, `--override`) because `scripts/mdt.js`
+ * translates the public API onto this file.
  */
 
 const fs = require('fs');
@@ -69,7 +56,6 @@ const WORKFLOW_CONTRACTS_DIR = path.join(REPO_ROOT, 'workflow-contracts');
 const TARGET_CAPABILITIES = {
   claude: { hooks: 'official', runtimeScripts: true, sessionData: true },
   cursor: { hooks: 'experimental', runtimeScripts: true, sessionData: true },
-  gemini: { hooks: false, runtimeScripts: false, sessionData: false },
   codex: { hooks: false, runtimeScripts: true, sessionData: true }
 };
 
@@ -119,15 +105,15 @@ const SIMPLE_CLI_FLAGS = {
 };
 
 function applyCliPairArg(state, arg, nextArg) {
-  if (arg === '--target' && nextArg) {
-    state.target = nextArg === 'antigravity' ? 'gemini' : nextArg;
+  if ((arg === '--target' || arg === '--tool') && nextArg) {
+    state.target = nextArg;
     return true;
   }
   if (arg === '--project-dir' && nextArg) {
     state.projectDir = path.resolve(nextArg);
     return true;
   }
-  if (arg === '--override' && nextArg) {
+  if ((arg === '--override' || arg === '--config-root') && nextArg) {
     state.overrideDir = path.resolve(nextArg);
     return true;
   }
@@ -450,13 +436,6 @@ function getSelectedRuleNamesForTarget(target, selectedPackages) {
     );
   }
 
-  if (target === 'gemini') {
-    return mergeUniqueOrdered(
-      getManifestRuleSelections(selectedPackages),
-      getToolManifestSelections(selectedPackages, 'gemini', 'rules')
-    );
-  }
-
   return getManifestRuleSelections(selectedPackages);
 }
 
@@ -596,7 +575,7 @@ function assertSinglePackageRequirements(target, selectedPackage, capabilities) 
 }
 
 function printAvailableOptions(_target) {
-  console.log('Available targets: claude, cursor, codex, gemini');
+  console.log('Available targets: claude, cursor, codex');
   const packages = getAvailablePackages();
   console.log('Available packages:');
   if (packages.length === 0) {
@@ -619,9 +598,6 @@ function resolveInstallRoot(target, overrideDir = null) {
   }
   if (target === 'codex') {
     return path.join(os.homedir(), '.codex');
-  }
-  if (target === 'gemini') {
-    return path.join(os.homedir(), '.gemini');
   }
 
   throw new Error(`Unsupported target '${target}'`);
@@ -662,29 +638,6 @@ function buildCodexInstallPlan(lines, selectedPackages, overrideDir, devMode) {
     ...(codexScripts.length > 0
       ? [`[dry-run] Would install package-selected Codex workflow scripts to ${path.join(mdtRoot, 'scripts')}`]
       : [])
-  ];
-}
-
-function buildGeminiInstallPlan(lines, selectedPackages, overrideDir) {
-  const geminiRoot = resolveInstallRoot('gemini', overrideDir);
-  const agentsDest = path.join(geminiRoot, 'antigravity', '.agents');
-  const cmdsDest = path.join(geminiRoot, 'commands');
-  const nextLines = [
-    ...lines,
-    `[dry-run] Packages: ${getSelectedPackageSummary(selectedPackages)}`,
-    `[dry-run] Would install agents and skills to ${agentsDest}`,
-    `[dry-run] Would install custom commands to ${cmdsDest}`,
-    `[dry-run] Would install runtime state under ${resolveMdtRoot(geminiRoot)}`
-  ];
-
-  if (selectedPackages.length === 0) {
-    return nextLines;
-  }
-
-  const packageNames = selectedPackages.map((pkg) => pkg.name);
-  return [
-    ...nextLines,
-    `[dry-run] Would append rules for packages [${packageNames.join(', ')}] to ${path.join(geminiRoot, 'GEMINI.md')}`
   ];
 }
 
@@ -732,7 +685,6 @@ function buildInstallPlan({ target, devMode, overrideDir, packageNames }) {
     ];
 
   if (target === 'codex') return [...warnings, ...buildCodexInstallPlan(header, selectedPackages, overrideDir, devMode)];
-  if (target === 'gemini') return [...warnings, ...buildGeminiInstallPlan(header, selectedPackages, overrideDir)];
   if (target === 'claude') return [...warnings, ...buildClaudeInstallPlan(header, selectedPackages, overrideDir, devMode)];
 
   return [...warnings, ...buildCursorInstallPlan(header, selectedPackages, overrideDir, devMode)];
@@ -778,7 +730,7 @@ function copyRuntimeScripts(destScriptsDir) {
   const ciSrcDir = path.join(REPO_ROOT, 'scripts', 'ci');
   const ciDestDir = path.join(destScriptsDir, 'ci');
   if (copyExplicitFiles(ciSrcDir, ciDestDir, RUNTIME_CI_FILES, 'Runtime CI script') > 0) {
-    // Installed docs-health workflows rely on these validator scripts.
+    // Dev installs ship the markdown validators so installed docs workflows can run locally.
   }
 
   copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), destScriptsDir, ['mdt.js'], 'Runtime CLI script');
@@ -797,13 +749,13 @@ function copyRuntimeScriptsToMdtRoot(installRoot) {
 }
 
 function usage(_target) {
-  console.error('Usage: node scripts/install-mdt.js [--target claude|cursor|codex|gemini] [--global] [--override <tool-config-dir>] [--list] [--dry-run] [package ...]');
+  console.error('Usage: mdt install [package ...] [--tool claude|cursor|codex] [--config-root <tool-config-dir>] [--dev] [--dry-run]');
+  console.error('Internal fallback: node scripts/install-mdt.js [--target claude|cursor|codex] [--global] [--override <tool-config-dir>] [--list] [--dry-run] [package ...]');
   console.error('');
   console.error('Targets:');
   console.error('  claude (default) — Install to ~/.claude/');
   console.error('  cursor           — Install to ~/.cursor/');
   console.error('  codex            — Install to ~/.codex/');
-  console.error('  gemini           — Install to ~/.gemini/');
   console.error('');
   console.error('Options:');
   console.error('  --global         — Compatibility alias; installs are global by default.');
@@ -1476,163 +1428,22 @@ function installCodex(packageNames, overrideDir, devMode) {
   installCodexGlobal(selectedPackages, overrideDir, devMode);
 }
 
-function convertCommandsToToml(commandsSrc, commandsDest) {
-  if (!fs.existsSync(commandsSrc)) return;
-  fs.mkdirSync(commandsDest, { recursive: true });
-  fs.readdirSync(commandsSrc).forEach(f => {
-    if (f.endsWith('.md')) {
-      const p = path.join(commandsSrc, f);
-      const content = fs.readFileSync(p, 'utf8');
-
-      let description = '';
-      let promptContent = content;
-
-      if (content.startsWith('---')) {
-        const parts = content.split('---');
-        if (parts.length >= 3) {
-          const fm = parts[1];
-          const descMatch = fm.match(/description:\s*(.*)/);
-          if (descMatch) description = descMatch[1].trim();
-          promptContent = parts.slice(2).join('---').trim();
-        }
-      }
-
-      const tomlPath = path.join(commandsDest, f.replace('.md', '.toml'));
-      let tomlStr = '';
-      if (description) {
-        const cleanDesc = description.replace(/"/g, '\\"');
-        tomlStr += `description = "${cleanDesc}"\n`;
-      }
-      const cleanPrompt = promptContent.replace(/"""/g, '""\\"');
-      tomlStr += `prompt = """\n${cleanPrompt}\n"""\n`;
-      fs.writeFileSync(tomlPath, tomlStr, 'utf8');
-    }
-  });
-}
-
-function resolveGeminiDestinations(overrideDir) {
-  const geminiRoot = resolveInstallRoot('gemini', overrideDir);
-  return {
-    destDirAgent: path.join(geminiRoot, 'antigravity', '.agents'),
-    destDirGemini: geminiRoot
-  };
-}
-
-function getGeminiRuleSelections(selectedPackages) {
-  return getToolManifestSelections(selectedPackages, 'gemini', 'rules');
-}
-
-function collectGeminiRuleContent(cursorRules, selectedPackages) {
-  let combined = '';
-  for (const ruleFile of getGeminiRuleSelections(selectedPackages)) {
-    const srcPath = path.join(cursorRules, ruleFile);
-    if (!fs.existsSync(srcPath)) {
-      console.error(`Warning: Gemini rule '${ruleFile}' does not exist, skipping.`);
-      continue;
-    }
-    combined += '\n\n' + fs.readFileSync(srcPath, 'utf8');
-  }
-
-  return combined;
-}
-
-function appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini) {
-  const geminiMdPath = path.join(destDirGemini, 'GEMINI.md');
-  fs.mkdirSync(destDirGemini, { recursive: true });
-  const rulesCombined = collectGeminiRuleContent(cursorRules, selectedPackages);
-  if (!rulesCombined.trim()) return;
-
-  const existing = fs.existsSync(geminiMdPath) ? fs.readFileSync(geminiMdPath, 'utf8') : '';
-  fs.writeFileSync(geminiMdPath, existing + '\n' + rulesCombined.trim() + '\n', 'utf8');
-  console.log('Appended rules for ' + selectedPackages.map((pkg) => pkg.name).join(', ') + ' to ' + geminiMdPath);
-}
-
-function installGeminiRules(selectedPackages, destDirAgent, destDirGemini) {
-  const cursorRules = path.join(CURSOR_SRC, 'rules');
-  if (selectedPackages.length === 0) {
-    console.log('No packages provided, skipping rules...');
-    return;
-  }
-  if (!fs.existsSync(cursorRules)) return;
-  appendGeminiGlobalRules(cursorRules, selectedPackages, destDirGemini);
-}
-
-function installGeminiContent(destDirAgent, destDirGemini, selectedPackages, devMode = false) {
-  const skillsSrc = path.join(REPO_ROOT, 'skills');
-  if (fs.existsSync(skillsSrc)) {
-    const skillsDest = path.join(destDirAgent, 'skills');
-    if (installBaselineSharedSkills(destDirAgent) > 0) {
-      console.log('Installing baseline shared skills -> ' + skillsDest + '/');
-    }
-    const skillNames = getManifestSelections(selectedPackages, 'skills');
-    if (copySelectedDirectories(skillsSrc, skillsDest, skillNames, 'Package-selected skill') > 0) {
-      console.log('Installing package-selected skills -> ' + skillsDest + '/');
-    }
-  }
-
-  if (devMode && installDevSharedSkills(destDirAgent) > 0) {
-    console.log('Installing dev-only shared skills -> ' + path.join(destDirAgent, 'skills') + '/');
-  }
-
-  const agentsSrc = path.join(REPO_ROOT, 'agents');
-  if (fs.existsSync(agentsSrc)) {
-    const workflowsDest = path.join(destDirAgent, 'workflows');
-    const agentFiles = getManifestSelections(selectedPackages, 'agents');
-    if (copySelectedMarkdownFiles(agentsSrc, workflowsDest, agentFiles, 'Package-selected agent') > 0) {
-      console.log('Installing package-selected agents as workflows -> ' + workflowsDest + '/');
-    }
-  }
-
-  const commandsSrc = path.join(REPO_ROOT, 'commands');
-  if (fs.existsSync(commandsSrc)) {
-    const selectedCommands = getManifestSelections(selectedPackages, 'commands');
-    if (selectedCommands.length > 0) {
-      const tempCommandsSrc = fs.mkdtempSync(path.join(os.tmpdir(), 'mdt-gemini-commands-'));
-      try {
-        copySelectedMarkdownFiles(commandsSrc, tempCommandsSrc, selectedCommands, 'Package-selected command');
-        const commandsDest = path.join(destDirGemini, 'commands');
-        console.log('Installing package-selected commands -> ' + commandsDest + '/');
-        convertCommandsToToml(tempCommandsSrc, commandsDest);
-      } finally {
-        fs.rmSync(tempCommandsSrc, { recursive: true, force: true });
-      }
-    }
-  }
-
-  copyRuntimeScriptsToMdtRoot(destDirGemini);
-}
-
-function installGemini(packageNames, overrideDir, devMode = false) {
-  console.log('Installing Gemini CLI / Antigravity configs...');
-  const { destDirAgent, destDirGemini } = resolveGeminiDestinations(overrideDir);
-  const selectedPackages = resolveSelectedPackages(packageNames);
-  for (const warning of assertPackageRequirements('gemini', selectedPackages)) {
-    console.warn('Warning: ' + warning);
-  }
-  for (const warning of getSkillRequirementWarnings('gemini', selectedPackages, devMode)) {
-    console.warn('Note: ' + warning);
-  }
-  installGeminiRules(selectedPackages, destDirAgent, destDirGemini);
-  installGeminiContent(destDirAgent, destDirGemini, selectedPackages, devMode);
-  console.log('Done. Gemini configs installed.');
-}
-
 function isSupportedTarget(target) {
-  return target === 'claude' || target === 'cursor' || target === 'codex' || target === 'gemini';
+  return target === 'claude' || target === 'cursor' || target === 'codex';
 }
 
 function handleRetiredProjectDir(projectDir) {
   if (projectDir !== null) {
     console.error('Error: --project-dir is retired. MDT installs are global-only now.');
-    console.error('Use node scripts/materialize-mdt-local.js for repo-local exception bridges when a tool needs them.');
-    console.error('For Cursor specifically: use install-mdt.js --target cursor for the global cursor-agent surface, and materialize-mdt-local.js --target cursor --surface rules for Cursor IDE repo-local rules.');
+    console.error('Use mdt bridge materialize for repo-local exception bridges when a tool needs them.');
+    console.error('For Cursor specifically: use mdt install --tool cursor for the global cursor-agent surface, and mdt bridge materialize --tool cursor --surface rules for Cursor IDE repo-local rules.');
     process.exit(1);
   }
 }
 
 function assertSupportedTarget(target) {
   if (!isSupportedTarget(target)) {
-    console.error("Error: unknown target '" + target + "'. Must be claude, cursor, codex, or gemini.");
+    console.error("Error: unknown target '" + target + "'. Must be claude, cursor, or codex.");
     process.exit(1);
   }
 }
@@ -1660,7 +1471,6 @@ function handleDryRun(target, dryRun, devMode, overrideDir, packageNames) {
 function runInstallForTarget(target, packageNames, overrideDir, devMode) {
   if (target === 'claude') installClaude(packageNames, overrideDir, devMode);
   else if (target === 'cursor') installCursor(packageNames, overrideDir, devMode);
-  else if (target === 'gemini') installGemini(packageNames, overrideDir, devMode);
   else installCodex(packageNames, overrideDir, devMode);
 }
 
@@ -1698,6 +1508,5 @@ module.exports = {
   installClaudePermissions,
   installClaudeContentDirs,
   installCursorCoreDirs,
-  installGeminiContent,
   installCodexSkills
 };

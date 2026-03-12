@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Release script — bump plugin version and tag.
- * Usage: node scripts/release.js VERSION
- * Example: node scripts/release.js 1.5.0
+ * Backing implementation for `mdt release --version <x.y.z>`.
+ *
+ * This still updates the Claude plugin metadata because that packaging surface
+ * remains part of the repo's release artifact set.
  */
 
 const fs = require('fs');
@@ -10,7 +11,26 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..');
-const VERSION = process.argv[2];
+function parseVersionArg(argv) {
+  const args = argv.slice(2);
+  if (args.length === 1 && !args[0].startsWith('-')) {
+    return args[0];
+  }
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--version' && args[i + 1]) {
+      return args[i + 1];
+    }
+    if (arg.startsWith('--version=')) {
+      return arg.slice('--version='.length);
+    }
+  }
+
+  return null;
+}
+
+const VERSION = parseVersionArg(process.argv);
 
 const FILES = [
   path.join(REPO_ROOT, 'package.json'),
@@ -19,8 +39,8 @@ const FILES = [
 ];
 
 function usage() {
-  console.error('Usage: node scripts/release.js VERSION');
-  console.error('Example: node scripts/release.js 1.5.0');
+  console.error('Usage: mdt release --version X.Y.Z');
+  console.error('Internal fallback: node scripts/release.js X.Y.Z');
   process.exit(1);
 }
 

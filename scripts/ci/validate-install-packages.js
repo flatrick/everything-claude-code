@@ -21,7 +21,7 @@ const DEFAULT_CODEX_RULES_DIR = path.join(REPO_ROOT, 'codex-template', 'rules');
 const DEFAULT_CODEX_SKILLS_DIR = path.join(REPO_ROOT, 'codex-template', 'skills');
 const REQUIRED_PACKAGES = new Set(['typescript', 'sql', 'dotnet', 'rust', 'python', 'bash', 'powershell']);
 const PACKAGE_KINDS = new Set(['language', 'scaffolding', 'capability']);
-const PACKAGE_TARGETS = new Set(['claude', 'cursor', 'gemini', 'codex']);
+const PACKAGE_TARGETS = new Set(['claude', 'cursor', 'codex']);
 const REQUIRE_KEYS = ['hooks', 'runtimeScripts', 'sessionData'];
 
 function readJsonFile(filePath) {
@@ -343,7 +343,6 @@ function normalizeReferenceLabel(label) {
   const explicitLabels = {
     'tools.cursor.rules': 'Cursor rule',
     'tools.cursor.commands': 'Cursor command',
-    'tools.gemini.rules': 'Gemini rule',
     'tools.codex.rules': 'Codex rule',
     'tools.codex.scripts': 'Codex script'
   };
@@ -410,22 +409,6 @@ function validateClaudeTools(packageName, claude, context) {
   return validateToolSkillSet(packageName, claude.skills, skillsDir, null, 'Claude skill', io);
 }
 
-function validateGeminiTools(packageName, gemini, context) {
-  const { io, cursorRulesDir } = context;
-  if (gemini === undefined) {
-    return false;
-  }
-  if (!gemini || typeof gemini !== 'object' || Array.isArray(gemini)) {
-    io.error(`ERROR: ${packageName}/package.json - tools.gemini must be an object when provided`);
-    return true;
-  }
-  if (!isStringArray(gemini.rules)) {
-    io.error(`ERROR: ${packageName}/package.json - tools.gemini.rules must be an array of non-empty strings`);
-    return true;
-  }
-  return validateOptionalStringArray(packageName, gemini.rules, 'tools.gemini.rules', cursorRulesDir, io);
-}
-
 function validateCodexTools(packageName, codex, context) {
   const { io, codexRulesDir, codexSkillsDir, skillsDir } = context;
   let hasErrors = false;
@@ -464,7 +447,6 @@ function validatePackageManifest(packageName, manifest, context) {
 
   hasErrors = validateCursorTools(packageName, manifest.tools.cursor, context) || hasErrors;
   hasErrors = validateClaudeTools(packageName, manifest.tools.claude, context) || hasErrors;
-  hasErrors = validateGeminiTools(packageName, manifest.tools.gemini, context) || hasErrors;
   hasErrors = validateCodexTools(packageName, manifest.tools.codex, context) || hasErrors;
   return hasErrors;
 }

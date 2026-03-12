@@ -153,7 +153,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [claude, cursor, codex, gemini]
+        profile: [claude, cursor, codex]
 
     steps:
       - name: Checkout

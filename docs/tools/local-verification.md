@@ -2,6 +2,10 @@
 
 Use this when you need to refresh or challenge any claim in the MDT tool docs.
 
+Version-stamp rule:
+- every environment-specific claim in current-state docs must include `Last verified` and `Tested with version`
+- if a surface cannot be checked in the current audit, mark it `not-locally-verified` instead of preserving an older value
+
 ## Verification Order
 
 1. Read the relevant page in `docs/tools/`.
@@ -9,19 +13,7 @@ Use this when you need to refresh or challenge any claim in the MDT tool docs.
 3. Run local CLI probes first.
 4. Run the local setup verification scripts.
 5. Inspect MDT's repo adapter/config files.
-6. Only then open vendor docs if:
-   - the local version changed,
-   - the page is stale,
-   - local behavior conflicts with current docs,
-   - or a claim is still `experimental` / `repo-adapter`.
-
-## Status Update Rules
-
-- Upgrade to `official` only with vendor docs.
-- Upgrade to `locally-verified` only with local command output or successful local behavior.
-- Leave as `experimental` if the repo supports it but vendor docs do not clearly document it.
-- Leave as `repo-adapter` if MDT can emulate the outcome but the vendor does not name/support the concept directly.
-- Use `not-locally-verified` if the tool is missing on this machine.
+6. Only then open vendor docs if the local version changed, the page is stale, local behavior conflicts with current docs, or a claim is still `experimental` or `repo-adapter`.
 
 ## Local Commands
 
@@ -35,28 +27,6 @@ mdt smoke workflows --tool cursor
 mdt smoke workflows --tool codex
 ```
 
-Use `mdt verify tool-setups` as the deterministic local check for the core MDT workflows:
-- `plan`
-- `tdd`
-- `code-review`
-- `verify`
-- `security`
-- `e2e`
-
-Use `mdt smoke tool-setups` as an optional local CLI probe. Missing tools should be recorded as `SKIP`, not guessed as passing or failing.
-
-Use `mdt smoke workflows --tool claude` when you want a deeper Claude-specific check for
-the current `plan`, `tdd`, `code-review`, `verify`, `smoke`, `security`, and
-`e2e` workflows without requiring a live Claude session.
-
-Use `mdt smoke workflows --tool cursor` when you want a deeper Cursor-specific check for
-the current `plan`, `tdd`, `code-review`, `verify`, `smoke`, `security`, and
-`e2e` workflows without requiring a live Cursor desktop session.
-
-Use `mdt smoke workflows --tool codex` when you want a deeper Codex-specific check for
-the current `plan`, `tdd`, `code-review`, `verify`, `smoke`, `security`, and
-`e2e` workflows without requiring a live model session.
-
 ### Claude Code
 
 ```bash
@@ -69,15 +39,13 @@ claude mcp --help
 ### Cursor
 
 ```bash
+agent --version
 agent --help
+cursor-agent --version
 cursor-agent --help
 ```
 
-Cursor desktop should currently be treated as a manual verification surface.
-Prefer `agent` or `cursor-agent` for automated local smoke checks, and use the
-desktop app only for manual workflow confirmation inside Cursor itself.
-
-Manual tool checklists live under [docs/testing/manual-verification/](../testing/manual-verification/README.md), including prepared pages for Claude Code, Cursor, and Codex.
+Cursor IDE is a manual verification surface. Use the desktop app only for human-operated runtime checks inside Cursor itself.
 
 ### Codex
 
@@ -88,57 +56,17 @@ codex exec --help
 codex features list
 ```
 
-Default local Codex sessions should stay on `workspace-write`.
-
-When verification work needs nested subprocesses, broader temp-dir access, or
-other behavior blocked by the default sandbox, use an explicit per-invocation
-Codex command instead of loosening your global Codex config.
-
-Examples:
-
-```bash
-codex --sandbox danger-full-access --ask-for-approval on-request
-```
-
-```powershell
-codex --sandbox danger-full-access --ask-for-approval on-request
-```
-
-Use this only for trusted local verification inside this repository.
-This keeps the relaxation scoped to the current Codex launch instead of
-changing `~/.codex/config.toml`.
-
-- keep status as `not-locally-verified`
-
-## Repo Adapter Checks
-
-Use these files to confirm what MDT actually ships:
-
-- Claude: `claude-template/hooks.json`, `commands/`, `agents/`, `skills/`
-- Cursor: `cursor-template/rules/`, `cursor-template/hooks.json`, `cursor-template/hooks/`
-- Codex: `codex-template/config.toml`, `codex-template/AGENTS.md`
-
-## Minimum Evidence Required Per Claim
-
-| Claim type | Required evidence |
-|---|---|
-| Official feature exists | vendor docs link |
-| Locally installed tool exists | `--version` or `--help` output |
-| MDT ships an adapter | repo file path |
-| Feature is experimental | vendor docs say experimental, local feature flags, or no vendor docs but repo adapter exists |
-| Feature is unsupported | no vendor docs found in current audit and no reliable local surface |
-
 ## Required Page Footer Data
 
-Every page in `docs/tools/` should keep:
+Every current-state page in `docs/tools/` should keep:
 - audit date
-- tool version or `not installed locally`
+- tested version or `not-locally-verified`
 - status labels used on the page
 - source links
 
 ## Current Machine Baseline
 
 - Claude Code installed: yes
-- Cursor installed: yes
-- Cursor terminal agent installed: yes
+- Cursor Agent installed: yes
+- Cursor IDE CLI launcher on PATH: no
 - Codex installed: yes

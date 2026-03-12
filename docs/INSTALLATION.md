@@ -1,6 +1,6 @@
 # Installation
 
-Use `mdt` to install MDT into Claude Code, Cursor, Codex, or Gemini.
+Use `mdt` to install MDT into Claude Code, Cursor, or Codex.
 
 Detailed tool behavior lives in:
 
@@ -14,8 +14,8 @@ Detailed tool behavior lives in:
 ## CLI
 
 ```bash
-mdt install [package ...] [--tool claude|cursor|codex|gemini] [--config-root <tool-config-dir>] [--dev] [--dry-run]
-mdt install list [--tool claude|cursor|codex|gemini]
+mdt install [package ...] [--tool claude|cursor|codex] [--config-root <tool-config-dir>] [--dev] [--dry-run]
+mdt install list [--tool claude|cursor|codex]
 ```
 
 Notes:
@@ -50,7 +50,6 @@ Current bridge support:
 | `claude` | `~/.claude/` | `~/.claude/mdt/` | installs rules, agents, commands, skills, hooks, and runtime scripts |
 | `cursor` | `~/.cursor/` | `~/.cursor/mdt/` | always installs MDT into the shared global Cursor directory, even for IDE-only users; includes `.mdc` rules, skills, commands, optional experimental hooks, and runtime state |
 | `codex` | `~/.codex/` | `~/.codex/mdt/` | installs Codex config, AGENTS, skills, rules, and helper scripts globally |
-| `gemini` | `~/.gemini/` | `~/.gemini/mdt/` | uses Gemini/Antigravity-specific layout with MDT state under `mdt/` |
 
 ## Examples
 
@@ -94,12 +93,6 @@ Codex notes:
 - Codex-specific MDT guidance lives primarily in `~/.codex/AGENTS.md`
 - continuous-learning state is project-scoped inside `~/.codex/mdt/homunculus/<project-id>/`
 - MDT does not enable any Codex MCP servers by default; add them manually only when a concrete workflow needs them
-
-Gemini:
-
-```bash
-mdt install --tool gemini typescript
-```
 
 Discovery:
 

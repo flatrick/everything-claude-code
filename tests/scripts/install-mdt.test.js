@@ -286,35 +286,6 @@ function runTests() {
       }
     },
     {
-      name: 'gemini global install appends only package-selected rules and installs mdt scripts',
-      run: () => {
-        const tmpHome = createTestDir('mdt-install-gemini-home-');
-        const geminiRoot = path.join(tmpHome, '.gemini');
-
-        try {
-          const result = runInstaller(['--target', 'gemini', 'typescript'], {
-            overrideDir: geminiRoot,
-            env: {
-              HOME: tmpHome,
-              USERPROFILE: tmpHome
-            }
-          });
-          assertSuccess(result, 'gemini install');
-
-          const geminiMdPath = path.join(geminiRoot, 'GEMINI.md');
-          const geminiMd = fs.readFileSync(geminiMdPath, 'utf8');
-          assert.ok(geminiMd.includes('# TypeScript/JavaScript Coding Style'));
-          assert.ok(geminiMd.includes('# Coding Style'));
-          assert.ok(!geminiMd.includes('# Python Coding Style'));
-          assert.ok(fs.existsSync(path.join(geminiRoot, 'mdt', 'scripts', 'lib', 'utils.js')));
-          assert.ok(fs.existsSync(path.join(geminiRoot, 'mdt', 'scripts', 'mdt.js')));
-          assert.ok(fs.existsSync(path.join(geminiRoot, 'antigravity', '.agents', 'skills', 'coding-standards', 'SKILL.md')));
-        } finally {
-          cleanupTestDir(tmpHome);
-        }
-      }
-    },
-    {
       name: 'codex global install copies selected assets and runtime scripts into mdt root',
       run: () => {
         const tmpHome = createTestDir('mdt-install-codex-home-');
@@ -512,7 +483,7 @@ function runTests() {
           });
           assert.strictEqual(result.status, 1);
           assert.ok(result.stderr.includes('--project-dir is retired'));
-          assert.ok(result.stderr.includes('materialize-mdt-local.js'));
+          assert.ok(result.stderr.includes('mdt bridge materialize'));
         } finally {
           cleanupTestDir(tmpHome);
           cleanupTestDir(tmpProject);
@@ -539,27 +510,6 @@ function runTests() {
           for (const skillName of REPRESENTATIVE_BASELINE_SKILLS) {
             assert.ok(fs.existsSync(path.join(claudeBase, 'skills', skillName, 'SKILL.md')));
           }
-        } finally {
-          cleanupTestDir(tmpHome);
-        }
-      }
-    },
-    {
-      name: 'gemini install rejects package that does not support gemini target',
-      run: () => {
-        const tmpHome = createTestDir('mdt-install-gemini-incompatible-');
-        const geminiRoot = path.join(tmpHome, '.gemini');
-
-        try {
-          const result = runInstaller(['--target', 'gemini', 'continuous-learning'], {
-            overrideDir: geminiRoot,
-            env: {
-              HOME: tmpHome,
-              USERPROFILE: tmpHome
-            }
-          });
-          assert.strictEqual(result.status, 1);
-          assert.ok(result.stderr.includes("Package 'continuous-learning' does not support target 'gemini'"));
         } finally {
           cleanupTestDir(tmpHome);
         }

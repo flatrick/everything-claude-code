@@ -20,7 +20,6 @@ const {
   getSkillRequirementWarnings,
   installClaudeContentDirs,
   installCursorCoreDirs,
-  installGeminiContent,
   installCodexSkills
 } = require('../../scripts/install-mdt');
 
@@ -53,6 +52,13 @@ function runTests() {
     const parsed = parseArgsFrom(['--target', 'codex', '--project-dir', 'C:\\temp\\repo', 'typescript']);
     assert.strictEqual(parsed.target, 'codex');
     assert.strictEqual(parsed.projectDir, path.resolve('C:\\temp\\repo'));
+    assert.deepStrictEqual(parsed.packageNames, ['typescript']);
+  })) passed++; else failed++;
+
+  if (test('parseArgsFrom accepts public tool aliases for direct script use', () => {
+    const parsed = parseArgsFrom(['--tool', 'cursor', '--config-root', 'C:\\temp\\.cursor', 'typescript']);
+    assert.strictEqual(parsed.target, 'cursor');
+    assert.strictEqual(parsed.overrideDir, path.resolve('C:\\temp\\.cursor'));
     assert.deepStrictEqual(parsed.packageNames, ['typescript']);
   })) passed++; else failed++;
 
@@ -122,8 +128,7 @@ function runTests() {
         commands: ['plan.md'],
         skills: ['verification-loop'],
         tools: {
-          cursor: { rules: ['common-coding-style.md'], skills: ['frontend-slides'] },
-          gemini: { rules: ['common-coding-style.md'] }
+          cursor: { rules: ['common-coding-style.md'], skills: ['frontend-slides'] }
         }
       }), 'utf8');
 
@@ -141,8 +146,7 @@ function runTests() {
         commands: ['verify.md'],
         skills: ['security-review'],
         tools: {
-          cursor: { rules: ['common-testing.md'], skills: ['frontend-slides', 'extra-skill'] },
-          gemini: { rules: ['common-testing.md'] }
+          cursor: { rules: ['common-testing.md'], skills: ['frontend-slides', 'extra-skill'] }
         }
       }), 'utf8');
 
@@ -152,15 +156,14 @@ function runTests() {
         ruleDirectory: 'rust',
         extends: ['base-a', 'base-b'],
         requires: {
-          tools: ['claude', 'cursor', 'gemini']
+          tools: ['claude', 'cursor']
         },
         rules: ['child/rule.md', 'base-a/rule.md'],
         agents: ['planner.md', 'security-reviewer.md'],
         commands: ['plan.md', 'code-review.md'],
         skills: ['verification-loop', 'coding-standards'],
         tools: {
-          cursor: { rules: ['child-rule.md', 'common-coding-style.md'], skills: ['child-skill', 'extra-skill'] },
-          gemini: { rules: ['child-rule.md'] }
+          cursor: { rules: ['child-rule.md', 'common-coding-style.md'], skills: ['child-skill', 'extra-skill'] }
         }
       }), 'utf8');
 
@@ -178,7 +181,6 @@ function runTests() {
       assert.deepStrictEqual(resolved.skills, ['verification-loop', 'security-review', 'coding-standards']);
       assert.deepStrictEqual(resolved.tools.cursor.rules, ['common-coding-style.md', 'common-testing.md', 'child-rule.md']);
       assert.deepStrictEqual(resolved.tools.cursor.skills, ['frontend-slides', 'extra-skill', 'child-skill']);
-      assert.deepStrictEqual(resolved.tools.gemini.rules, ['common-coding-style.md', 'common-testing.md', 'child-rule.md']);
       assert.deepStrictEqual(resolved.requires, {
         hooks: true,
         runtimeScripts: true,
@@ -203,7 +205,7 @@ function runTests() {
         agents: [],
         commands: [],
         skills: [],
-        tools: { cursor: { rules: [], skills: [] }, gemini: { rules: [] } }
+        tools: { cursor: { rules: [], skills: [] } }
       }), 'utf8');
 
       fs.writeFileSync(path.join(packagesDir, 'beta', 'package.json'), JSON.stringify({
@@ -215,7 +217,7 @@ function runTests() {
         agents: [],
         commands: [],
         skills: [],
-        tools: { cursor: { rules: [], skills: [] }, gemini: { rules: [] } }
+        tools: { cursor: { rules: [], skills: [] } }
       }), 'utf8');
 
       assert.throws(
@@ -240,8 +242,6 @@ function runTests() {
     assert.ok(manifest.skills.includes('coding-standards'));
     assert.ok(Array.isArray(manifest.tools.cursor.rules));
     assert.ok(manifest.tools.cursor.rules.includes('typescript-coding-style.md'));
-    assert.ok(Array.isArray(manifest.tools.gemini.rules));
-    assert.ok(manifest.tools.gemini.rules.includes('typescript-coding-style.md'));
     assert.deepStrictEqual(manifest.tools.cursor.skills, ['frontend-slides']);
     assert.deepStrictEqual(manifest.tools.cursor.commands, ['docs-health.md', 'plan.md', 'tdd.md', 'verify.md', 'code-review.md', 'smoke.md', 'e2e.md', 'security.md', 'build-fix.md', 'refactor-clean.md']);
     assert.deepStrictEqual(manifest.tools.codex.rules, ['common-coding-style.md', 'common-testing.md', 'common-security.md', 'common-git-workflow.md']);
@@ -264,8 +264,6 @@ function runTests() {
     assert.ok(Array.isArray(manifest.tools.cursor.rules));
     assert.ok(manifest.tools.cursor.rules.includes('python-coding-style.md'));
     assert.deepStrictEqual(manifest.tools.cursor.commands, ['docs-health.md']);
-    assert.ok(Array.isArray(manifest.tools.gemini.rules));
-    assert.ok(manifest.tools.gemini.rules.includes('python-coding-style.md'));
     assert.deepStrictEqual(manifest.requires, {});
   })) passed++; else failed++;
 
@@ -318,19 +316,6 @@ function runTests() {
     assert.ok(plan.some((line) => line.includes('Packages: typescript')));
   })) passed++; else failed++;
 
-  if (test('buildInstallPlan includes gemini local paths', () => {
-    const plan = buildInstallPlan({ target: 'gemini', devMode: false, packageNames: ['typescript'] });
-    assert.ok(plan.some((l) => l.includes('Target: gemini (global)')));
-    assert.ok(plan.some((l) => l.includes('.agents')));
-    assert.ok(plan.some((line) => line.includes('Packages: typescript')));
-  })) passed++; else failed++;
-
-  if (test('buildInstallPlan includes gemini global paths', () => {
-    const plan = buildInstallPlan({ target: 'gemini', devMode: false, packageNames: ['typescript'] });
-    assert.ok(plan.some((l) => l.includes('Target: gemini (global)')));
-    assert.ok(plan.some((l) => l.includes('GEMINI.md')));
-  })) passed++; else failed++;
-
   if (test('buildInstallPlan warns when package requires experimental Cursor hooks', () => {
     const plan = buildInstallPlan({ target: 'cursor', devMode: false, packageNames: ['continuous-learning'] });
     assert.ok(plan.some((line) => line.includes("skill 'continuous-learning-automatic' depends on hooks for target 'cursor'")));
@@ -345,13 +330,6 @@ function runTests() {
     assert.ok(claudePlan.some((line) => line.includes('Claude dev smoke scripts')));
     assert.ok(cursorPlan.some((line) => line.includes('Cursor dev smoke command')));
     assert.ok(codexPlan.some((line) => line.includes('Codex dev smoke skill')));
-  })) passed++; else failed++;
-
-  if (test('buildInstallPlan rejects packages that do not support the selected target', () => {
-    assert.throws(
-      () => buildInstallPlan({ target: 'gemini', devMode: false, packageNames: ['continuous-learning'] }),
-      /Package 'continuous-learning' does not support target 'gemini'/
-    );
   })) passed++; else failed++;
 
   if (test('buildInstallPlan claude installs globally by default', () => {
@@ -437,9 +415,10 @@ function runTests() {
       const installRulesCommand = fs.readFileSync(path.join(tempDir, 'commands', 'install-rules.md'), 'utf8');
       assert.ok(planCommand.includes('Wait for explicit user confirmation before making code changes.'));
       assert.ok(!planCommand.includes('Use Cursor’s custom command UI'));
-      assert.ok(docsHealthCommand.includes('DOCS HEALTH: PASS|PARTIAL|FAIL'));
+      assert.ok(docsHealthCommand.includes('# Docs Health'));
+      assert.ok(docsHealthCommand.includes('current-state docs under `docs/`'));
       assert.ok(smokeCommand.includes('SMOKE: PASS|FAIL|PARTIAL'));
-      assert.ok(installRulesCommand.includes('materialize-mdt-local.js --target cursor --surface rules'));
+      assert.ok(installRulesCommand.includes('mdt.js bridge materialize --tool cursor --surface rules'));
     });
   })) passed++; else failed++;
 
@@ -448,33 +427,6 @@ function runTests() {
       installCursorCoreDirs(tempDir, resolveSelectedPackages(['typescript']), true);
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'smoke.md')));
-    });
-  })) passed++; else failed++;
-
-  if (test('installGeminiContent copies only selected shared assets', () => {
-    withTempDir('mdt-install-gemini-', (tempDir) => {
-      const agentDir = path.join(tempDir, '.agent');
-      const geminiDir = path.join(tempDir, '.gemini');
-      installGeminiContent(agentDir, geminiDir, resolveSelectedPackages(['typescript']));
-
-      assert.ok(fs.existsSync(path.join(agentDir, 'workflows', 'planner.md')));
-      assert.ok(!fs.existsSync(path.join(agentDir, 'workflows', 'python-reviewer.md')));
-      assert.ok(fs.existsSync(path.join(agentDir, 'skills', 'documentation-steward', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(agentDir, 'skills', 'coding-standards', 'SKILL.md')));
-      assert.ok(!fs.existsSync(path.join(agentDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
-      assert.ok(!fs.existsSync(path.join(agentDir, 'skills', 'python-patterns', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(geminiDir, 'commands', 'docs-health.toml')));
-      assert.ok(fs.existsSync(path.join(geminiDir, 'commands', 'plan.toml')));
-      assert.ok(!fs.existsSync(path.join(geminiDir, 'commands', 'python-review.toml')));
-    });
-  })) passed++; else failed++;
-
-  if (test('installGeminiContent adds dev-only internal doc skill in dev mode', () => {
-    withTempDir('mdt-install-gemini-dev-', (tempDir) => {
-      const agentDir = path.join(tempDir, '.agent');
-      const geminiDir = path.join(tempDir, '.gemini');
-      installGeminiContent(agentDir, geminiDir, resolveSelectedPackages(['typescript']), true);
-      assert.ok(fs.existsSync(path.join(agentDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
     });
   })) passed++; else failed++;
 
@@ -552,12 +504,7 @@ function runTests() {
     });
   })) passed++; else failed++;
 
-  if (test('assertPackageRequirements rejects unsupported targets and warns for experimental Cursor hooks', () => {
-    assert.throws(
-      () => assertPackageRequirements('gemini', resolveSelectedPackages(['continuous-learning'])),
-      /Package 'continuous-learning' does not support target 'gemini'/
-    );
-
+  if (test('assertPackageRequirements warns for experimental Cursor hooks', () => {
     const warnings = assertPackageRequirements('cursor', resolveSelectedPackages(['continuous-learning']));
     assert.deepStrictEqual(warnings, []);
     assert.deepStrictEqual(assertPackageRequirements('codex', resolveSelectedPackages(['continuous-learning'])), []);

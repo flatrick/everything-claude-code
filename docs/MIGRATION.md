@@ -4,7 +4,7 @@ After the ModelDev Toolkit Node-only migration, skills and hooks run only via No
 
 ## Current status
 
-- **Done:** Installer and runtime are **Node-only**. `mdt install` installs to Claude Code, Cursor, Codex, or Gemini. No PowerShell or Bash scripts remain; skills and hooks run via Node.js. CI guard (`validate-no-hardcoded-paths.js`) enforces no `.sh`/`.ps1` in the repo.
+- **Done:** Installer and runtime are **Node-only**. `mdt install` installs to Claude Code, Cursor, or Codex. No PowerShell or Bash scripts remain; skills and hooks run via Node.js. CI guard (`validate-no-hardcoded-paths.js`) enforces no `.sh`/`.ps1` in the repo.
 - **Pre-v1 install policy:** Until a commit is tagged `v1.0.0`, install layout and package composition are allowed to change. Do not rely on in-place migration steps between intermediate revisions. The expected workflow is to start fresh and re-run `mdt install`.
 
 ## Steps

@@ -2,7 +2,7 @@
 /**
  * Run all tests
  *
- * Usage: node tests/run-all.js [--profile <neutral|claude|cursor|codex|gemini>]
+ * Usage: node tests/run-all.js [--profile <neutral|claude|cursor|codex>]
  */
 
 const { spawnSync } = require('child_process');

@@ -32,9 +32,6 @@ function runTests() {
         cursor: {
           rules: [],
           skills: []
-        },
-        gemini: {
-          rules: []
         }
       },
       ...overrides
@@ -524,9 +521,6 @@ function runTests() {
               rules: [],
               skills: [],
               commands: packageName === 'typescript' ? ['missing-command.md'] : []
-            },
-            gemini: {
-              rules: []
             }
           }
         })),
@@ -596,8 +590,7 @@ function runTests() {
             tools: {
               cursor: packageName === 'typescript'
                 ? { rules: ['missing-rule.md'], skills: ['missing-skill'] }
-                : { rules: [], skills: [] },
-              gemini: { rules: [] }
+                : { rules: [], skills: [] }
             }
           })
         ),
@@ -888,67 +881,6 @@ function runTests() {
     cleanupTestDir(cursorSkillsDir);
   })) passed++; else failed++;
 
-  if (test('fails when referenced Gemini rules do not exist', () => {
-    const packagesDir = createTestDir();
-    const rulesDir = createTestDir();
-    const agentsDir = createTestDir();
-    const commandsDir = createTestDir();
-    const skillsDir = createTestDir();
-    const cursorRulesDir = createTestDir();
-    const cursorSkillsDir = createTestDir();
-
-    fs.writeFileSync(path.join(agentsDir, 'planner.md'), '---\nmodel: sonnet\ntools: Read\n---\n# Planner');
-    fs.writeFileSync(path.join(commandsDir, 'plan.md'), '# Plan\nBody');
-    fs.mkdirSync(path.join(skillsDir, 'verification-loop'));
-    fs.writeFileSync(
-      path.join(skillsDir, 'verification-loop', 'SKILL.md'),
-      '# Verification Loop\n\n## When to Use\nUse this skill for verification.',
-      'utf8'
-    );
-    fs.mkdirSync(path.join(rulesDir, 'common'));
-    fs.writeFileSync(path.join(rulesDir, 'common', 'coding-style.md'), '# Common\nBody');
-    fs.writeFileSync(path.join(cursorRulesDir, 'common-coding-style.md'), '# Common Cursor\nBody');
-
-    for (const packageName of ['typescript', 'sql', 'dotnet', 'rust', 'python', 'bash', 'powershell']) {
-      fs.mkdirSync(path.join(packagesDir, packageName));
-      fs.mkdirSync(path.join(rulesDir, packageName));
-      fs.writeFileSync(path.join(rulesDir, packageName, 'coding-style.md'), `# ${packageName}\nBody`);
-      fs.writeFileSync(
-        path.join(packagesDir, packageName, 'package.json'),
-        JSON.stringify(
-          buildValidPackageManifest(packageName, {
-            tools: {
-              cursor: { rules: [], skills: [] },
-              gemini: packageName === 'typescript'
-                ? { rules: ['missing-gemini-rule.md'] }
-                : { rules: ['common-coding-style.md'] }
-            }
-          })
-        ),
-        'utf8'
-      );
-    }
-
-    const result = runValidatorWithDirs('validate-install-packages', {
-      PACKAGES_DIR: packagesDir,
-      RULES_DIR: rulesDir,
-      AGENTS_DIR: agentsDir,
-      COMMANDS_DIR: commandsDir,
-      SKILLS_DIR: skillsDir,
-      CURSOR_RULES_DIR: cursorRulesDir,
-      CURSOR_SKILLS_DIR: cursorSkillsDir
-    });
-    assert.strictEqual(result.code, 1, 'Should fail on missing referenced Gemini rules');
-    assert.ok(result.stderr.includes('missing Gemini rule reference: missing-gemini-rule.md'), 'Should report missing Gemini rule');
-    cleanupTestDir(packagesDir);
-    cleanupTestDir(rulesDir);
-    cleanupTestDir(agentsDir);
-    cleanupTestDir(commandsDir);
-    cleanupTestDir(skillsDir);
-    cleanupTestDir(cursorRulesDir);
-    cleanupTestDir(cursorSkillsDir);
-  })) passed++; else failed++;
-
   if (test('passes when a Codex skill is provided only by shared skills and not codex-template', () => {
     const packagesDir = createTestDir();
     const rulesDir = createTestDir();
@@ -985,7 +917,6 @@ function runTests() {
           buildValidPackageManifest(packageName, {
             tools: {
               cursor: { rules: [], skills: [] },
-              gemini: { rules: [] },
               codex: packageName === 'typescript'
                 ? { skills: ['verification-loop'] }
                 : undefined
