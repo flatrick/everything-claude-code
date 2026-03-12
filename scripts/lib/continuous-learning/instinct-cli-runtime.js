@@ -99,7 +99,8 @@ function createInstinctCliRuntime(options = {}) {
   function getCliPaths() {
     const homunculusDir = withToolEnv(() => getHomunculusDir());
     return {
-      PROJECTS_DIR: path.join(homunculusDir, 'projects'),
+      // Project-scoped state now lives directly under homunculus/<project-id>/.
+      PROJECTS_DIR: homunculusDir,
       REGISTRY_FILE: path.join(homunculusDir, 'projects.json'),
       GLOBAL_PERSONAL: path.join(homunculusDir, 'instincts', 'personal'),
       GLOBAL_INHERITED: path.join(homunculusDir, 'instincts', 'inherited')

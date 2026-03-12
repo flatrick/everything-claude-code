@@ -20,5 +20,5 @@ This repository is **ModelDev Toolkit (MDT)**, designed to be consumed by Codex 
 - Codex tools should assume:
   - MDT installs are global-only by default,
   - skills follow the shared `SKILL.md` + optional `agents/openai.yaml` convention,
-  - continuous-learning state lives under `~/.codex/mdt/homunculus/projects/<project-id>/`,
+  - continuous-learning state lives under `~/.codex/mdt/homunculus/<project-id>/`,
   - smoke-style checks are run via the shipped Node scripts rather than Codex-specific markdown commands.

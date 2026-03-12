@@ -25,7 +25,7 @@ Look for:
 3. **Determine save location:**
    - Ask: "Would this pattern be useful in a different project?"
    - **Global candidate** (`<data>/generated/skills/learned/`): Generic patterns usable across 2+ projects (bash compatibility, LLM API behavior, debugging techniques, etc.)
-   - **Project learning state** (`<data>/homunculus/projects/<project-id>/...`): Project-specific knowledge should stay in project-scoped instinct/evolution state until it is promoted into a real skill
+   - **Project learning state** (`<data>/homunculus/<project-id>/...`): Project-specific knowledge should stay in project-scoped instinct/evolution state until it is promoted into a real skill
    - When in doubt, keep it in MDT-owned staging/state first; do not write candidate skills directly into the live tool skill directory
 
 4. Draft the skill file using this format:

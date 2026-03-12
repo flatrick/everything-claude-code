@@ -40,7 +40,7 @@ instead of guessing another path.
 ## What to Do
 
 1. Detect current project context
-2. Read project instincts from `<config>/mdt/homunculus/projects/<project-id>/instincts/`
+2. Read project instincts from `<config>/mdt/homunculus/<project-id>/instincts/`
 3. Read global instincts from `<config>/mdt/homunculus/instincts/`
 4. Merge with precedence rules
 5. Display grouped by domain with confidence bars and observation stats

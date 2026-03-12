@@ -86,7 +86,7 @@ Example:
    - Agent candidates (larger, high-confidence clusters)
 5. Show promotion candidates (project -> global) when applicable
 6. If `--generate` is passed, write files to:
-   - Project scope: `<data>/homunculus/projects/<project-id>/evolved/`
+   - Project scope: `<data>/homunculus/<project-id>/evolved/`
    - Global fallback: `<data>/homunculus/evolved/`
 
 ## Output Format

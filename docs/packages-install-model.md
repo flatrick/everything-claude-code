@@ -21,9 +21,13 @@ path copying rather than by an explicit install bundle definition.
 This note captured the design direction before package manifests were implemented.
 The repo now uses package manifests for install selection. Prefer:
 
-- [docs/package-manifest-v1.md](./package-manifest-v1.md)
+- [docs/package-manifest-schema.md](./package-manifest-schema.md)
 - [docs/INSTALLATION.md](./INSTALLATION.md)
 - [NEXT-STEPS.md](../NEXT-STEPS.md)
+
+For the preserved intermediate design draft, see:
+
+- [docs/package-manifest-v1.md](./package-manifest-v1.md)
 
 ## Pre-v1 Operating Rule
 

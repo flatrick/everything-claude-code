@@ -32,7 +32,7 @@ node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" status
 ## What to Do
 
 1. Detect current project context (git remote/path hash)
-2. Read project instincts from `<data>/homunculus/projects/<project-id>/instincts/`
+2. Read project instincts from `<data>/homunculus/<project-id>/instincts/`
 3. Read global instincts from `<data>/homunculus/instincts/`
 4. Merge with precedence rules (project overrides global when IDs collide)
 5. Display grouped by domain with confidence bars and observation stats

@@ -39,7 +39,7 @@ Import instincts from local file paths or HTTP(S) URLs.
 3. Check for duplicates with existing instincts
 4. Merge or add new instincts
 5. Save to inherited instincts directory:
-   - Project scope: `<data>/homunculus/projects/<project-id>/instincts/inherited/`
+   - Project scope: `<data>/homunculus/<project-id>/instincts/inherited/`
    - Global scope: `<data>/homunculus/instincts/inherited/`
 
 ## Import Process

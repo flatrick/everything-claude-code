@@ -159,3 +159,22 @@ installer mirrors, and installed tool runtime paths.
 - verify Claude, Cursor, Codex, and Gemini installed script behavior after the change
 
 ---
+
+## Revisit OpenCode after `v1.0.0` + `.mjs` migration
+
+**Status:** Deferred until after `v1.0.0`.
+
+OpenCode is intentionally outside the active MDT support surface for now.
+
+Do not spend stabilization time on it before:
+
+- `v1.0.0` is cut
+- the planned repo-wide `.mjs` migration is complete
+
+If support is resumed later:
+
+- rebuild the adapter from current vendor reality
+- add fresh local smoke coverage
+- reintroduce it through packages, workflow contracts, and tool docs together
+
+---
