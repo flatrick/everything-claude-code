@@ -1,24 +1,42 @@
-## Codex Guidance
+# CODEX.md
 
-This repository is **ModelDev Toolkit (MDT)**, designed to be consumed by Codex as a **scaffolding source** for config, skills, and helper scripts.
+This file is the Codex-specific entrypoint for working in this repository.
 
-### How Codex should treat this repo
+## Shared Repo Guidance
 
-- **Primary guidance**: read root `AGENTS.md` for cross-tool rules and workflows.
-- **Codex-specific details**: see `docs/tools/codex.md` (source of truth for Codex capability claims and integration points).
-- **Install source**: treat `codex-template/` as the **authoritative source tree** for Codex-facing assets (`config.toml`, `AGENTS.md`, skills, and helper scripts).
-- **Install targets**:
-  - tool-facing layer: `~/.codex/` for Codex config and global guidance
-  - MDT-owned layer: `~/.codex/mdt/` for runtime helpers, observer scripts, and learning state
+Read [AGENTS.md](AGENTS.md) first.
 
-### Expected install workflow
+That file is the shared source of truth for:
 
-- Use `node scripts/install-mdt.js --target codex <package...>` to materialize:
-  - configuration into `~/.codex/`
-  - selected skills from `codex-template/skills/` into `~/.codex/skills/`
-  - runtime helpers into `~/.codex/mdt/scripts/`
-- Codex tools should assume:
-  - MDT installs are global-only by default,
-  - skills follow the shared `SKILL.md` + optional `agents/openai.yaml` convention,
-  - continuous-learning state lives under `~/.codex/mdt/homunculus/<project-id>/`,
-  - smoke-style checks are run via the shipped Node scripts rather than Codex-specific markdown commands.
+- repo working rules
+- development workflow
+- testing and security expectations
+- cross-tool documentation policy
+
+## Codex-Specific Details
+
+For durable Codex capability and integration details, use:
+
+- [docs/tools/codex.md](docs/tools/codex.md)
+- [docs/supported-tools.md](docs/supported-tools.md)
+
+Repo-specific Codex note:
+
+- Codex-facing install assets live under [codex-template/](codex-template/)
+- MDT-owned runtime helpers and state are installed under `~/.codex/mdt/`
+- workflow smoke checks are script-based, not Claude-style markdown commands
+
+## Verification
+
+Use the normal repo verification flow first:
+
+```bash
+npm run lint
+npm test
+```
+
+If you need Codex-specific workflow verification, also use:
+
+```bash
+node scripts/smoke-codex-workflows.js
+```

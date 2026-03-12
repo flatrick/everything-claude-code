@@ -1,46 +1,44 @@
-## Cursor / Cursor Agent Guidance
+# CURSOR.md
 
-This repository is **ModelDev Toolkit (MDT)**, designed to be consumed by Cursor and Cursor Agent as a **scaffolding source**, not as an already-installed project.
+This file is the Cursor-specific entrypoint for working in this repository.
 
-### How Cursor should treat this repo
+## Shared Repo Guidance
 
-- **Primary guidance**: read root `AGENTS.md` for cross-tool rules and workflows.
-- **Cursor-specific details**: see `docs/tools/cursor.md` (source of truth for Cursor capability claims and integration points).
-- **Install layout**: treat `cursor-template/` as the **install source** for rules, skills, commands, and the optional hook adapter.
-- **Install target**: `~/.cursor/` is the normal MDT install target, even for users who currently only use Cursor IDE. MDT-owned runtime/state lives under `~/.cursor/mdt/`.
-- **Local exception**: if a workflow needs a repo-local Cursor surface, use the explicit bridge command instead of a full project install.
+Read [AGENTS.md](AGENTS.md) first.
 
-### Expected install workflow
+That file is the shared source of truth for:
 
-- Use `node scripts/install-mdt.js --target cursor <package...>` to materialize the primary global Cursor install into `~/.cursor/`, even if the user is not currently using `cursor-agent`:
-  - global rules into `~/.cursor/rules/*.mdc`
-  - skills into `~/.cursor/skills/`
-  - custom commands into `~/.cursor/commands/`
-  - optional experimental hooks into `~/.cursor/hooks*`
-  - MDT-owned helpers/state into `~/.cursor/mdt/`
-- Use `node scripts/materialize-mdt-local.js --target cursor --surface rules <package...>` only when a repo-local `.cursor/rules/` bridge is explicitly needed for Cursor IDE.
-- Cursor tools should assume:
-  - this repo is safe to clone and install from,
-  - repo-local `.cursor/` contents are exception surfaces, not the primary install target,
-  - workflows must still function even if the experimental hook adapter is ignored (rules, skills, `AGENTS.md`, memories, and background agents remain primary).
+- repo working rules
+- development workflow
+- testing and security expectations
+- cross-tool documentation policy
 
-### Rules Surface Split
+## Cursor-Specific Details
 
-Local verification last true on `2026-03-12` shows a current split between
-Cursor surfaces:
+For durable Cursor capability and integration details, use:
 
-- Cursor IDE reads project rules from the opened repo's `.cursor/rules/`
-- Cursor IDE user-global rules appear to live in Cursor-managed app storage
-  rather than `~/.cursor/rules/*.mdc`
-- `cursor-agent` reads file-backed user-global rules from
-  `~/.cursor/rules/*.mdc`
+- [docs/tools/cursor.md](docs/tools/cursor.md)
+- [docs/supported-tools.md](docs/supported-tools.md)
 
-Operational rule for MDT:
+Repo-specific Cursor notes:
 
-- always install the main MDT Cursor payload into `~/.cursor/`
-- add repo-local `.cursor/rules/` only when Cursor IDE needs project rules in a
-  given repo
+- Cursor install-source assets live under [cursor-template/](cursor-template/)
+- the primary MDT install target is `~/.cursor/`
+- repo-local `.cursor/` surfaces are exception bridges, not the default install
+  model
+- the hook adapter is experimental and workflows must still work without it
 
-Do not treat repo-local `.cursor/rules/` and global `~/.cursor/rules/*.mdc` as
-interchangeable. They differ in scope, storage, and which Cursor surface reads
-them.
+## Verification
+
+Use the normal repo verification flow first:
+
+```bash
+npm run lint
+npm test
+```
+
+If you need Cursor-specific workflow verification, also use:
+
+```bash
+node scripts/smoke-cursor-workflows.js
+```

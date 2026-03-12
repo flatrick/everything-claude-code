@@ -13,4 +13,3 @@ Current entries:
 - [2026-03-12 roadmap rebaseline](./2026-03-12.roadmap-rebaseline.md)
 
 Use `NEXT-STEPS.md` for active roadmap work and `BACKLOG.md` for deferred work.
-

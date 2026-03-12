@@ -1,61 +1,37 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file is the Claude-specific entrypoint for working in this repository.
 
-## Project Overview
+## Shared Repo Guidance
 
-This is **ModelDev Toolkit** - a generic model toolkit for software development workflows and scaffolding. It includes production-ready agents, skills, hooks, commands, rules, and MCP configurations across Claude Code, Cursor, Codex, and Gemini.
+Read [AGENTS.md](AGENTS.md) first.
 
-## Running Tests
+That file is the shared source of truth for:
+
+- repo working rules
+- development workflow
+- testing and security expectations
+- cross-tool documentation policy
+
+## Claude-Specific Details
+
+For durable Claude capability and integration details, use:
+
+- [docs/tools/claude-code.md](docs/tools/claude-code.md)
+- [docs/supported-tools.md](docs/supported-tools.md)
+
+Claude-native note:
+
+- `CLAUDE.md` is a real Claude guidance surface, so keep this file as a thin
+  Claude entrypoint that points back to shared repo guidance rather than
+  duplicating repository rules here.
+
+## Verification
+
+When changing code in this repo, use the normal repo verification flow unless
+the task explicitly calls for something narrower:
 
 ```bash
-# Run all tests
-node tests/run-all.js
-
-# Run individual test files
-node tests/lib/utils.test.js
-node tests/lib/package-manager.test.js
-node tests/hooks/hooks.test.js
+npm run lint
+npm test
 ```
-
-## Architecture
-
-The project is organized into several core components:
-
-- **agents/** - Specialized subagents for delegation (planner, code-reviewer, tdd-guide, etc.)
-- **skills/** - Workflow definitions and domain knowledge (coding standards, patterns, testing)
-- **commands/** - Slash commands invoked by users (/tdd, /plan, /e2e, etc.)
-- **hooks/** - Trigger-based automations (session persistence, pre/post-tool hooks)
-- **rules/** - Always-follow guidelines (security, coding style, testing requirements)
-- **mcp-configs/** - MCP server configurations for external integrations
-- **scripts/** - Cross-platform Node.js utilities for hooks and setup
-- **tests/** - Test suite for scripts and utilities
-
-## Key Commands
-
-- `/tdd` - Test-driven development workflow
-- `/plan` - Implementation planning
-- `/e2e` - Generate and run E2E tests
-- `/code-review` - Quality review
-- `/build-fix` - Fix build errors
-- `/learn` - Extract patterns from sessions
-- `/skill-create` - Generate skills from git history
-
-## Development Notes
-
-- **Runtime:** ModelDev Toolkit is **JavaScript/Node only**. No PowerShell or Bash scripts; install via `node scripts/install-mdt.js`, hooks and skills run via Node (see `scripts/lib/detect-env.js` for config/data paths).
-- Package manager detection: npm, pnpm, yarn, bun (configurable via `CLAUDE_PACKAGE_MANAGER` env var or project config)
-- Cross-platform: Windows, macOS, Linux support via Node.js scripts
-- Agent format: Markdown with YAML frontmatter (name, description, tools, model)
-- Skill format: Markdown with clear sections for when to use, how it works, examples
-- Hook format: JSON with matcher conditions and command/notification hooks
-
-## Contributing
-
-Follow the formats in CONTRIBUTING.md:
-- Agents: Markdown with frontmatter (name, description, tools, model)
-- Skills: Clear sections (When to Use, How It Works, Examples)
-- Commands: Markdown with description frontmatter
-- Hooks: JSON with matcher and hooks array
-
-File naming: lowercase with hyphens (e.g., `python-reviewer.md`, `tdd-workflow.md`)
