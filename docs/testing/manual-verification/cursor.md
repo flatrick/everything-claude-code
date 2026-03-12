@@ -210,12 +210,13 @@ If a future Cursor build stops loading `.cursor/hooks.json` or you install MDT
 with `MDT_SKIP_CURSOR_HOOKS=1` set in the environment:
 
 - Rules in `.cursor/rules/` continue to apply as project guidance.
-- Skills in `.cursor/skills/` (including `continuous-learning-manual` and the core
-  coding/testing/security patterns) remain available via `/` in Agent chat.
+- Skills in `.cursor/skills/` (including `continuous-learning-manual` plus the
+  installed coding/testing/security workflow skills) remain available via `/`
+  in Agent chat.
 - `AGENTS.md` at the project root still participates in Cursor’s agent system.
 - Cursor’s custom commands, memories, background agents, and MCP features
   remain available as documented in [docs/tools/cursor.md](../../tools/cursor.md).
 
 In that configuration you will not see hook-driven behaviors (e.g. dev-server
 blocking, automatic console.log audits, or automatic observation capture), but
-the core MDT workflows remain usable through rules, skills, and agents.
+the main MDT workflows remain usable through rules, skills, and agents.
