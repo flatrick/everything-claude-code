@@ -52,6 +52,17 @@ skill approach creates avoidable costs:
 The private-runtime approach fixes the ownership issue while keeping the public
 surface small and stable.
 
+## Additional Benefits Worth Naming
+The private-runtime approach also creates benefits that are not just about
+reducing rollout risk:
+
+1. it establishes a reusable MDT pattern: private runtime under `scripts/lib/`
+   plus stable public wrappers
+2. it immediately removes maintenance surface because several Codex overlay
+   copies are already identical to the shared manual implementation
+3. it keeps future tool-specific manual workflows open without adding another
+   public infrastructure skill
+
 ## Design Principles
 
 ### 1. Shared implementation is private infrastructure
@@ -83,6 +94,10 @@ separate work with separate blast radius.
 ### 6. Remove duplication only after wrappers and tests are green
 Switch real implementations first. Trim duplicate files only after installed
 layouts and runtime behavior are verified.
+
+### 7. Make shared code location-agnostic before relocating it
+Current runtime code infers behavior from where its own files live. Break that
+coupling before moving code into `scripts/lib/continuous-learning/`.
 
 ## Important Constraints From Current Repo Behavior
 
@@ -129,18 +144,54 @@ hook surface belongs to `continuous-learning-automatic`.
 
 These mismatches are in scope for correction as part of the migration.
 
+### Current runtime behavior is still file-location-sensitive
+Several current scripts infer tool/config roots, runtime lookup paths, or
+default config paths from `__dirname` and the existing public skill layout.
+
+This means the migration cannot safely be only a file move. Shared runtime code
+must first accept explicit context such as entrypoint directory, config root, or
+config path so the wrappers can preserve current behavior after extraction.
+
+### Tests encode public file layout and wrapper exports
+Current tests do not only execute public scripts as CLIs. They also import named
+exports directly from public files and build fake installed layouts that mirror
+the current `skills/...` and `scripts/lib/...` arrangement.
+
+This means compatibility work must preserve both:
+
+- public script paths
+- public module export behavior used by tests and any repo-local consumers
+
+### Codex overlay docs are validator-constrained, not just metadata-constrained
+Current validators enforce Codex-specific documentation boundaries for
+`codex-template/skills/continuous-learning-manual/SKILL.md`, including concrete
+Codex paths rather than abstract placeholders.
+
+This means the overlay cannot be treated as metadata-only while those validator
+rules remain in place.
+
+### Observer config is currently owned by the public manual skill surface
+The observer runtime currently loads `config.json` from the public
+`continuous-learning-manual` skill root.
+
+This means the migration should not silently move config ownership into the
+private runtime. Shared code should consume config supplied by public wrappers.
+
 ## Decision Log
 These decisions should be treated as defaults for the migration:
 
 - do not create a public `continuous-learning-core` skill
 - extract shared implementation into `scripts/lib/continuous-learning/`
 - keep existing public command and script entrypoints stable during migration
+- preserve current public wrapper exports where tests rely on them
 - keep current Codex shared-skill installer semantics unchanged
 - treat `continuous-learning-manual` as the public explicit/manual CLI surface
   across supported tools, not as the shared backend owner
 - treat `continuous-learning-automatic` as a thin hook surface only
 - migrate the optional Codex observer in the same program of work
 - keep overlay metadata until validators are deliberately updated
+- keep observer config owned by the public manual skill surface in this
+  migration
 
 ## Proposed Ownership Model
 
@@ -166,6 +217,7 @@ It should own:
 
 - `SKILL.md`
 - `skill.meta.json`
+- `config.json`
 - public explicit/manual entrypoints such as `scripts/codex-learn.js`
 - public CLI wrappers such as `scripts/instinct-cli.js`
 - compatibility wrappers for any temporarily preserved paths
@@ -177,6 +229,9 @@ It should document:
 - how the public manual commands relate to the automatic hook layer
 
 It should not remain the real owner of shared runtime code.
+
+Its wrappers should continue to preserve current module exports where tests rely
+on those exports.
 
 ### `skills/continuous-learning-automatic/`
 This remains a public skill.
@@ -211,7 +266,8 @@ Initial safe target contents:
   `skills/continuous-learning-manual/`
 
 It should not keep duplicated shared implementations after the migration is
-complete.
+complete, but it may still need to retain Codex-specific docs while current
+validator rules remain in place.
 
 ## File-Level Refactor Plan
 
@@ -234,10 +290,30 @@ Acceptance criteria:
 - manual docs no longer claim ownership of hook entrypoints
 - tests encode the real current contract before extraction
 
-### Phase 1: Extract Shared Runtime
+### Phase 1: Stabilize Runtime Resolution And Extract Shared Runtime
 
-#### 2. Create the private shared runtime module
-Add `scripts/lib/continuous-learning/` and move shared implementation there.
+#### 2. Introduce location-agnostic runtime context helpers
+Before moving shared code, add a small runtime context/resolution layer that
+lets shared implementation accept explicit inputs such as:
+
+- entrypoint directory
+- config root
+- data root
+- config path
+
+Use the current public wrapper paths as the compatibility boundary. Public
+scripts and agents should keep the existing path- and layout-sensitive behavior
+by passing explicit context into shared code.
+
+Acceptance criteria:
+
+- shared runtime logic no longer depends on its own final file location
+- wrappers remain responsible for preserving current installed-layout behavior
+- no new public skill is introduced
+
+#### 3. Create the private shared runtime module
+Add `scripts/lib/continuous-learning/` and move shared implementation there once
+the context abstraction exists.
 
 Initial candidates:
 
@@ -252,7 +328,7 @@ Acceptance criteria:
 - one private runtime location owns shared implementation
 - no new public skill is introduced
 
-#### 3. Convert public entrypoints into thin wrappers
+#### 4. Convert public entrypoints into thin wrappers
 Update public scripts so they import or delegate to the private runtime instead
 of owning real implementations themselves.
 
@@ -269,10 +345,24 @@ Targets include:
 Acceptance criteria:
 
 - public paths keep working
+- current named exports used by tests still work
 - real implementation lives in the private runtime
 - wrappers are minimal and explicit
 
-#### 4. Rewire the optional Codex observer
+#### 5. Add installed-layout fixture helpers and compatibility coverage
+Before duplicate cleanup, update tests/helpers so they can construct realistic
+installed layouts that include both:
+
+- `skills/...`
+- `mdt/scripts/lib/continuous-learning/...`
+
+Acceptance criteria:
+
+- tests no longer rely on outdated fake layouts that omit the extracted runtime
+- compatibility coverage explicitly protects wrapper exports and installed-layout
+  inference
+
+#### 6. Rewire the optional Codex observer
 Update `scripts/codex-observer.js` so it resolves the private runtime first.
 
 If needed during transition, it may fall back to stable manual wrappers, but the
@@ -286,7 +376,7 @@ Acceptance criteria:
 
 ### Phase 2: Re-state Skill Boundaries
 
-#### 5. Rewrite `continuous-learning-manual` docs around its real role
+#### 7. Rewrite `continuous-learning-manual` docs around its real role
 Update manual-skill docs so they describe:
 
 - explicit/manual commands
@@ -303,8 +393,10 @@ Acceptance criteria:
 
 - manual is clearly a public workflow surface
 - docs do not imply it owns the backend
+- docs make clear that config remains public-surface-owned even though runtime
+  code is private
 
-#### 6. Rewrite `continuous-learning-automatic` docs around thin ownership
+#### 8. Rewrite `continuous-learning-automatic` docs around thin ownership
 Update automatic-skill docs so they describe:
 
 - hook capture
@@ -323,7 +415,7 @@ Acceptance criteria:
 
 ### Phase 3: Keep Install Composition Stable
 
-#### 7. Preserve current package selection semantics
+#### 9. Preserve current package selection semantics
 Do not add a new public skill to `packages/continuous-learning/package.json`.
 
 The migration target remains:
@@ -338,7 +430,7 @@ Acceptance criteria:
 - no `continuous-learning-core` manifest entry exists
 - current installer semantics remain valid
 
-#### 8. Ensure runtime installation is sufficient
+#### 10. Ensure runtime installation is sufficient
 Verify that runtime installation already places the new private module under the
 tool runtime root through the existing `scripts/lib` copy behavior.
 
@@ -353,7 +445,7 @@ Acceptance criteria:
 
 ### Phase 4: Update Commands, Docs, And Integrations
 
-#### 9. Keep public command docs pointed at public manual entrypoints
+#### 11. Keep public command docs pointed at public manual entrypoints
 Do not repoint command docs to private runtime paths.
 
 Review and keep or refine public entrypoint usage in:
@@ -370,7 +462,7 @@ Acceptance criteria:
 - user-facing commands still reference stable public scripts
 - docs do not expose private runtime paths
 
-#### 10. Update descriptive docs that describe ownership
+#### 12. Update descriptive docs that describe ownership
 Review files such as:
 
 - `skills/continuous-learning-manual/SKILL.md`
@@ -387,7 +479,7 @@ Acceptance criteria:
 
 ### Phase 5: Trim Duplicate Implementations
 
-#### 11. Remove duplicate implementations from automatic
+#### 13. Remove duplicate implementations from automatic
 After wrappers and tests are in place, remove duplicated shared logic from
 automatic-owned scripts.
 
@@ -398,8 +490,10 @@ Key target:
 Acceptance criteria:
 
 - automatic no longer contains a second real copy of shared runtime logic
+- duplicate removal happens only after the shared resolver preserves the
+  automatic wrapper's current behavior
 
-#### 12. Remove duplicated shared implementation from the Codex overlay
+#### 14. Remove duplicated shared implementation from the Codex overlay
 After installation and validator behavior are confirmed, remove duplicated
 shared implementations from:
 
@@ -417,8 +511,9 @@ Acceptance criteria:
 
 - overlay contains true Codex differences only
 - required metadata is still present
+- Codex-specific docs remain where validator rules still require them
 
-#### 13. Trim shared manual to its real public role
+#### 15. Trim shared manual to its real public role
 After the new runtime is stable, remove any remaining shared backend ownership
 from `skills/continuous-learning-manual/` except:
 
@@ -433,36 +528,40 @@ Acceptance criteria:
 
 ### Phase 6: Update Tests And Validators
 
-#### 14. Add or update private-runtime tests
+#### 16. Add or update private-runtime tests
 Add focused tests for:
 
 - project detection behavior
 - shared config loading
 - retrospective behavior
 - shared observer helper behavior
+- runtime context/path-resolution behavior
 
 Acceptance criteria:
 
 - the private runtime is directly tested
 - shared behavior is no longer validated only through duplicated public files
 
-#### 15. Keep compatibility tests for public entrypoints
+#### 17. Keep compatibility tests for public entrypoints
 Update tests so they distinguish between:
 
 - shared runtime behavior tests
 - public wrapper compatibility tests
+- installed-layout fixture tests
 
 At minimum verify:
 
 - manual CLI entrypoints still work
+- named exports from public wrappers still work
 - automatic hook entrypoint still works
 - Codex observer still works
+- installed layout inference still works for `.claude`, `.cursor`, and `.codex`
 
 Acceptance criteria:
 
 - tests protect both new ownership and stable public entrypoints
 
-#### 16. Update install and validator expectations
+#### 18. Update install and validator expectations
 Review and update:
 
 - install tests
@@ -480,10 +579,11 @@ Acceptance criteria:
 
 - tests encode the unchanged public install contract
 - validators still pass with overlay metadata preserved
+- validators still pass with any retained Codex-specific overlay docs
 
 ### Phase 7: Documentation Sweep And Cleanup
 
-#### 17. Sweep for stale backend-ownership references
+#### 19. Sweep for stale backend-ownership references
 Search for wording that still implies:
 
 - manual owns the backend
@@ -494,7 +594,7 @@ Acceptance criteria:
 
 - repo-wide ownership language is consistent
 
-#### 18. Sweep for stale path references carefully
+#### 20. Sweep for stale path references carefully
 Search for old implementation-path references and decide case by case whether
 they should:
 
@@ -511,34 +611,47 @@ Acceptance criteria:
 This should still be a staged migration, but the stages need different
 boundaries than the earlier plan.
 
-### PR 1: Contract freeze and private runtime extraction
+### PR 1: Contract freeze, context abstraction, and fixture groundwork
 Scope:
 
 - correct doc and test drift for current behavior
+- add the location-agnostic runtime context/resolution layer
+- add or update test helpers for extracted-runtime installed layouts
+- preserve current wrapper exports as an explicit contract
+
+Why first:
+
+- this removes the biggest hidden migration risk before any code move happens
+- it turns the later extraction into a relocation behind a defined
+  compatibility boundary
+
+### PR 2: Private runtime extraction and wrapper cutover
+Scope:
+
 - add `scripts/lib/continuous-learning/`
 - move shared implementation there
 - turn existing public scripts into wrappers
 - update `scripts/codex-observer.js`
 
-Why first:
+Why second:
 
-- this changes the real ownership model without introducing a new public skill
-- it avoids the broken state where consumers are rewired before installs include
-  the new backend owner
+- this changes the real ownership model only after the compatibility boundary is
+  already explicit
+- it avoids moving path-sensitive code before layout resolution is stabilized
 
-### PR 2: Skill-doc rewrite and test alignment
+### PR 3: Skill-doc rewrite and test alignment
 Scope:
 
 - rewrite manual and automatic docs around the new boundaries
 - update tests to distinguish private runtime from public wrappers
 - update validators only where needed for the extracted architecture
 
-Why second:
+Why third:
 
 - once extraction is done, the docs and tests can describe the stable structure
   instead of a moving target
 
-### PR 3: Duplicate removal and final cleanup
+### PR 4: Duplicate removal and final cleanup
 Scope:
 
 - remove duplicated implementations from automatic
@@ -546,7 +659,7 @@ Scope:
 - trim shared manual to public wrappers and docs only
 - do final stale-reference cleanup
 
-Why third:
+Why fourth:
 
 - duplicate removal is safest after the new ownership model is already green
 
@@ -560,6 +673,7 @@ node tests/scripts/install-mdt-unit.test.js
 node tests/scripts/install-mdt.test.js
 node tests/scripts/detect-project.test.js
 node tests/scripts/instinct-cli.test.js
+node tests/scripts/node-runtime-scripts.test.js
 node tests/scripts/codex-observer.test.js
 node tests/scripts/continuous-learning-observer.test.js
 node tests/scripts/continuous-learning-retrospective.test.js
@@ -568,6 +682,9 @@ node tests/ci/validators.test.js
 ```
 
 Add focused tests for the new private runtime module as part of the extraction.
+
+Treat wrapper export compatibility and installed-layout fixture coverage as part
+of the required test surface, not optional cleanup.
 
 ### Full suite
 Before considering the refactor complete:
@@ -602,6 +719,7 @@ Also verify:
 - `scripts/codex-observer.js` resolves shared behavior from private runtime or
   an intentional temporary wrapper during the transition
 - installed Codex overlay still includes required metadata files
+- retained Codex overlay docs still satisfy current validator expectations
 
 ### Installed-layout verification
 In addition to source-tree tests, verify installed layouts under temporary
@@ -628,6 +746,18 @@ Mitigation:
 - rely on the existing runtime-script install surface under `mdt/scripts/lib/`
 - verify installed-layout tests in the same PR as extraction
 
+### Risk: Shared code is moved before path-sensitive behavior is removed
+Mitigation:
+
+- add a context/resolution layer before relocating shared code
+- keep wrappers responsible for installed-layout inference
+
+### Risk: Wrapper module exports regress even if CLI behavior stays green
+Mitigation:
+
+- treat current public wrapper exports as part of the compatibility contract
+- add direct import/require compatibility tests for public wrappers
+
 ### Risk: A new migration accidentally exposes private runtime paths to users
 Mitigation:
 
@@ -646,6 +776,12 @@ Mitigation:
 - keep overlay metadata until validators are deliberately changed
 - trim shared implementation only after install and validator tests are green
 
+### Risk: Codex-specific overlay docs get over-trimmed
+Mitigation:
+
+- treat validator-required Codex docs as a persistent overlay responsibility
+- remove duplicated code independently from doc retention decisions
+
 ### Risk: Current contract drift gets carried forward
 Mitigation:
 
@@ -658,6 +794,12 @@ Mitigation:
 - migrate `scripts/codex-observer.js` in the same extraction PR
 - keep dedicated observer tests and dry-run verification
 
+### Risk: Observer config ownership becomes ambiguous during extraction
+Mitigation:
+
+- keep `config.json` public-surface-owned in this migration
+- have shared runtime consume config passed in by wrappers
+
 ## Acceptance Checklist
 - [ ] no public `continuous-learning-core` skill exists
 - [ ] shared continuous-learning implementation lives in
@@ -669,10 +811,17 @@ Mitigation:
 - [ ] current package install behavior remains:
       Claude `manual + automatic`, Cursor `manual + automatic`, Codex `manual`
 - [ ] public command and script entrypoints remain stable during migration
+- [ ] current named exports from public wrappers remain compatible where tests
+      depend on them
+- [ ] installed config-root inference still works for `.claude`, `.cursor`, and
+      `.codex`
 - [ ] `scripts/codex-observer.js` works with the extracted runtime
 - [ ] duplicate implementations are removed from automatic
 - [ ] duplicate shared implementations are removed from the Codex overlay
 - [ ] required Codex overlay metadata is still present
+- [ ] required Codex-specific overlay docs are still present while validators
+      require them
+- [ ] observer config remains owned by the public manual skill surface
 - [ ] docs no longer misstate non-git fallback, hook ownership, or backend
       ownership
 - [ ] tests and validators pass with updated expectations
@@ -681,18 +830,20 @@ Mitigation:
 Use this order to minimize breakage:
 
 1. fix contract drift in docs and tests
-2. create `scripts/lib/continuous-learning/`
-3. move shared implementation there
-4. convert public entrypoints into thin wrappers
-5. update `scripts/codex-observer.js`
-6. rewrite manual and automatic docs around the new ownership model
-7. update tests and validators
-8. remove duplicated implementations from automatic
-9. remove duplicated shared implementation from the Codex overlay
-10. do a final stale-reference sweep
+2. add the shared context/resolution layer
+3. add extracted-runtime fixture helpers and compatibility coverage
+4. create `scripts/lib/continuous-learning/`
+5. move shared implementation there
+6. convert public entrypoints into thin wrappers
+7. update `scripts/codex-observer.js`
+8. rewrite manual and automatic docs around the new ownership model
+9. update tests and validators
+10. remove duplicated implementations from automatic
+11. remove duplicated shared implementation from the Codex overlay
+12. do a final stale-reference sweep
 
 ## Practical Recommendation
-Treat this as a 3-PR runtime extraction, not as a public-skill split.
+Treat this as a 4-PR runtime extraction, not as a public-skill split.
 
 The safest long-term structure is:
 
@@ -703,3 +854,7 @@ The safest long-term structure is:
 That structure fixes the real duplication problem, avoids introducing an
 infrastructure skill as a user-facing concept, and fits the current installer
 and validator architecture with much lower rollout risk.
+
+The key revision to this plan is sequencing: remove path-sensitive coupling
+first, then extract the runtime, then trim duplicates only after compatibility
+tests and validator expectations are green.

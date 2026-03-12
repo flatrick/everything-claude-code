@@ -29,7 +29,7 @@ These are official Cursor surfaces and should be treated as the primary integrat
 
 | MDT Concern | Cursor surface | Repo status |
 |---|---|---|
-| Rules / project guidance | `.cursor/rules/` (project) and `~/.cursor/rules/*.mdc` (user/global) | official, `locally-verified` |
+| Rules / project guidance | `.cursor/rules/` (project, including Cursor IDE) and `~/.cursor/rules/*.mdc` (user/global via `cursor-agent`) | official, `locally-verified` |
 | Commands | Cursor custom commands | official vendor surface with repo-installed MDT command prompts |
 | Agents / delegation | custom modes, background agents, terminal agent | official |
 | Skills / reusable workflows | `.cursor/skills/` (project) and `~/.cursor/skills/` (user); `SKILL.md` format with YAML frontmatter; auto-discovered and `/`-invocable | official |
@@ -59,11 +59,26 @@ Important nuance:
   file-installed
 - local testing shows `cursor-agent` will happily create and use
   `~/.cursor/rules/*.mdc`
-- this likely means there is a real difference between Cursor IDE behavior and
-  `cursor-agent` CLI behavior
+- local verification last true on `2026-03-12` shows this is not just a
+  possibility: Cursor IDE and `cursor-agent` currently behave differently here
+- Cursor IDE reads project rules from the opened repository's
+  `.cursor/rules/`
+- Cursor IDE user-global rules appear to live in Cursor-managed app storage
+  rather than `~/.cursor/rules/*.mdc`
+- `cursor-agent` reads file-backed user-global rules from
+  `~/.cursor/rules/*.mdc`
 - until Cursor's official docs catch up, MDT should treat the user-global
   `.mdc` rule surface as `locally-verified` for `cursor-agent`, not as fully
   settled vendor-wide truth for every Cursor surface
+
+Practical interpretation for MDT:
+
+- treat Cursor IDE project rules and Cursor Agent user-global rules as distinct
+  install surfaces
+- do not describe `~/.cursor/rules/*.mdc` as a vendor-wide user-rule surface
+  for all Cursor experiences
+- do not describe repo-local `.cursor/rules/` as the same thing as Cursor Agent
+  global rules; they differ in both scope and storage model
 
 The rules and skills map directly onto official Cursor concepts.
 The command files are repo-defined MDT prompt bodies for Cursor custom commands, not vendor-provided built-ins.
@@ -79,7 +94,8 @@ as MDT's `experimental` Cursor adapter, not as vendor truth. MDT workflows must 
 
 ### Official guidance surfaces
 
-- Rules in `.cursor/rules/` (project) and `~/.cursor/rules/*.mdc` (user/global)
+- Rules in `.cursor/rules/` (project) and `~/.cursor/rules/*.mdc`
+  (user/global via `cursor-agent`; last locally true `2026-03-12`)
 - Skills in `.cursor/skills/` (project) or `~/.cursor/skills/` (user) — `SKILL.md` with YAML frontmatter
 - `AGENTS.md` at repo root
 - custom commands in Cursor's documented command system
@@ -111,7 +127,7 @@ That makes Cursor a viable official target for planning, Q&A, MCP, and rule-gene
 - Do not assume `cursor-template/hooks.json` is official just because it exists in this repo.
 - Do not assume every shared MDT slash command has a Cursor counterpart unless it is actually shipped under `cursor-template/commands/` and declared by a package manifest.
 - Skills are a first-class Cursor concept. Use `.cursor/skills/` with `SKILL.md` files — same format as Claude Code and Codex. Do not convert skills to rules when the skill format is the right fit.
-- Do not assume project `.cursor/rules/*.md` and user `~/.cursor/rules/*.mdc` are interchangeable. Local evidence shows Cursor accepts user-global `.mdc` rule files, so MDT should treat global Cursor rules as a separate file format and install surface from project-local rules.
+- Do not assume project `.cursor/rules/*.md` and user `~/.cursor/rules/*.mdc` are interchangeable. Local evidence last true on `2026-03-12` shows Cursor IDE uses repo-local `.cursor/rules/` for project scope, while `cursor-agent` accepts user-global `.mdc` rule files from `~/.cursor/rules/`. MDT should treat them as separate install surfaces with different scope and storage behavior.
 - Do not force Claude hook semantics onto Cursor when rules, memories, background agents, or commands achieve the same MDT outcome more cleanly.
 - Do not assume live `.cursor/commands/*.md` files are the only source Cursor is consulting. Local troubleshooting showed Cursor can retain stale command/retrieval state under `AppData\\Roaming\\Cursor\\User\\workspaceStorage`, so command-path bugs should be checked against workspace cache as well as installed files.
 
@@ -147,15 +163,26 @@ given ambiguous instructions.
 
 ## Local Bridge Exception
 
-MDT installs Cursor globally by default. If a specific workflow needs repo-local
-Cursor rules, use:
+MDT installs Cursor globally by default for the `cursor-agent` surface. If a
+specific workflow also needs repo-local Cursor IDE rules, use the installed
+Cursor custom command:
+
+```text
+/install-rules
+```
+
+That command copies the rules currently installed under `~/.cursor/rules/` into
+the opened repo's `.cursor/rules/`.
+
+Equivalent shell command:
 
 ```bash
-node scripts/materialize-mdt-local.js --target cursor --surface rules
+node ~/.cursor/mdt/scripts/materialize-mdt-local.js --target cursor --surface rules
 ```
 
 That materializes only the local `.cursor/rules/` bridge for the current repo.
-It is not a full project-local MDT install.
+It is not a full project-local MDT install, and it does not replace the global
+`~/.cursor/` install used by `cursor-agent`.
 
 ## Hooks Adapter Scope and Opt-In
 

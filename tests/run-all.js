@@ -124,6 +124,7 @@ const testFiles = [
   'scripts/detect-project.test.js',
   'scripts/instinct-cli.test.js',
   'scripts/continuous-learning-retrospective.test.js',
+  'scripts/materialize-mdt-local-unit.test.js',
   'scripts/install-mdt-unit.test.js',
   'scripts/install-mdt.test.js',
   'scripts/run-with-flags.test.js',

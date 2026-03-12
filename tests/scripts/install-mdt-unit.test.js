@@ -423,6 +423,7 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'instinct-status.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'instinct-export.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'instinct-import.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'install-rules.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'plan.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'projects.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'promote.md')));
@@ -434,10 +435,12 @@ function runTests() {
       const planCommand = fs.readFileSync(path.join(tempDir, 'commands', 'plan.md'), 'utf8');
       const docsHealthCommand = fs.readFileSync(path.join(tempDir, 'commands', 'docs-health.md'), 'utf8');
       const smokeCommand = fs.readFileSync(path.join(tempDir, 'commands', 'smoke.md'), 'utf8');
+      const installRulesCommand = fs.readFileSync(path.join(tempDir, 'commands', 'install-rules.md'), 'utf8');
       assert.ok(planCommand.includes('Wait for explicit user confirmation before making code changes.'));
       assert.ok(!planCommand.includes('Use Cursor’s custom command UI'));
       assert.ok(docsHealthCommand.includes('DOCS HEALTH: PASS|PARTIAL|FAIL'));
       assert.ok(smokeCommand.includes('SMOKE: PASS|FAIL|PARTIAL'));
+      assert.ok(installRulesCommand.includes('materialize-mdt-local.js --target cursor --surface rules'));
     });
   })) passed++; else failed++;
 

@@ -62,8 +62,12 @@ Guides refer to the upstream project; this fork may differ. For this fork, prefe
    # Claude Code
    node scripts/install-mdt.js typescript
 
-   # Cursor
+   # Cursor global install (always install to ~/.cursor/)
    node scripts/install-mdt.js --target cursor typescript
+
+   # Cursor IDE repo-local rules bridge (additional step when needed)
+   # Preferred inside Cursor after install: /install-rules
+   node scripts/materialize-mdt-local.js --target cursor --surface rules
 
    # Codex
    node scripts/install-mdt.js --target codex typescript continuous-learning
@@ -82,6 +86,8 @@ Guides refer to the upstream project; this fork may differ. For this fork, prefe
    ```
 
 Marketplace/plugin support remains secondary in this fork for now. For the official upstream Claude Code plugin flow, use the [original repo](https://github.com/affaan-m/modeldev-toolkit).
+
+Cursor note, last locally true `2026-03-12`: always install MDT for Cursor into the global `~/.cursor/` directory, even if the user only plans to use Cursor IDE today. That global install remains the shared MDT install surface and may be consumed by more Cursor surfaces in the future. If the user also wants repo-local `.cursor/rules/` files for Cursor IDE, use the installed Cursor custom command `/install-rules` or run `materialize-mdt-local.js --target cursor --surface rules` as an additional bridge step. The bridge command copies the rules currently installed under `~/.cursor/rules/` into the opened repo's `.cursor/rules/`.
 
 ---
 

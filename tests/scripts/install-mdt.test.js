@@ -236,7 +236,9 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'continuous-learning-manual', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'continuous-learning-automatic', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'plan.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'install-rules.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'instinct-status.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'scripts', 'materialize-mdt-local.js')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'rules', 'typescript-coding-style.mdc')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'rules', 'common-coding-style.mdc')));
           assert.ok(!fs.existsSync(path.join(cursorRoot, 'skills', 'rust-patterns')));

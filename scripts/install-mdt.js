@@ -42,6 +42,7 @@ const RUNTIME_CI_FILES = [
 ];
 const CLAUDE_WORKFLOW_SCRIPTS = ['smoke-claude-workflows.js'];
 const DEV_SMOKE_SCRIPT_FILES = ['smoke-tool-setups.js'];
+const CURSOR_WORKFLOW_SCRIPT_FILES = ['materialize-mdt-local.js'];
 const CODEX_DEV_SKILL_NAMES = ['tool-setup-verifier', 'smoke'];
 const SUPPORTED_PACKAGE_TARGETS = new Set(['claude', 'cursor', 'gemini', 'codex']);
 const TARGET_CAPABILITIES = {
@@ -1152,6 +1153,11 @@ function installCursorCoreDirs(destDir, selectedPackages, devMode = false) {
 
   const commandsSrc = path.join(CURSOR_SRC, 'commands');
   if (fs.existsSync(commandsSrc)) {
+    const alwaysCursorCommands = ['install-rules.md'];
+    if (copySelectedMarkdownFiles(commandsSrc, commandsDest, alwaysCursorCommands, 'Cursor utility command') > 0) {
+      console.log('Installing Cursor utility commands -> ' + commandsDest + '/');
+    }
+
     let copiedCursorCommands = 0;
     for (const selectedPackage of selectedPackages) {
       const cursorCommands = Array.isArray(selectedPackage.tools.cursor?.commands)
@@ -1212,6 +1218,9 @@ function installCursorHookScripts(destDir) {
 function installCursorRuntimeScripts(destDir) {
   const scriptsDest = copyRuntimeScriptsToMdtRoot(destDir);
   console.log('Installing runtime scripts -> ' + scriptsDest + '/');
+  if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, CURSOR_WORKFLOW_SCRIPT_FILES, 'Cursor workflow script') > 0) {
+    console.log('Installing Cursor workflow scripts -> ' + scriptsDest + '/');
+  }
 }
 
 function installCursorMcp(destDir) {
@@ -1514,6 +1523,7 @@ function main() {
   if (projectDir !== null) {
     console.error('Error: --project-dir is retired. MDT installs are global-only now.');
     console.error('Use node scripts/materialize-mdt-local.js for repo-local exception bridges when a tool needs them.');
+    console.error('For Cursor specifically: use install-mdt.js --target cursor for the global cursor-agent surface, and materialize-mdt-local.js --target cursor --surface rules for Cursor IDE repo-local rules.');
     process.exit(1);
   }
 

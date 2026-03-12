@@ -56,7 +56,7 @@ packages are applied.
 | Gap | Impact | Fixable? | How |
 |---|---|---|---|
 | **Skills**: only 1 Cursor-specific skill in template; shared skills arrive via package install | Users who install without packages get almost nothing | Yes | Add more skills to `cursor-template/skills/` or rely fully on package-driven install (current direction) |
-| **User-level rules**: official docs still describe DB-backed/user-managed behavior while local `cursor-agent` accepts file-installed `~/.cursor/rules/*.mdc` | Install behavior differs by Cursor surface | Partially | Use global `~/.cursor/rules/*.mdc` as the MDT default, and treat repo-local rules only as an explicit bridge |
+| **User-level rules**: Cursor IDE appears to keep user-global rules in Cursor-managed app storage, while local `cursor-agent` accepts file-installed `~/.cursor/rules/*.mdc` (last locally true `2026-03-12`) | Install behavior differs by Cursor surface | Partially | Use `~/.cursor/rules/*.mdc` only for `cursor-agent`-style global installs, and treat repo-local rules only as an explicit bridge |
 | **Hooks**: experimental adapter, not vendor-documented | Could break in any Cursor update | Partially | Keep hooks optional; core workflows must work without them |
 | **Commands**: 8 shipped vs Claude's full 33-command catalog | Missing: e2e, build-fix, security, refactor-clean, eval, loop, checkpoint, instinct-\*, etc. | Yes | Add to `cursor-template/commands/` and package manifests |
 | **Continuous learning**: depends on experimental hooks | If hooks break, learning stops silently | Partially | Add a manual CLI fallback like Codex has |
@@ -97,12 +97,23 @@ gap and affects multiple MDT workflows:
 learning, offer both the manual CLI (zero-infra) and the optional external
 watcher (higher fidelity, requires a second terminal).
 
-### Cursor: User-Level Rules (Vendor Limitation)
+### Cursor: User-Level Rules (Surface Split)
 
-Cursor's official docs still describe user-level rules as database-backed, but
-local `cursor-agent` also accepts file-installed `~/.cursor/rules/*.mdc`.
-MDT should treat global `.mdc` rules as the default install surface and use
-repo-local `.cursor/rules/` only as an explicit bridge when needed.
+Local verification last true on `2026-03-12` shows a real split between Cursor
+surfaces:
+
+- Cursor IDE reads project rules from the opened repo's `.cursor/rules/`
+- Cursor IDE user-global rules appear to live in Cursor-managed app storage
+  rather than `~/.cursor/rules/*.mdc`
+- `cursor-agent` accepts file-installed user-global rules under
+  `~/.cursor/rules/*.mdc`
+
+MDT should therefore treat:
+
+- repo-local `.cursor/rules/` as the project-rule surface used by Cursor IDE
+- `~/.cursor/rules/*.mdc` as a `cursor-agent` global-rule surface
+
+These should not be described as interchangeable.
 
 ## Implementation Plan
 

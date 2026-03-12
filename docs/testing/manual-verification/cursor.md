@@ -1,6 +1,8 @@
 # Cursor Manual Verification
 
-Use this page to confirm MDT behavior inside Cursor desktop after installing into a fresh global `~/.cursor/` directory.
+Use this page to confirm MDT behavior inside Cursor desktop after installing
+into a fresh global `~/.cursor/` directory and, when needed, materializing the
+repo-local `.cursor/rules/` bridge that Cursor IDE reads.
 
 ## Preconditions
 
@@ -9,6 +11,19 @@ Use this page to confirm MDT behavior inside Cursor desktop after installing int
 
 ```bash
 node scripts/install-mdt.js --target cursor typescript continuous-learning
+```
+
+If you want Cursor IDE to read repo-local MDT rules in the current repository,
+also materialize the local rules bridge:
+
+```bash
+/install-rules
+```
+
+Equivalent shell command:
+
+```bash
+node ~/.cursor/mdt/scripts/materialize-mdt-local.js --target cursor --surface rules
 ```
 
 3. Confirm the install exists (full MDT baseline with experimental hooks enabled):
@@ -21,6 +36,8 @@ Expected:
 - `~/.cursor/hooks.json` exists (experimental adapter, not a vendor-documented surface)
 - `~/.cursor/mdt/hooks/` exists
 - `~/.cursor/skills/continuous-learning-manual/` exists
+- if the local rules bridge was materialized, repo `.cursor/rules/` exists for
+  the opened repo
 
 ## Quick Smoke
 

@@ -39,7 +39,71 @@ function parseArgs(args) {
 
 function usage() {
   console.error('Usage: node scripts/materialize-mdt-local.js --target cursor --surface rules [--repo <path>] [--override <tool-config-dir>] [package ...]');
+  console.error('');
+  console.error('Purpose: materialize repo-local .cursor/rules/ files for Cursor IDE.');
+  console.error('Use install-mdt.js --target cursor for the global ~/.cursor/ install used by cursor-agent.');
+  console.error('If package names are omitted, the script copies the currently installed global Cursor rules from ~/.cursor/rules/ into the current repo.');
   process.exit(1);
+}
+
+function resolveCursorConfigDir(overrideDir, env = process.env) {
+  if (overrideDir) {
+    return path.resolve(overrideDir);
+  }
+
+  const configDir = (env.CONFIG_DIR || '').trim();
+  if (configDir) {
+    return path.resolve(configDir);
+  }
+
+  const homeDir = env.HOME || env.USERPROFILE || process.env.HOME || process.env.USERPROFILE;
+  if (!homeDir) {
+    throw new Error('Unable to resolve Cursor config dir: HOME/USERPROFILE is not set.');
+  }
+
+  return path.join(homeDir, '.cursor');
+}
+
+function copyInstalledCursorRules(repoDir, options = {}) {
+  const resolvedRepoDir = detectRepoRoot(repoDir);
+  const cursorConfigDir = resolveCursorConfigDir(options.overrideDir, options.env);
+  const sourceDir = options.sourceDir
+    ? path.resolve(options.sourceDir)
+    : path.join(cursorConfigDir, 'rules');
+  const destDir = path.join(resolvedRepoDir, '.cursor', 'rules');
+
+  if (!fs.existsSync(sourceDir)) {
+    throw new Error(`Cursor global rules directory does not exist: ${sourceDir}`);
+  }
+
+  const copied = [];
+  fs.mkdirSync(destDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    if (!entry.isFile()) {
+      continue;
+    }
+    if (!/\.(md|mdc)$/i.test(entry.name)) {
+      continue;
+    }
+
+    const srcPath = path.join(sourceDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    fs.copyFileSync(srcPath, destPath);
+    copied.push(entry.name);
+  }
+
+  if (copied.length === 0) {
+    throw new Error(`No Cursor rule files found in ${sourceDir}`);
+  }
+
+  return {
+    mode: 'installed-global',
+    repoDir: resolvedRepoDir,
+    sourceDir,
+    destDir,
+    copied: copied.sort()
+  };
 }
 
 function materializeCursorRules(repoDir, packageNames) {
@@ -67,12 +131,17 @@ function materializeCursorRules(repoDir, packageNames) {
     }
   }
 
-  return { repoDir: resolvedRepoDir, destDir, copied: [...copied].sort() };
+  return {
+    mode: 'package-selection',
+    repoDir: resolvedRepoDir,
+    destDir,
+    copied: [...copied].sort()
+  };
 }
 
 function main() {
   const { target, surface, repoDir, overrideDir, packageNames } = parseArgs(process.argv.slice(2));
-  if (!surface || packageNames.length === 0) {
+  if (!surface) {
     usage();
   }
 
@@ -86,7 +155,9 @@ function main() {
     process.exit(1);
   }
 
-  const result = materializeCursorRules(repoDir, packageNames);
+  const result = packageNames.length > 0
+    ? materializeCursorRules(repoDir, packageNames)
+    : copyInstalledCursorRules(repoDir, { overrideDir });
   recordBridgeDecision({
     repoRoot: result.repoDir,
     surface: `${target}.${surface}`,
@@ -94,6 +165,10 @@ function main() {
   });
 
   console.log(`Materialized ${target}.${surface} bridge into ${result.destDir}`);
+  console.log('This bridge is for repo-local Cursor IDE rules, not the global cursor-agent install surface.');
+  if (result.mode === 'installed-global') {
+    console.log(`Copied currently installed global Cursor rules from ${result.sourceDir}`);
+  }
   if (result.copied.length > 0) {
     console.log(`Copied ${result.copied.length} files: ${result.copied.join(', ')}`);
   } else {
@@ -107,5 +182,7 @@ if (require.main === module) {
 
 module.exports = {
   parseArgs,
-  materializeCursorRules
+  copyInstalledCursorRules,
+  materializeCursorRules,
+  resolveCursorConfigDir
 };

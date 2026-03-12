@@ -38,14 +38,16 @@ This is the install model for MDT now:
 
 Current bridge support:
 
-- Cursor repo-local rules via `node scripts/materialize-mdt-local.js --target cursor --surface rules`
+- Cursor repo-local rules for Cursor IDE via:
+  - Cursor custom command `/install-rules` after a normal Cursor install
+  - or `node scripts/materialize-mdt-local.js --target cursor --surface rules`
 
 ## Target Summary
 
 | Target | Tool config root | MDT-owned root | Notes |
 | --- | --- | --- | --- |
 | `claude` | `~/.claude/` | `~/.claude/mdt/` | installs rules, agents, commands, skills, hooks, and runtime scripts |
-| `cursor` | `~/.cursor/` | `~/.cursor/mdt/` | installs global `.mdc` rules, skills, commands, optional experimental hooks, and runtime state |
+| `cursor` | `~/.cursor/` | `~/.cursor/mdt/` | always installs MDT into the shared global Cursor directory, even for IDE-only users; includes `.mdc` rules, skills, commands, optional experimental hooks, and runtime state |
 | `codex` | `~/.codex/` | `~/.codex/mdt/` | installs Codex config, AGENTS, skills, rules, and helper scripts globally |
 | `gemini` | `~/.gemini/` | `~/.gemini/mdt/` | uses Gemini/Antigravity-specific layout with MDT state under `mdt/` |
 
@@ -61,10 +63,21 @@ node scripts/install-mdt.js --dry-run typescript continuous-learning
 Cursor:
 
 ```bash
+# Global Cursor install surface (always install to ~/.cursor/)
 node scripts/install-mdt.js --target cursor typescript
 node scripts/install-mdt.js --target cursor typescript continuous-learning
+
+# Repo-local Cursor IDE rules bridge (additional step when needed)
+# Preferred inside Cursor after install: /install-rules
 node scripts/materialize-mdt-local.js --target cursor --surface rules
 ```
+
+Cursor mode split, last locally true `2026-03-12`:
+
+- always use `install-mdt.js --target cursor ...` to install MDT into the global `~/.cursor/` directory, even if the user does not currently use `cursor-agent`
+- treat that global install as the primary MDT Cursor install surface and future-compatible shared location
+- use `/install-rules` inside Cursor, or `materialize-mdt-local.js --target cursor --surface rules`, only as an additional step when a repo needs `.cursor/rules/` files for Cursor IDE
+- the repo-local bridge complements the global install; it does not replace it
 
 Codex:
 
