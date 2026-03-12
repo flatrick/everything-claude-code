@@ -2,9 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 const {
-  resolveSelectedPackages
-} = require('./install-mdt');
-const {
   recordBridgeDecision,
   detectRepoRoot
 } = require('./lib/mdt-state');
@@ -107,6 +104,18 @@ function copyInstalledCursorRules(repoDir, options = {}) {
 }
 
 function materializeCursorRules(repoDir, packageNames) {
+  let resolveSelectedPackages;
+  try {
+    ({ resolveSelectedPackages } = require('./install-mdt'));
+  } catch (error) {
+    if (error && error.code === 'MODULE_NOT_FOUND') {
+      throw new Error(
+        'Package-selection mode requires scripts/install-mdt.js. Use the no-package installed-global mode from ~/.cursor/rules/ when running from an installed Cursor bridge.'
+      );
+    }
+    throw error;
+  }
+
   const resolvedRepoDir = detectRepoRoot(repoDir);
   const destDir = path.join(resolvedRepoDir, '.cursor', 'rules');
   const selectedPackages = resolveSelectedPackages(packageNames);

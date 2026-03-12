@@ -359,8 +359,8 @@ function buildInstalledSmokeChecks(files, options = {}) {
         message: 'Installed Claude settings.json should exist'
       },
       {
-        path: '.claude/scripts/smoke-claude-workflows.js',
-        ok: files['.claude/scripts/smoke-claude-workflows.js'].exists,
+        path: '.claude/mdt/scripts/smoke-claude-workflows.js',
+        ok: files['.claude/mdt/scripts/smoke-claude-workflows.js'].exists,
         message: 'Installed Claude workflow smoke script should exist'
       },
       {
@@ -407,7 +407,7 @@ function smokeClaudeWorkflows(options = {}) {
         '.claude/skills/verification-loop/SKILL.md': readRepoFile(rootDir, path.join('.claude', 'skills', 'verification-loop', 'SKILL.md')),
         '.claude/commands/smoke.md': readRepoFile(rootDir, path.join('.claude', 'commands', 'smoke.md')),
         '.claude/settings.json': readRepoFile(rootDir, path.join('.claude', 'settings.json')),
-        '.claude/scripts/smoke-claude-workflows.js': readRepoFile(rootDir, path.join('.claude', 'scripts', 'smoke-claude-workflows.js')),
+        '.claude/mdt/scripts/smoke-claude-workflows.js': readRepoFile(rootDir, path.join('.claude', 'mdt', 'scripts', 'smoke-claude-workflows.js')),
         '.claude/agents/security-reviewer.md': readRepoFile(rootDir, path.join('.claude', 'agents', 'security-reviewer.md')),
         '.claude/skills/security-review/SKILL.md': readRepoFile(rootDir, path.join('.claude', 'skills', 'security-review', 'SKILL.md')),
         '.claude/commands/e2e.md': readRepoFile(rootDir, path.join('.claude', 'commands', 'e2e.md')),

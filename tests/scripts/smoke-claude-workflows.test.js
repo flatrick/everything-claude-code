@@ -58,7 +58,7 @@ function createInstalledFixtureRoot() {
   writeFile(rootDir, path.join('.claude', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop');
   writeFile(rootDir, path.join('.claude', 'commands', 'smoke.md'), '# Smoke');
   writeFile(rootDir, path.join('.claude', 'settings.json'), '{"hooks":{}}');
-  writeFile(rootDir, path.join('.claude', 'scripts', 'smoke-claude-workflows.js'), '// smoke');
+  writeFile(rootDir, path.join('.claude', 'mdt', 'scripts', 'smoke-claude-workflows.js'), '// smoke');
   writeFile(rootDir, path.join('.claude', 'agents', 'security-reviewer.md'), '# Security Reviewer');
   writeFile(rootDir, path.join('.claude', 'skills', 'security-review', 'SKILL.md'), '# Security Review');
   writeFile(rootDir, path.join('.claude', 'commands', 'e2e.md'), '# E2E');
