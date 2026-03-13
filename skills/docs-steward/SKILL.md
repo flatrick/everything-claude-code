@@ -1,12 +1,12 @@
 ---
-name: documentation-steward
-description: Keep MDT documentation current, accurate, well-placed, and easy to follow for both humans and LLMs. Use when auditing doc drift, correcting stale claims, deciding where docs belong, or validating documentation quality before a commit.
+name: docs-steward
+description: Keep repository documentation current, accurate, well-placed, and easy to follow for both humans and LLMs. Use when auditing doc drift, correcting stale claims, deciding where docs belong, or validating documentation quality before a commit.
 
 ---
 
-# Documentation Steward
+# Docs Steward
 
-Use this skill when the task is about keeping MDT documentation correct, current, and easy to navigate.
+Use this skill when the task is about keeping repository documentation correct, current, and easy to navigate.
 
 ## When to Use
 
@@ -22,7 +22,7 @@ Maintain one coherent documentation system that:
 - keeps root docs thin and easy to scan
 - keeps active planning in `docs/plans/`
 - keeps ECC comparison in `docs/upstream-rename-map.md`
-- keeps tool capability claims aligned with audited evidence
+- keeps tool capability claims aligned with audited evidence when the repo has tool docs
 
 ## Core Taxonomy
 
@@ -51,6 +51,14 @@ Destination rules:
 3. Propagate that truth outward to root docs and runtime prompt assets.
 4. Remove or de-authorize obsolete docs that would compete with the new truth.
 5. Stamp environment-specific verification claims with exact tested versions.
+
+## Tool Docs Rule
+
+If the repository keeps audited tool capability pages under `docs/tools/`:
+
+- treat `docs/tools/` as the source of truth for capability/support claims
+- verify against local CLI behavior before trusting adapter files
+- use repo adapter/config files as evidence, not proof of vendor support
 
 ## Never Do This
 

@@ -26,14 +26,12 @@
     "rust-reviewer.md"
   ],
   "commands": [
-    "docs-health.md",
     "plan.md",
     "tdd.md",
     "verify.md",
     "code-review.md"
   ],
   "skills": [
-    "documentation-steward",
     "rust-patterns",
     "tdd-workflow",
     "verification-loop",
@@ -43,9 +41,7 @@
     "cursor": {
       "rules": [],
       "skills": [],
-      "commands": [
-        "docs-health.md"
-      ]
+      "commands": []
     }
   }
 }

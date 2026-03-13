@@ -30,10 +30,10 @@ const CI_VALIDATORS = [
   'template-doc-boundaries'
 ];
 
-const WORKFLOW_SMOKE_SCRIPTS = {
-  claude: 'smoke-claude-workflows.js',
-  cursor: 'smoke-cursor-workflows.js',
-  codex: 'smoke-codex-workflows.js'
+const DEV_SMOKE_WORKFLOW_SCRIPTS = {
+  claude: 'mdt-dev-smoke-claude-workflows.js',
+  cursor: 'mdt-dev-smoke-cursor-workflows.js',
+  codex: 'mdt-dev-smoke-codex-workflows.js'
 };
 
 function createIo(io = {}) {
@@ -180,8 +180,8 @@ function buildHelpText() {
     '  install list',
     '  bridge materialize',
     '  verify tool-setups',
-    '  smoke tool-setups',
-    '  smoke workflows --tool <claude|cursor|codex>',
+    '  dev smoke tool-setups',
+    '  dev smoke workflows --tool <claude|cursor|codex>',
     '  package-manager detect|list|set',
     '  release --version <x.y.z>',
     '  learning status|capture|analyze',
@@ -482,33 +482,33 @@ function buildVerifyCommand(argv) {
   );
 }
 
-function buildSmokeCommand(argv) {
+function buildDevSmokeCommand(argv) {
   if (argv[0] === 'tool-setups') {
     const options = parseCommonOptions(argv.slice(1));
-    if (options.tool && !WORKFLOW_SMOKE_SCRIPTS[options.tool]) {
-      throw createUsageError('smoke tool-setups requires --tool <claude|cursor|codex>');
+    if (options.tool && !DEV_SMOKE_WORKFLOW_SCRIPTS[options.tool]) {
+      throw createUsageError('dev smoke tool-setups requires --tool <claude|cursor|codex>');
     }
-    const { smokeToolSetups } = require('./smoke-tool-setups');
+    const { smokeToolSetups } = require('./mdt-dev-smoke-tool-setups');
     return runInProcess(
       (io) => smokeToolSetups({ io, format: options.format, tool: options.tool }).exitCode,
       {
         format: options.format,
-        commandName: options.tool ? `smoke tool-setups ${options.tool}` : 'smoke tool-setups'
+        commandName: options.tool ? `dev smoke tool-setups ${options.tool}` : 'dev smoke tool-setups'
       }
     );
   }
 
   if (argv[0] === 'workflows') {
     const options = parseCommonOptions(argv.slice(1));
-    if (!options.tool || !WORKFLOW_SMOKE_SCRIPTS[options.tool]) {
-      throw createUsageError('smoke workflows requires --tool <claude|cursor|codex>');
+    if (!options.tool || !DEV_SMOKE_WORKFLOW_SCRIPTS[options.tool]) {
+      throw createUsageError('dev smoke workflows requires --tool <claude|cursor|codex>');
     }
     return runInProcess(
       (io) => {
         const workflowFns = {
-          claude: () => require('./smoke-claude-workflows').smokeClaudeWorkflows,
-          cursor: () => require('./smoke-cursor-workflows').smokeCursorWorkflows,
-          codex: () => require('./smoke-codex-workflows').smokeCodexWorkflows
+          claude: () => require('./mdt-dev-smoke-claude-workflows').smokeClaudeWorkflows,
+          cursor: () => require('./mdt-dev-smoke-cursor-workflows').smokeCursorWorkflows,
+          codex: () => require('./mdt-dev-smoke-codex-workflows').smokeCodexWorkflows
         };
         const workflowOptions = { io, format: options.format };
         if (options.cwd) {
@@ -519,12 +519,19 @@ function buildSmokeCommand(argv) {
       },
       {
         format: options.format,
-        commandName: `smoke workflows ${options.tool}`
+        commandName: `dev smoke workflows ${options.tool}`
       }
     );
   }
 
-  throw createUsageError('Unknown smoke command');
+  throw createUsageError('Unknown dev smoke command');
+}
+
+function buildDevCommand(argv) {
+  if (argv[0] === 'smoke') {
+    return buildDevSmokeCommand(argv.slice(1));
+  }
+  throw createUsageError('Unknown dev command');
 }
 
 function buildPackageManagerCommand(argv) {
@@ -759,7 +766,7 @@ function buildHooksCommand(argv) {
 
 const ROOT_COMMAND_HANDLERS = {
   install: (rest) => buildInstallCommand(rest),
-  smoke: (rest) => buildSmokeCommand(rest),
+  dev: (rest) => buildDevCommand(rest),
   'package-manager': (rest) => buildPackageManagerCommand(rest),
   release: (rest) => buildReleaseCommand(rest),
   learning: (rest) => buildLearningCommand(rest),
@@ -798,7 +805,7 @@ if (require.main === module) {
 
 module.exports = {
   CI_VALIDATORS,
-  WORKFLOW_SMOKE_SCRIPTS,
+  DEV_SMOKE_WORKFLOW_SCRIPTS,
   buildCiCommand,
   buildHelpText,
   createUsageError,

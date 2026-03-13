@@ -1,12 +1,12 @@
 ---
 name: skill-stocktake
-description: "Use when auditing MDT skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation."
+description: "Use when auditing installed skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation."
 
 ---
 
 # skill-stocktake
 
-Workflow that audits MDT skills and commands using a quality checklist plus AI holistic judgment. Supports two modes: Quick Scan for recently changed skills, and Full Stocktake for a complete review.
+Workflow that audits installed skills and commands using a quality checklist plus AI holistic judgment. Supports two modes: Quick Scan for recently changed skills, and Full Stocktake for a complete review.
 
 ## When to Activate
 

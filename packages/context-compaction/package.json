@@ -9,11 +9,8 @@
     "common/performance.md"
   ],
   "agents": [],
-  "commands": [
-    "docs-health.md"
-  ],
+  "commands": [],
   "skills": [
-    "documentation-steward",
     "strategic-compact"
   ],
   "tools": {
@@ -24,9 +21,7 @@
         "common-performance.md"
       ],
       "skills": [],
-      "commands": [
-        "docs-health.md"
-      ]
+      "commands": []
     }
   },
   "requires": {

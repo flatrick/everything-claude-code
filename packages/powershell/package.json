@@ -25,13 +25,11 @@
     "powershell-reviewer.md"
   ],
   "commands": [
-    "docs-health.md",
     "plan.md",
     "verify.md",
     "code-review.md"
   ],
   "skills": [
-    "documentation-steward",
     "powershell-patterns",
     "verification-loop",
     "security-review"
@@ -40,9 +38,7 @@
     "cursor": {
       "rules": [],
       "skills": [],
-      "commands": [
-        "docs-health.md"
-      ]
+      "commands": []
     }
   }
 }

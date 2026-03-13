@@ -1,12 +1,12 @@
-# Smoke Command
+# MDT Dev Smoke
 
-Run a lightweight MDT sanity check for the current tool and workspace.
+Run a lightweight MDT dev-install sanity check for the current tool and workspace.
 
 ## Goal
 
-Use this command for a quick confidence check, not a full verification pass.
+Use this command for a quick dev confidence check, not a full verification pass.
 
-Run only the current tool's smoke checks unless the user explicitly asks for a
+Run only the current tool's dev smoke checks unless the user explicitly asks for a
 cross-tool audit.
 
 It should answer:
@@ -71,7 +71,7 @@ Important:
 Produce a short report like:
 
 ```text
-SMOKE: PASS|FAIL|PARTIAL
+DEV SMOKE: PASS|FAIL|PARTIAL
 
 Tool:      claude|cursor
 Install:   OK|MISSING
@@ -86,7 +86,7 @@ Next step: ...
 
 - prefer fast checks over exhaustive checks
 - do not run the full test suite unless the user explicitly asks
-- do not probe Claude, Cursor, and Codex from the same `/smoke` run unless the user explicitly asks for the all-tools audit
+- do not probe Claude, Cursor, and Codex from the same `mdt-dev-smoke` run unless the user explicitly asks for the all-tools audit
 - clearly separate `missing`, `skipped`, and `failed`
 - use concrete file/path evidence for every `OK` or `MISSING` claim
 - if the install is absent, say exactly what reinstall command to run

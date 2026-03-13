@@ -46,7 +46,7 @@ function resolveSelectedTools(tool) {
   }
 
   if (!TOOL_ORDER.includes(tool)) {
-    throw createUsageError('smoke tool-setups requires --tool <claude|cursor|codex>');
+    throw createUsageError('dev smoke tool-setups requires --tool <claude|cursor|codex>');
   }
 
   return [tool];
@@ -225,7 +225,7 @@ function smokeToolSetups(options = {}) {
   if (options.format === 'json') {
     io.log(JSON.stringify(result, null, 2));
   } else {
-    io.log('Tool setup smoke checks:');
+    io.log('Dev smoke tool setup checks:');
     for (const summary of summaries) {
       io.log(`- ${summary.tool}: ${summary.status}`);
       for (const probe of summary.probes) {

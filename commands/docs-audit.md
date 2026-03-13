@@ -1,11 +1,10 @@
-# Docs Health
+# Docs Audit
 
-Run a focused MDT documentation audit for correctness, placement, and
-readability.
+Run a focused documentation audit for correctness, placement, and readability.
 
 ## Goal
 
-Produce a short documentation health report that answers:
+Produce a short documentation audit report that answers:
 
 - are the markdown links and repo path references valid?
 - are current-state claims still true?
@@ -23,7 +22,7 @@ node scripts/ci/validate-markdown-path-refs.js
 ```
 
 If the repo does not have `scripts/ci/` at root because this is an installed
-MDT target repo, use the installed validator copies instead:
+tool config, use the installed validator copies instead:
 
 - Claude Code: `node .claude/scripts/ci/validate-markdown-links.js`
 - Claude Code: `node .claude/scripts/ci/validate-markdown-path-refs.js`
@@ -32,12 +31,10 @@ MDT target repo, use the installed validator copies instead:
 - Codex: `node .agents/scripts/ci/validate-markdown-links.js`
 - Codex: `node .agents/scripts/ci/validate-markdown-path-refs.js`
 
-2. Use the `documentation-steward` skill.
+2. Use the `docs-steward` skill.
 
-3. If the task touches cross-tool capability claims and the skill is available,
-also use:
-
-- `skills/tool-doc-maintainer/SKILL.md`
+3. If the task touches tool capability claims, treat `docs/tools/` plus local
+verification as the source of truth instead of copying older references.
 
 4. Review the relevant docs and classify findings into:
 
@@ -56,7 +53,7 @@ files grow into a second manual.
 Return a short report like:
 
 ```text
-DOCS HEALTH: PASS|PARTIAL|FAIL
+DOCS AUDIT: PASS|PARTIAL|FAIL
 
 Validators: OK|FAIL
 Current truth: OK|DRIFT

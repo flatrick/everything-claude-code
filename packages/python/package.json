@@ -26,7 +26,6 @@
     "python-reviewer.md"
   ],
   "commands": [
-    "docs-health.md",
     "plan.md",
     "tdd.md",
     "verify.md",
@@ -34,7 +33,6 @@
     "python-review.md"
   ],
   "skills": [
-    "documentation-steward",
     "python-patterns",
     "python-testing",
     "tdd-workflow",
@@ -60,9 +58,7 @@
         "python-testing.md"
       ],
       "skills": [],
-      "commands": [
-        "docs-health.md"
-      ]
+      "commands": []
     }
   }
 }

@@ -28,10 +28,12 @@ const RUNTIME_CI_FILES = [
   'validate-markdown-links.js',
   'validate-markdown-path-refs.js'
 ];
-const CLAUDE_WORKFLOW_SCRIPTS = ['smoke-claude-workflows.js'];
-const DEV_SMOKE_SCRIPT_FILES = ['smoke-tool-setups.js'];
-const CURSOR_WORKFLOW_SCRIPT_FILES = ['materialize-mdt-local.js', 'smoke-cursor-workflows.js'];
-const CODEX_DEV_SKILL_NAMES = ['tool-setup-verifier', 'smoke'];
+const BASELINE_SHARED_COMMAND_FILES = ['docs-audit.md'];
+const CLAUDE_DEV_SMOKE_WORKFLOW_SCRIPTS = ['mdt-dev-smoke-claude-workflows.js'];
+const DEV_SMOKE_SCRIPT_FILES = ['mdt-dev-smoke-tool-setups.js'];
+const CURSOR_RUNTIME_SCRIPT_FILES = ['materialize-mdt-local.js'];
+const CURSOR_DEV_SMOKE_WORKFLOW_SCRIPTS = ['mdt-dev-smoke-cursor-workflows.js'];
+const CODEX_DEV_SKILL_NAMES = ['mdt-dev-verify', 'mdt-dev-smoke'];
 const BASELINE_SHARED_SKILL_NAMES = [
   'api-design',
   'autonomous-loops',
@@ -39,6 +41,7 @@ const BASELINE_SHARED_SKILL_NAMES = [
   'coding-standards',
   'content-hash-cache-pattern',
   'database-migrations',
+  'docs-steward',
   'deployment-patterns',
   'eval-harness',
   'frontend-patterns',
@@ -395,19 +398,20 @@ function getDevSkillNamesForTarget(target, devMode = false) {
   }
 
   if (target === 'codex') {
-    return ['tool-doc-maintainer', ...CODEX_DEV_SKILL_NAMES];
+    return [...CODEX_DEV_SKILL_NAMES];
   }
 
-  return ['tool-doc-maintainer'];
+  return [];
 }
 
 function getSelectedSkillNamesForTarget(target, selectedPackages, devMode = false) {
+  const baselineSkillNames = BASELINE_SHARED_SKILL_NAMES;
   const sharedSkillNames = target === 'codex'
     ? []
     : getManifestSelections(selectedPackages, 'skills');
   const toolSkillNames = getToolManifestSelections(selectedPackages, target, 'skills');
   const devSkillNames = getDevSkillNamesForTarget(target, devMode);
-  return mergeUniqueOrdered(sharedSkillNames, toolSkillNames, devSkillNames);
+  return mergeUniqueOrdered(baselineSkillNames, sharedSkillNames, toolSkillNames, devSkillNames);
 }
 
 function loadSelectedSkillMetadata(target, skillName) {
@@ -514,10 +518,15 @@ function evaluateSkillRequirements(target, selectedPackages, devMode = false) {
 
   const selectedRuleNames = new Set(getSelectedRuleNamesForTarget(target, selectedPackages));
   const selectedSkillNames = new Set(getSelectedSkillNamesForTarget(target, selectedPackages, devMode));
+  const skillNamesToValidate = mergeUniqueOrdered(
+    target === 'codex' ? [] : getManifestSelections(selectedPackages, 'skills'),
+    getToolManifestSelections(selectedPackages, target, 'skills'),
+    getDevSkillNamesForTarget(target, devMode)
+  );
   const errors = [];
   const warnings = [];
 
-  for (const skillName of selectedSkillNames) {
+  for (const skillName of skillNamesToValidate) {
     const result = validateSelectedSkillMetadata(target, skillName, selectedRuleNames, selectedSkillNames, capabilities);
     errors.push(...result.errors);
     warnings.push(...result.warnings);
@@ -633,7 +642,7 @@ function buildCodexInstallPlan(lines, selectedPackages, overrideDir, devMode) {
     `[dry-run] Would install shared workspace hardening bundle to ${path.join(mdtRoot, 'hardening')}`,
     ...(devMode
       ? [
-        `[dry-run] Would install Codex dev smoke skill to ${path.join(userCodexDir, 'skills')}`,
+        `[dry-run] Would install Codex dev skills (mdt-dev-smoke, mdt-dev-verify) to ${path.join(userCodexDir, 'skills')}`,
         `[dry-run] Would install Codex dev smoke workflow scripts to ${path.join(mdtRoot, 'scripts')}`
       ]
       : []),
@@ -652,11 +661,11 @@ function buildClaudeInstallPlan(lines, selectedPackages, overrideDir, devMode = 
     ...lines,
     `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${claudeBase}`,
-    `[dry-run] Would copy rules, package-selected agents/commands/skills, hooks, and runtime scripts to ${mdtRoot}`,
+    `[dry-run] Would copy rules, baseline/package-selected agents/commands/skills, hooks, and runtime scripts to ${mdtRoot}`,
     `[dry-run] Would install shared workspace hardening bundle to ${path.join(mdtRoot, 'hardening')}`,
     `[dry-run] Would grant Edit/Write permissions for ${mdtRoot}/ in settings.json`,
     ...(devMode ? [
-      `[dry-run] Would install Claude dev smoke command to ${path.join(claudeBase, 'commands')}`,
+      `[dry-run] Would install Claude dev smoke command (mdt-dev-smoke) to ${path.join(claudeBase, 'commands')}`,
       `[dry-run] Would install Claude dev smoke scripts to ${path.join(mdtRoot, 'scripts')}`
     ] : [])
   ];
@@ -670,9 +679,9 @@ function buildCursorInstallPlan(lines, selectedPackages, overrideDir, devMode = 
     ...lines,
     `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${cursorBase}`,
-    `[dry-run] Would install Cursor rules, package-selected agents/skills/commands, hook config, mcp config, and runtime scripts under ${mdtRoot}`,
+    `[dry-run] Would install Cursor rules, baseline/package-selected agents/skills/commands, hook config, mcp config, and runtime scripts under ${mdtRoot}`,
     `[dry-run] Would install shared workspace hardening bundle to ${path.join(mdtRoot, 'hardening')}`,
-    ...(devMode ? [`[dry-run] Would install Cursor dev smoke command to ${path.join(cursorBase, 'commands')}`] : []),
+    ...(devMode ? [`[dry-run] Would install Cursor dev smoke command (mdt-dev-smoke) to ${path.join(cursorBase, 'commands')}`] : []),
     `[dry-run] Local exception bridges, if needed later, would materialize only the missing surface into the active repo`
   ];
 }
@@ -925,15 +934,6 @@ function installClaudeRules(selectedPackages, rulesDest) {
   }
 }
 
-function installDevSharedSkills(destDir) {
-  if (!fs.existsSync(SHARED_SKILLS_SRC)) {
-    return 0;
-  }
-
-  const skillsDest = path.join(destDir, 'skills');
-  return copySelectedDirectories(SHARED_SKILLS_SRC, skillsDest, ['tool-doc-maintainer'], 'Dev-only shared skill');
-}
-
 function installBaselineSharedSkills(destDir) {
   if (!fs.existsSync(SHARED_SKILLS_SRC)) {
     return 0;
@@ -941,6 +941,20 @@ function installBaselineSharedSkills(destDir) {
 
   const skillsDest = path.join(destDir, 'skills');
   return copySelectedDirectories(SHARED_SKILLS_SRC, skillsDest, BASELINE_SHARED_SKILL_NAMES, 'Baseline shared skill');
+}
+
+function installBaselineSharedCommands(destDir) {
+  if (!fs.existsSync(SHARED_COMMANDS_SRC)) {
+    return 0;
+  }
+
+  const commandsDest = path.join(destDir, 'commands');
+  return copySelectedMarkdownFiles(
+    SHARED_COMMANDS_SRC,
+    commandsDest,
+    BASELINE_SHARED_COMMAND_FILES,
+    'Baseline shared command'
+  );
 }
 
 function installClaudeContentDirs(claudeBase, selectedPackages, devMode = false) {
@@ -963,9 +977,12 @@ function installClaudeAgents(claudeBase, selectedPackages) {
 function installClaudeCommands(claudeBase, selectedPackages, devMode) {
   const commandsDest = path.join(claudeBase, 'commands');
   if (fs.existsSync(SHARED_COMMANDS_SRC) && path.resolve(SHARED_COMMANDS_SRC) !== path.resolve(commandsDest)) {
+    if (installBaselineSharedCommands(claudeBase) > 0) {
+      console.log('Installing baseline shared commands -> ' + commandsDest + '/');
+    }
     const commandFiles = mergeUniqueOrdered(
       getManifestSelections(selectedPackages, 'commands'),
-      devMode ? ['smoke.md'] : []
+      devMode ? ['mdt-dev-smoke.md'] : []
     );
     if (copySelectedMarkdownFiles(SHARED_COMMANDS_SRC, commandsDest, commandFiles, 'Package-selected command') > 0) {
       console.log('Installing package-selected commands -> ' + commandsDest + '/');
@@ -988,9 +1005,6 @@ function installClaudeSkills(claudeBase, selectedPackages, devMode) {
   const claudeSkillNames = getToolManifestSelections(selectedPackages, 'claude', 'skills');
   if (copySelectedDirectories(SHARED_SKILLS_SRC, skillsDest, claudeSkillNames, 'Claude package-selected skill') > 0) {
     console.log('Installing Claude package skills -> ' + skillsDest + '/');
-  }
-  if (devMode && installDevSharedSkills(claudeBase) > 0) {
-    console.log('Installing dev-only shared skills -> ' + skillsDest + '/');
   }
 }
 
@@ -1052,15 +1066,12 @@ function installClaudePermissions(claudeBase) {
 function installClaudeRuntimeScripts(claudeBase) {
   const scriptsDest = copyRuntimeScriptsToMdtRoot(claudeBase);
   console.log('Installing runtime scripts -> ' + scriptsDest + '/');
-  if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, CLAUDE_WORKFLOW_SCRIPTS, 'Claude workflow script') > 0) {
-    console.log('Installing Claude workflow scripts -> ' + scriptsDest + '/');
-  }
 }
 
 function installDevSmokeScripts(installRoot, fileNames, logLabel) {
   const scriptsDest = path.join(ensureMdtRoot(installRoot), 'scripts');
-  if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, fileNames, `${logLabel} smoke script`) > 0) {
-    console.log(`Installing ${logLabel} smoke scripts -> ${scriptsDest}/`);
+  if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, fileNames, `${logLabel} dev smoke script`) > 0) {
+    console.log(`Installing ${logLabel} dev smoke scripts -> ${scriptsDest}/`);
   }
 
   const workflowContractsDest = path.join(resolveMdtRoot(installRoot), 'workflow-contracts');
@@ -1092,7 +1103,11 @@ function installClaude(packageNames, overrideDir, devMode = false) {
   installClaudePermissions(claudeBase);
   installClaudeRuntimeScripts(claudeBase);
   if (devMode) {
-    installDevSmokeScripts(claudeBase, DEV_SMOKE_SCRIPT_FILES, 'Claude dev');
+    installDevSmokeScripts(
+      claudeBase,
+      mergeUniqueOrdered(DEV_SMOKE_SCRIPT_FILES, CLAUDE_DEV_SMOKE_WORKFLOW_SCRIPTS),
+      'Claude dev'
+    );
   }
   printWindowsHookNote('NOTE: Windows — Hook scripts use Node.js; tmux-dependent features are skipped on Windows.');
   console.log('Done. Claude configs installed to ' + claudeBase + '/');
@@ -1198,9 +1213,6 @@ function installCursorCoreDirs(destDir, selectedPackages, devMode = false) {
   installCursorAgents(destDir, selectedPackages);
   installCursorSkills(destDir, selectedPackages);
   installCursorCommands(destDir, selectedPackages, devMode);
-  if (devMode && installDevSharedSkills(destDir) > 0) {
-    console.log('Installing dev-only shared skills -> ' + path.join(destDir, 'skills') + '/');
-  }
 }
 
 function installCursorAgents(destDir, selectedPackages) {
@@ -1218,9 +1230,12 @@ function installCursorSharedCommands(commandsDest, selectedPackages, devMode) {
   if (!fs.existsSync(SHARED_COMMANDS_SRC)) {
     return;
   }
+  if (installBaselineSharedCommands(path.dirname(commandsDest)) > 0) {
+    console.log('Installing baseline shared commands -> ' + commandsDest + '/');
+  }
   const sharedCommandFiles = mergeUniqueOrdered(
     getManifestSelections(selectedPackages, 'commands'),
-    devMode ? ['smoke.md'] : []
+    devMode ? ['mdt-dev-smoke.md'] : []
   );
   if (copySelectedMarkdownFiles(SHARED_COMMANDS_SRC, commandsDest, sharedCommandFiles, 'Package-selected command') > 0) {
     console.log('Installing package-selected commands -> ' + commandsDest + '/');
@@ -1295,8 +1310,8 @@ function installCursorHookScripts(destDir) {
 function installCursorRuntimeScripts(destDir) {
   const scriptsDest = copyRuntimeScriptsToMdtRoot(destDir);
   console.log('Installing runtime scripts -> ' + scriptsDest + '/');
-  if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, CURSOR_WORKFLOW_SCRIPT_FILES, 'Cursor workflow script') > 0) {
-    console.log('Installing Cursor workflow scripts -> ' + scriptsDest + '/');
+  if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, CURSOR_RUNTIME_SCRIPT_FILES, 'Cursor runtime script') > 0) {
+    console.log('Installing Cursor runtime helper scripts -> ' + scriptsDest + '/');
   }
 }
 
@@ -1330,7 +1345,11 @@ function installCursor(packageNames, overrideDir, devMode = false) {
   }
   installCursorRuntimeScripts(destDir);
   if (devMode) {
-    installDevSmokeScripts(destDir, DEV_SMOKE_SCRIPT_FILES, 'Cursor dev');
+    installDevSmokeScripts(
+      destDir,
+      mergeUniqueOrdered(DEV_SMOKE_SCRIPT_FILES, CURSOR_DEV_SMOKE_WORKFLOW_SCRIPTS),
+      'Cursor dev'
+    );
   }
   installCursorMcp(destDir);
   printWindowsHookNote('NOTE: Windows — Cursor hooks use Node.js; tmux features are skipped on Windows.');
@@ -1370,9 +1389,6 @@ function installCodexSkills(selectedPackages, destDir, devMode = false) {
     if (installMergedSkillDirectories(SHARED_SKILLS_SRC, CODEX_SKILLS_SRC, skillsDest, CODEX_DEV_SKILL_NAMES, 'Codex dev skill') > 0) {
       console.log('Installing Codex dev skills -> ' + skillsDest + '/');
     }
-    if (installDevSharedSkills(destDir) > 0) {
-      console.log('Installing dev-only shared skills -> ' + skillsDest + '/');
-    }
   }
 }
 
@@ -1383,7 +1399,7 @@ function installCodexRuntimeScripts(codexDir) {
 
 function installCodexWorkflowScripts(codexDir, selectedPackages, devMode = false) {
   const scriptsDest = path.join(ensureMdtRoot(codexDir), 'scripts');
-  const baselineWorkflowScripts = devMode ? ['smoke-tool-setups.js', 'smoke-codex-workflows.js'] : [];
+  const baselineWorkflowScripts = devMode ? ['mdt-dev-smoke-tool-setups.js', 'mdt-dev-smoke-codex-workflows.js'] : [];
   const optionalWorkflowScripts = getToolManifestSelections(selectedPackages, 'codex', 'scripts');
   const workflowScripts = mergeUniqueOrdered(baselineWorkflowScripts, optionalWorkflowScripts);
   if (copyExplicitFiles(path.join(REPO_ROOT, 'scripts'), scriptsDest, workflowScripts, 'Codex workflow script') > 0) {

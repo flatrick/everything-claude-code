@@ -1,12 +1,12 @@
 ---
-name: docs-health
-description: Audit MDT docs for current-truth drift, stale links, and plan/backlog mismatches.
+name: docs-audit
+description: Audit the current repo docs for drift, stale links, and misplaced current truth.
 
 ---
 
-# Docs Health
+# Docs Audit
 
-Use this command to audit MDT documentation health without guessing.
+Use this command to audit repository documentation health without guessing.
 
 ## Check These Surfaces
 
@@ -14,7 +14,7 @@ Use this command to audit MDT documentation health without guessing.
 - root fast-find docs
 - active plans under `docs/plans/`
 - backlog items in `BACKLOG.md`
-- runtime prompt Markdown that teaches MDT behavior
+- runtime prompt Markdown that teaches tool/workflow behavior
 
 ## Current Rules
 
@@ -22,7 +22,7 @@ Use this command to audit MDT documentation health without guessing.
 - `docs/plans/` is the planning surface
 - `BACKLOG.md` is the active gap/deferred work surface
 - `docs/upstream-rename-map.md` is the ECC comparison surface
-- current-state docs should use `mdt ...` as the public entrypoint
+- current-state docs should use the documented public entrypoints
 - environment-specific verification claims should be version-stamped
 
 ## Suggested Checks

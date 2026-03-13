@@ -1,16 +1,16 @@
 ---
 name: security-scan
-description: Scan your MDT tool configuration for security vulnerabilities, misconfigurations, and injection risks using AgentShield. Checks instruction files, settings, MCP servers, hooks, and agent definitions.
+description: Scan your tool configuration for security vulnerabilities, misconfigurations, and injection risks using AgentShield. Checks instruction files, settings, MCP servers, hooks, and agent definitions.
 
 ---
 
 # Security Scan Skill
 
-Audit your MDT tool configuration for security issues using [AgentShield](https://github.com/affaan-m/agentshield).
+Audit your tool configuration for security issues using [AgentShield](https://github.com/affaan-m/agentshield).
 
 ## When to Activate
 
-- Setting up a new MDT-enabled project
+- Setting up a new tool-enabled project
 - After modifying tool config, instruction files, or MCP configs
 - Before committing configuration changes
 - When onboarding to a new repository with existing MDT tool configs

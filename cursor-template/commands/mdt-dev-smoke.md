@@ -1,12 +1,12 @@
 ---
-name: smoke
-description: Run a quick MDT sanity check for the current Cursor workspace.
+name: mdt-dev-smoke
+description: Run a quick MDT dev-install sanity check for the current Cursor workspace.
 
 ---
 
-# Smoke Command
+# MDT Dev Smoke
 
-Use this command for a fast Cursor-specific MDT sanity check.
+Use this command for a fast Cursor-specific MDT dev sanity check.
 
 Do not run other-tool smoke probes from this Cursor command unless the user
 explicitly asks for a broader all-tools audit.
@@ -45,7 +45,7 @@ Important runtime rule:
 ## Preferred Output
 
 ```text
-SMOKE: PASS|FAIL|PARTIAL
+DEV SMOKE: PASS|FAIL|PARTIAL
 
 Install:   OK|MISSING
 Rules:     OK|MISSING

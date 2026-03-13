@@ -1,0 +1,7 @@
+interface:
+  display_name: "MDT Dev Smoke"
+  short_description: "Run the installed MDT Codex dev smoke checks"
+  brand_color: "#10B981"
+  default_prompt: "Run the installed Codex MDT dev smoke checks. Use `node ~/.codex/mdt/scripts/mdt.js dev smoke tool-setups` and `node ~/.codex/mdt/scripts/mdt.js dev smoke workflows --tool codex`, then summarize PASS/FAIL/SKIP with the next remediation step and point to `docs/testing/manual-verification/codex.md` for the required real-session runtime check."
+policy:
+  allow_implicit_invocation: true

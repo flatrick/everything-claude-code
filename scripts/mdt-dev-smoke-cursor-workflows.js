@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { TOOL_WORKFLOW_CONTRACT } = require('./lib/tool-workflow-contract');
-const { summarizeTool } = require('./smoke-tool-setups');
+const { summarizeTool } = require('./mdt-dev-smoke-tool-setups');
 
 function resolveCursorInstallRoot(scriptDir) {
   if (path.basename(scriptDir) === 'scripts' && path.basename(path.dirname(scriptDir)) === 'mdt') {
@@ -148,7 +148,7 @@ function buildVerifyChecks(files) {
 function buildSmokeChecks(files, options = {}) {
   const cursorSummary = summarizeTool('cursor', TOOL_WORKFLOW_CONTRACT.smokeProbes.cursor || [], options);
   const hasRequiredFiles = [
-    files['cursor-template/commands/smoke.md'],
+    files['cursor-template/commands/mdt-dev-smoke.md'],
     files['docs/testing/manual-verification/cursor.md']
   ].every((file) => file && file.exists);
   const cliPass = cursorSummary.status === 'PASS';
@@ -157,12 +157,12 @@ function buildSmokeChecks(files, options = {}) {
   const cliDetails = cursorSummary.probes.map((probe) => `${probe.command} - ${probe.detail}`).join('; ');
 
   return {
-    workflow: 'smoke',
+    workflow: 'mdt-dev-smoke',
     checks: [
       {
-        path: 'cursor-template/commands/smoke.md',
-        ok: files['cursor-template/commands/smoke.md'].exists,
-        message: 'Cursor smoke command should exist'
+        path: 'cursor-template/commands/mdt-dev-smoke.md',
+        ok: files['cursor-template/commands/mdt-dev-smoke.md'].exists,
+        message: 'Cursor dev smoke command should exist'
       },
       {
         path: 'docs/testing/manual-verification/cursor.md',
@@ -174,10 +174,10 @@ function buildSmokeChecks(files, options = {}) {
         ok: cliPass || cliSkip,
         statusOverride: cliSkip ? 'SKIP' : undefined,
         message: cliSkip
-          ? `Cursor CLI smoke was skipped: ${cliDetails}`
+          ? `Cursor CLI dev smoke was skipped: ${cliDetails}`
           : cliFail
-            ? `Cursor CLI smoke failed: ${cliDetails}`
-            : 'Cursor CLI smoke probes passed'
+            ? `Cursor CLI dev smoke failed: ${cliDetails}`
+            : 'Cursor CLI dev smoke probes passed'
       }
     ],
     statusOverride: hasRequiredFiles && cliSkip ? 'SKIP' : undefined
@@ -327,16 +327,16 @@ function buildInstalledSmokeChecks(files, options = {}) {
   const cliDetails = cursorSummary.probes.map((probe) => `${probe.command} - ${probe.detail}`).join('; ');
 
   return {
-    workflow: 'smoke',
+    workflow: 'mdt-dev-smoke',
     checks: [
       {
-        path: '~/.cursor/commands/smoke.md',
-        ok: files['~/.cursor/commands/smoke.md'].exists,
-        message: 'Installed Cursor smoke command should exist'
+        path: '~/.cursor/commands/mdt-dev-smoke.md',
+        ok: files['~/.cursor/commands/mdt-dev-smoke.md'].exists,
+        message: 'Installed Cursor dev smoke command should exist'
       },
       {
-        path: '~/.cursor/mdt/scripts/smoke-cursor-workflows.js',
-        ok: files['~/.cursor/mdt/scripts/smoke-cursor-workflows.js'].exists,
+        path: '~/.cursor/mdt/scripts/mdt-dev-smoke-cursor-workflows.js',
+        ok: files['~/.cursor/mdt/scripts/mdt-dev-smoke-cursor-workflows.js'].exists,
         message: 'Installed Cursor workflow smoke script should exist'
       },
       {
@@ -344,10 +344,10 @@ function buildInstalledSmokeChecks(files, options = {}) {
         ok: cliPass || cliSkip,
         statusOverride: cliSkip ? 'SKIP' : undefined,
         message: cliSkip
-          ? `Cursor CLI smoke was skipped: ${cliDetails}`
+          ? `Cursor CLI dev smoke was skipped: ${cliDetails}`
           : cliFail
-            ? `Cursor CLI smoke failed: ${cliDetails}`
-            : 'Cursor CLI smoke probes passed'
+            ? `Cursor CLI dev smoke failed: ${cliDetails}`
+            : 'Cursor CLI dev smoke probes passed'
       }
     ],
     statusOverride: cliSkip ? 'SKIP' : undefined
@@ -428,7 +428,7 @@ function createRepoFiles(workspaceRoot) {
     'cursor-template/commands/tdd.md': readFile(workspaceRoot, path.join('cursor-template', 'commands', 'tdd.md')),
     'cursor-template/commands/code-review.md': readFile(workspaceRoot, path.join('cursor-template', 'commands', 'code-review.md')),
     'cursor-template/commands/verify.md': readFile(workspaceRoot, path.join('cursor-template', 'commands', 'verify.md')),
-    'cursor-template/commands/smoke.md': readFile(workspaceRoot, path.join('cursor-template', 'commands', 'smoke.md')),
+    'cursor-template/commands/mdt-dev-smoke.md': readFile(workspaceRoot, path.join('cursor-template', 'commands', 'mdt-dev-smoke.md')),
     'cursor-template/commands/e2e.md': readFile(workspaceRoot, path.join('cursor-template', 'commands', 'e2e.md')),
     'cursor-template/rules/common-development-workflow.md': readFile(workspaceRoot, path.join('cursor-template', 'rules', 'common-development-workflow.md')),
     'cursor-template/rules/common-testing.md': readFile(workspaceRoot, path.join('cursor-template', 'rules', 'common-testing.md')),
@@ -445,13 +445,13 @@ function createInstalledFiles(cursorRoot, workspaceRoot) {
     '~/.cursor/commands/tdd.md': readFile(cursorRoot, path.join('commands', 'tdd.md')),
     '~/.cursor/commands/code-review.md': readFile(cursorRoot, path.join('commands', 'code-review.md')),
     '~/.cursor/commands/verify.md': readFile(cursorRoot, path.join('commands', 'verify.md')),
-    '~/.cursor/commands/smoke.md': readFile(cursorRoot, path.join('commands', 'smoke.md')),
+    '~/.cursor/commands/mdt-dev-smoke.md': readFile(cursorRoot, path.join('commands', 'mdt-dev-smoke.md')),
     '~/.cursor/commands/e2e.md': readFile(cursorRoot, path.join('commands', 'e2e.md')),
     '~/.cursor/rules/common-development-workflow.mdc': readFile(cursorRoot, path.join('rules', 'common-development-workflow.mdc')),
     '~/.cursor/rules/common-testing.mdc': readFile(cursorRoot, path.join('rules', 'common-testing.mdc')),
     '~/.cursor/rules/common-coding-style.mdc': readFile(cursorRoot, path.join('rules', 'common-coding-style.mdc')),
     '~/.cursor/rules/common-security.mdc': readFile(cursorRoot, path.join('rules', 'common-security.mdc')),
-    '~/.cursor/mdt/scripts/smoke-cursor-workflows.js': readFile(cursorRoot, path.join('mdt', 'scripts', 'smoke-cursor-workflows.js'))
+    '~/.cursor/mdt/scripts/mdt-dev-smoke-cursor-workflows.js': readFile(cursorRoot, path.join('mdt', 'scripts', 'mdt-dev-smoke-cursor-workflows.js'))
   };
 }
 
@@ -475,7 +475,7 @@ function reportResult(io, format, workflows, installedTargetMode) {
     return;
   }
 
-  io.log(`Cursor workflow smoke (${installedTargetMode ? 'installed-target' : 'repo-source'} mode):`);
+  io.log(`Cursor workflow dev smoke (${installedTargetMode ? 'installed-target' : 'repo-source'} mode):`);
   for (const workflow of workflows) {
     io.log(`- ${workflow.workflow}: ${workflow.status}`);
     for (const failure of workflow.failures) {

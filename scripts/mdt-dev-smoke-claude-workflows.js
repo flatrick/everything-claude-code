@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { TOOL_WORKFLOW_CONTRACT } = require('./lib/tool-workflow-contract');
-const { summarizeTool } = require('./smoke-tool-setups');
+const { summarizeTool } = require('./mdt-dev-smoke-tool-setups');
 
 function resolveWorkspaceRoot(scriptDir) {
   const repoRoot = path.join(scriptDir, '..');
@@ -179,7 +179,7 @@ function buildE2eChecks(files) {
 function buildSmokeChecks(files, options = {}) {
   const claudeSummary = summarizeTool('claude', TOOL_WORKFLOW_CONTRACT.smokeProbes.claude || [], options);
   const hasRequiredFiles = [
-    files['commands/smoke.md'],
+    files['commands/mdt-dev-smoke.md'],
     files['docs/testing/manual-verification/claude-code.md']
   ].every(file => file && file.exists);
   const cliPass = claudeSummary.status === 'PASS';
@@ -188,12 +188,12 @@ function buildSmokeChecks(files, options = {}) {
   const cliDetails = claudeSummary.probes.map(probe => `${probe.command} - ${probe.detail}`).join('; ');
 
   return {
-    workflow: 'smoke',
+    workflow: 'mdt-dev-smoke',
     checks: [
       {
-        path: 'commands/smoke.md',
-        ok: files['commands/smoke.md'].exists,
-        message: 'Claude smoke command should exist'
+        path: 'commands/mdt-dev-smoke.md',
+        ok: files['commands/mdt-dev-smoke.md'].exists,
+        message: 'Claude dev smoke command should exist'
       },
       {
         path: 'docs/testing/manual-verification/claude-code.md',
@@ -210,10 +210,10 @@ function buildSmokeChecks(files, options = {}) {
         ok: cliPass || cliSkip,
         statusOverride: cliSkip ? 'SKIP' : undefined,
         message: cliSkip
-          ? `Claude CLI smoke was skipped: ${cliDetails}`
+          ? `Claude CLI dev smoke was skipped: ${cliDetails}`
           : cliFail
-            ? `Claude CLI smoke failed: ${cliDetails}`
-            : 'Claude CLI smoke probes passed'
+            ? `Claude CLI dev smoke failed: ${cliDetails}`
+            : 'Claude CLI dev smoke probes passed'
       }
     ],
     statusOverride: hasRequiredFiles && cliSkip ? 'SKIP' : undefined
@@ -358,12 +358,12 @@ function buildInstalledSmokeChecks(files, options = {}) {
   const cliDetails = claudeSummary.probes.map(probe => `${probe.command} - ${probe.detail}`).join('; ');
 
   return {
-    workflow: 'smoke',
+    workflow: 'mdt-dev-smoke',
     checks: [
       {
-        path: '.claude/commands/smoke.md',
-        ok: files['.claude/commands/smoke.md'].exists,
-        message: 'Installed Claude smoke command should exist'
+        path: '.claude/commands/mdt-dev-smoke.md',
+        ok: files['.claude/commands/mdt-dev-smoke.md'].exists,
+        message: 'Installed Claude dev smoke command should exist'
       },
       {
         path: '.claude/settings.json',
@@ -371,8 +371,8 @@ function buildInstalledSmokeChecks(files, options = {}) {
         message: 'Installed Claude settings.json should exist'
       },
       {
-        path: '.claude/mdt/scripts/smoke-claude-workflows.js',
-        ok: files['.claude/mdt/scripts/smoke-claude-workflows.js'].exists,
+        path: '.claude/mdt/scripts/mdt-dev-smoke-claude-workflows.js',
+        ok: files['.claude/mdt/scripts/mdt-dev-smoke-claude-workflows.js'].exists,
         message: 'Installed Claude workflow smoke script should exist'
       },
       {
@@ -380,10 +380,10 @@ function buildInstalledSmokeChecks(files, options = {}) {
         ok: cliPass || cliSkip,
         statusOverride: cliSkip ? 'SKIP' : undefined,
         message: cliSkip
-          ? `Claude CLI smoke was skipped: ${cliDetails}`
+          ? `Claude CLI dev smoke was skipped: ${cliDetails}`
           : cliFail
-            ? `Claude CLI smoke failed: ${cliDetails}`
-            : 'Claude CLI smoke probes passed'
+            ? `Claude CLI dev smoke failed: ${cliDetails}`
+            : 'Claude CLI dev smoke probes passed'
       }
     ],
     statusOverride: cliSkip ? 'SKIP' : undefined
@@ -428,9 +428,9 @@ function createClaudeFiles(rootDir, installedRepoMode) {
         '.claude/agents/code-reviewer.md': readRepoFile(rootDir, path.join('.claude', 'agents', 'code-reviewer.md')),
         '.claude/commands/verify.md': readRepoFile(rootDir, path.join('.claude', 'commands', 'verify.md')),
         '.claude/skills/verification-loop/SKILL.md': readRepoFile(rootDir, path.join('.claude', 'skills', 'verification-loop', 'SKILL.md')),
-        '.claude/commands/smoke.md': readRepoFile(rootDir, path.join('.claude', 'commands', 'smoke.md')),
+        '.claude/commands/mdt-dev-smoke.md': readRepoFile(rootDir, path.join('.claude', 'commands', 'mdt-dev-smoke.md')),
         '.claude/settings.json': readRepoFile(rootDir, path.join('.claude', 'settings.json')),
-        '.claude/mdt/scripts/smoke-claude-workflows.js': readRepoFile(rootDir, path.join('.claude', 'mdt', 'scripts', 'smoke-claude-workflows.js')),
+        '.claude/mdt/scripts/mdt-dev-smoke-claude-workflows.js': readRepoFile(rootDir, path.join('.claude', 'mdt', 'scripts', 'mdt-dev-smoke-claude-workflows.js')),
         '.claude/agents/security-reviewer.md': readRepoFile(rootDir, path.join('.claude', 'agents', 'security-reviewer.md')),
         '.claude/skills/security-review/SKILL.md': readRepoFile(rootDir, path.join('.claude', 'skills', 'security-review', 'SKILL.md')),
         '.claude/commands/e2e.md': readRepoFile(rootDir, path.join('.claude', 'commands', 'e2e.md')),
@@ -448,7 +448,7 @@ function createClaudeFiles(rootDir, installedRepoMode) {
         'agents/code-reviewer.md': readRepoFile(rootDir, path.join('agents', 'code-reviewer.md')),
         'commands/verify.md': readRepoFile(rootDir, path.join('commands', 'verify.md')),
         'skills/verification-loop/SKILL.md': readRepoFile(rootDir, path.join('skills', 'verification-loop', 'SKILL.md')),
-        'commands/smoke.md': readRepoFile(rootDir, path.join('commands', 'smoke.md')),
+        'commands/mdt-dev-smoke.md': readRepoFile(rootDir, path.join('commands', 'mdt-dev-smoke.md')),
         'docs/testing/manual-verification/claude-code.md': readRepoFile(rootDir, path.join('docs', 'testing', 'manual-verification', 'claude-code.md')),
         'claude-template/hooks.json': readRepoFile(rootDir, path.join('claude-template', 'hooks.json')),
         'agents/security-reviewer.md': readRepoFile(rootDir, path.join('agents', 'security-reviewer.md')),
@@ -475,7 +475,7 @@ function smokeClaudeWorkflows(options = {}) {
   if (options.format === 'json') {
     io.log(JSON.stringify(result, null, 2));
   } else {
-    io.log(`Claude workflow smoke (${installedRepoMode ? 'installed-target' : 'repo-source'} mode):`);
+    io.log(`Claude workflow dev smoke (${installedRepoMode ? 'installed-target' : 'repo-source'} mode):`);
     for (const workflow of workflows) {
       io.log(`- ${workflow.workflow}: ${workflow.status}`);
       for (const failure of workflow.failures) {
