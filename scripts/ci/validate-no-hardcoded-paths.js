@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Enforce Node-only runtime: no .sh/.ps1 anywhere in repo, no hardcoded ~/.claude/ in JS.
+ * Enforce Node-only runtime and unambiguous tool-home path notation.
  * Replaces the former validate-windows-parity check; MDT uses JavaScript/Node only.
  */
 
@@ -11,6 +11,34 @@ const REPO_ROOT = path.join(__dirname, '../..');
 
 // Flag only hardcoded *home* .claude paths (not detect-env.js, not path.join(projectDir, '.claude'))
 const HARDCODED_HOME_CLAUDE = /path\.join\s*\(\s*(?:homeDir|os\.homedir\(\)|process\.env\.HOME)[^)]*['"]\.claude/;
+const AMBIGUOUS_WINDOWS_TOOL_HOME_DOTDIR = /[A-Za-z]:[\\/](?:Users|users)[\\/][^\\/:*?"<>|\s`'"]+[\\/]\.(?:claude|cursor|codex)(?:[\\/]|$)/;
+
+function walkRepoFiles(repoRoot, onFile) {
+  function walk(dir) {
+    if (!fs.existsSync(dir)) {
+      return;
+    }
+
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name === 'node_modules' || entry.name === '.git') {
+        continue;
+      }
+
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+
+      if (entry.isFile()) {
+        onFile(fullPath, path.relative(repoRoot, fullPath));
+      }
+    }
+  }
+
+  walk(repoRoot);
+}
 
 function isCommentOnly(line) {
   const trimmed = line.trim();
@@ -62,6 +90,32 @@ function checkNoHardcodedPaths(repoRoot = REPO_ROOT) {
   return errors;
 }
 
+function checkUnambiguousToolHomePaths(repoRoot = REPO_ROOT) {
+  const errors = [];
+  const allowedExtensions = new Set(['.js', '.md']);
+
+  walkRepoFiles(repoRoot, (fullPath, relPath) => {
+    if (!allowedExtensions.has(path.extname(fullPath))) {
+      return;
+    }
+
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const lines = content.split(/\r?\n/);
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index];
+      if (!AMBIGUOUS_WINDOWS_TOOL_HOME_DOTDIR.test(line)) {
+        continue;
+      }
+
+      errors.push(
+        `${relPath}:${index + 1}: ambiguous expanded Windows tool-home path; use ~/.{tool}/... in prose or Join-Path $HOME '.tool' in PowerShell examples`
+      );
+    }
+  });
+
+  return errors;
+}
+
 function checkNoShellScriptsInRepo(repoRoot = REPO_ROOT) {
   const errors = [];
   const dirsToWalk = [repoRoot, path.join(repoRoot, 'scripts')];
@@ -91,12 +145,13 @@ function validateNoHardcodedPaths(options = {}) {
   const io = options.io || { log: console.log, error: console.error };
   const noShell = checkNoShellScriptsInRepo(repoRoot);
   const hardcoded = checkNoHardcodedPaths(repoRoot);
-  const all = [...noShell, ...hardcoded];
+  const ambiguousToolHomes = checkUnambiguousToolHomePaths(repoRoot);
+  const all = [...noShell, ...hardcoded, ...ambiguousToolHomes];
   if (all.length > 0) {
     all.forEach(e => io.error(e));
     return { exitCode: 1, errors: all };
   }
-  io.log('Validated Node-only runtime (no .sh/.ps1 in repo, no hardcoded ~/.claude/)');
+  io.log('Validated Node-only runtime and unambiguous tool-home path notation');
   return { exitCode: 0, errors: [] };
 }
 
@@ -106,7 +161,9 @@ if (require.main === module) {
 }
 
 module.exports = {
+  AMBIGUOUS_WINDOWS_TOOL_HOME_DOTDIR,
   checkNoHardcodedPaths,
   checkNoShellScriptsInRepo,
+  checkUnambiguousToolHomePaths,
   validateNoHardcodedPaths
 };

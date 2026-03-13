@@ -326,6 +326,58 @@ function runTests() {
   })) passed++; else failed++;
 
   // ==========================================
+  // validate-no-hardcoded-paths.js
+  // ==========================================
+  console.log('\nvalidate-no-hardcoded-paths.js:');
+
+  if (test('passes on real project path notation rules', () => {
+    const result = runValidator('validate-no-hardcoded-paths');
+    assert.strictEqual(result.code, 0, `Should pass, got stderr: ${result.stderr}`);
+    assert.ok(result.stdout.includes('unambiguous tool-home path notation'), 'Should report validation success');
+  })) passed++; else failed++;
+
+  if (test('fails on ambiguous expanded Windows Codex home path in markdown', () => {
+    const testDir = createTestDir();
+    const readmePath = path.join(testDir, 'README.md');
+    const badPath = ['C:', 'Users', 'patri', '.codex', 'mdt', 'homunculus'].join('\\');
+    fs.writeFileSync(readmePath, `Store state under \`${badPath}\`.\n`, 'utf8');
+
+    const result = runValidatorWithDir('validate-no-hardcoded-paths', 'REPO_ROOT', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail on ambiguous expanded Windows tool-home path in markdown');
+    assert.ok(result.stderr.includes('ambiguous expanded Windows tool-home path'), 'Should report ambiguous path');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('fails on ambiguous expanded Windows Cursor home path in JavaScript', () => {
+    const testDir = createTestDir();
+    const scriptPath = path.join(testDir, 'scripts', 'example.js');
+    fs.mkdirSync(path.dirname(scriptPath), { recursive: true });
+    const badPath = ['C:', 'Users', 'patri', '.cursor', 'mdt', 'scripts'].join('/');
+    fs.writeFileSync(scriptPath, `const value = "${badPath}";\n`, 'utf8');
+
+    const result = runValidatorWithDir('validate-no-hardcoded-paths', 'REPO_ROOT', testDir);
+    assert.strictEqual(result.code, 1, 'Should fail on ambiguous expanded Windows tool-home path in JavaScript');
+    assert.ok(result.stderr.includes('ambiguous expanded Windows tool-home path'), 'Should report ambiguous path');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('accepts shell-neutral tool-home notation in markdown and PowerShell examples', () => {
+    const testDir = createTestDir();
+    fs.writeFileSync(
+      path.join(testDir, 'README.md'),
+      [
+        'Use `~/.codex/mdt/` in prose.',
+        "Use `Join-Path $HOME '.codex'` in PowerShell examples."
+      ].join('\n'),
+      'utf8'
+    );
+
+    const result = runValidatorWithDir('validate-no-hardcoded-paths', 'REPO_ROOT', testDir);
+    assert.strictEqual(result.code, 0, `Should accept safe tool-home notation, got stderr: ${result.stderr}`);
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  // ==========================================
   // validate-runtime-ignores.js
   // ==========================================
   console.log('\nvalidate-runtime-ignores.js:');
