@@ -31,6 +31,7 @@ function runTests() {
         runId: '20260313.211000',
         runDependencyStepImpl: () => ({
           name: 'check-dependencies',
+          path: 'package.json#scripts.test',
           status: 'pass',
           logFile: path.join(tempDir, '20260313.211000', 'check-dependencies.jsonl'),
           message: 'dependency preflight passed',
@@ -78,6 +79,16 @@ function runTests() {
         parsed.data.entries.some((entry) => entry.kind === 'summary' && entry.step === 'tests' && Array.isArray(entry.slowest_suites)),
         'Expected slowest_suites in the test summary'
       );
+      // Issue 2: summary sub-objects must include total
+      const pipelineSummary = parsed.data.entries.find((entry) => entry.kind === 'summary' && entry.step === 'pipeline');
+      assert.ok(pipelineSummary, 'Expected pipeline summary entry');
+      assert.strictEqual(typeof pipelineSummary.steps.total, 'number', 'steps.total should be a number');
+      assert.strictEqual(typeof pipelineSummary.suites.total, 'number', 'suites.total should be a number');
+      assert.strictEqual(typeof pipelineSummary.tests.total, 'number', 'tests.total should be a number');
+      // Issue 3: check-dependencies step must include path in the rollup
+      const depStep = parsed.data.entries.find((entry) => entry.kind === 'step' && entry.step === 'check-dependencies');
+      assert.ok(depStep, 'Expected check-dependencies step entry');
+      assert.strictEqual(depStep.path, 'package.json#scripts.test', 'check-dependencies path should appear in rollup');
     } finally {
       cleanupTestDir(tempDir);
     }

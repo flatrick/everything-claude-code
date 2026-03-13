@@ -177,6 +177,7 @@ function runDependencyStep(context) {
 
   return {
     name: step.name,
+    path: step.path,
     status,
     logFile,
     message: result.ok ? 'dependency preflight passed' : result.message,
@@ -265,6 +266,7 @@ function runTestPipeline(options = {}) {
       event: 'finish',
       status: dependencyResult.status,
       step: dependencyResult.name,
+      path: dependencyResult.path,
       message: dependencyResult.message,
       duration_ms: dependencyResult.durationMs,
       exit_code: dependencyResult.exitCode,
@@ -322,12 +324,14 @@ function runTestPipeline(options = {}) {
   summary.suites = {
     passed: testResult.suites.passed,
     skipped: testResult.suites.skipped,
-    failed: testResult.suites.failed
+    failed: testResult.suites.failed,
+    total: testResult.suites.passed + testResult.suites.skipped + testResult.suites.failed
   };
   summary.tests = {
     passed: testResult.tests.passed,
     skipped: testResult.tests.skipped,
-    failed: testResult.tests.failed
+    failed: testResult.tests.failed,
+    total: testResult.tests.passed + testResult.tests.skipped + testResult.tests.failed
   };
 
   rollupLogger.write({
@@ -359,7 +363,7 @@ function runTestPipeline(options = {}) {
     duration_ms: Date.now() - pipelineStartMs,
     exit_code: exitCode,
     data: {
-      steps: summary.steps,
+      steps: { ...summary.steps, total: summary.steps.passed + summary.steps.skipped + summary.steps.failed },
       suites: summary.suites,
       tests: summary.tests
     }
