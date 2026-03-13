@@ -3,12 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 const { probeNodeSubprocess } = require('../helpers/subprocess-capability');
-const { smokeToolSetups } = require('../../scripts/smoke-tool-setups');
 const {
   cleanupInstall,
+  createCliShimBin,
   ensureFile,
   installTarget,
+  prependPath,
   repoRoot,
+  runInstalledMdt,
   runNodeScript
 } = require('./shared-fixtures');
 
@@ -28,7 +30,7 @@ function runTests() {
   let failed = 0;
 
   if (test('installed Cursor dev surface includes smoke and install-rules commands', () => {
-    const fixture = installTarget('cursor', ['--dev', 'continuous-learning']);
+    const fixture = installTarget('cursor', ['--dev', 'typescript', 'continuous-learning']);
 
     try {
       ensureFile(path.join(fixture.overrideRoot, 'commands', 'smoke.md'));
@@ -40,28 +42,49 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  if (test('installed Cursor surface still reports smoke-tool probe coverage', () => {
-    const output = [];
-    const result = smokeToolSetups({
-      io: {
-        log: message => output.push(String(message))
+  if (test('installed Cursor surface runs isolated smoke through the installed wrapper', () => {
+    const fixture = installTarget('cursor', ['--dev', 'typescript', 'continuous-learning']);
+    const shimBin = createCliShimBin({
+      agent: {
+        '--help': 'agent help'
       },
-      spawnImpl: (command) => {
-        if (command === 'cursor-agent') {
-          return { status: 0, stdout: 'cursor-agent 1.0.0' };
-        }
-        if (command === 'codex') {
-          return { error: Object.assign(new Error('not installed'), { code: 'ENOENT' }) };
-        }
-        if (command === 'claude') {
-          return { error: Object.assign(new Error('not installed'), { code: 'ENOENT' }) };
-        }
-        return { error: Object.assign(new Error(`unexpected command ${command}`), { code: 'ENOENT' }) };
+      'cursor-agent': {
+        '--help': 'cursor-agent help'
       }
     });
 
-    assert.strictEqual(result.exitCode, 0, output.join('\n'));
-    assert.ok(output.join('\n').includes('- cursor: PASS'));
+    try {
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-tool-setups.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-cursor-workflows.js'));
+
+      const smokeSetup = runInstalledMdt(
+        fixture,
+        ['smoke', 'tool-setups', '--tool', 'cursor'],
+        {
+          cwd: repoRoot,
+          env: prependPath(shimBin, fixture.env)
+        }
+      );
+      assert.strictEqual(smokeSetup.status, 0, `${smokeSetup.stdout}\n${smokeSetup.stderr}`);
+      assert.ok(smokeSetup.stdout.includes('- cursor: PASS'));
+      assert.ok(!smokeSetup.stdout.includes('- claude:'));
+      assert.ok(!smokeSetup.stdout.includes('- codex:'));
+
+      const workflowSmoke = runInstalledMdt(
+        fixture,
+        ['smoke', 'workflows', '--tool', 'cursor'],
+        {
+          cwd: repoRoot,
+          env: prependPath(shimBin, fixture.env)
+        }
+      );
+      assert.strictEqual(workflowSmoke.status, 0, `${workflowSmoke.stdout}\n${workflowSmoke.stderr}`);
+      assert.ok(workflowSmoke.stdout.includes('Cursor workflow smoke (installed-target mode):'));
+      assert.ok(workflowSmoke.stdout.includes('smoke: PASS'));
+    } finally {
+      cleanupTestDir(shimBin);
+      cleanupInstall(fixture);
+    }
   })) passed++; else failed++;
 
   if (test('installed /install-rules bridge copies global rules into a repo-local .cursor/rules surface', () => {

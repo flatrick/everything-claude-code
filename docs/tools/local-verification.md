@@ -22,6 +22,9 @@ Version-stamp rule:
 ```bash
 mdt verify tool-setups
 mdt smoke tool-setups
+mdt smoke tool-setups --tool claude
+mdt smoke tool-setups --tool cursor
+mdt smoke tool-setups --tool codex
 mdt smoke workflows --tool claude
 mdt smoke workflows --tool cursor
 mdt smoke workflows --tool codex

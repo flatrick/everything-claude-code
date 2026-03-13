@@ -485,12 +485,15 @@ function buildVerifyCommand(argv) {
 function buildSmokeCommand(argv) {
   if (argv[0] === 'tool-setups') {
     const options = parseCommonOptions(argv.slice(1));
+    if (options.tool && !WORKFLOW_SMOKE_SCRIPTS[options.tool]) {
+      throw createUsageError('smoke tool-setups requires --tool <claude|cursor|codex>');
+    }
     const { smokeToolSetups } = require('./smoke-tool-setups');
     return runInProcess(
-      (io) => smokeToolSetups({ io, format: options.format }).exitCode,
+      (io) => smokeToolSetups({ io, format: options.format, tool: options.tool }).exitCode,
       {
         format: options.format,
-        commandName: 'smoke tool-setups'
+        commandName: options.tool ? `smoke tool-setups ${options.tool}` : 'smoke tool-setups'
       }
     );
   }
@@ -500,13 +503,20 @@ function buildSmokeCommand(argv) {
     if (!options.tool || !WORKFLOW_SMOKE_SCRIPTS[options.tool]) {
       throw createUsageError('smoke workflows requires --tool <claude|cursor|codex>');
     }
-    const workflowFns = {
-      claude: require('./smoke-claude-workflows').smokeClaudeWorkflows,
-      cursor: require('./smoke-cursor-workflows').smokeCursorWorkflows,
-      codex: require('./smoke-codex-workflows').smokeCodexWorkflows
-    };
     return runInProcess(
-      (io) => workflowFns[options.tool]({ io, format: options.format, workspaceRoot: options.cwd || REPO_ROOT, rootDir: options.cwd || REPO_ROOT }).exitCode,
+      (io) => {
+        const workflowFns = {
+          claude: () => require('./smoke-claude-workflows').smokeClaudeWorkflows,
+          cursor: () => require('./smoke-cursor-workflows').smokeCursorWorkflows,
+          codex: () => require('./smoke-codex-workflows').smokeCodexWorkflows
+        };
+        const workflowOptions = { io, format: options.format };
+        if (options.cwd) {
+          workflowOptions.workspaceRoot = options.cwd;
+          workflowOptions.rootDir = options.cwd;
+        }
+        return workflowFns[options.tool]()(workflowOptions).exitCode;
+      },
       {
         format: options.format,
         commandName: `smoke workflows ${options.tool}`

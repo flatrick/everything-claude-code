@@ -43,6 +43,28 @@ function runTests() {
     });
   })) passed++; else failed++;
 
+  if (test('wraps Windows cmd shims through cmd.exe before probing', () => {
+    const resolved = resolveWindowsShim(
+      { command: 'claude', args: ['--help'] },
+      {
+        platform: 'win32',
+        spawnImpl: (command, args) => {
+          assert.strictEqual(command, 'pwsh');
+          assert.strictEqual(args[2], "(Get-Command 'claude' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)");
+          return {
+            status: 0,
+            stdout: 'C:\\tools\\claude.cmd\n'
+          };
+        }
+      }
+    );
+
+    assert.deepStrictEqual(resolved, {
+      command: 'cmd.exe',
+      args: ['/d', '/s', '/c', 'C:\\tools\\claude.cmd', '--help']
+    });
+  })) passed++; else failed++;
+
   if (test('returns SKIP when the local environment blocks process spawn', () => {
     const probe = runProbe(
       { command: 'claude', args: ['--help'] },
@@ -89,6 +111,52 @@ function runTests() {
   if (test('summarizes multi-line help output to the first line only', () => {
     const summary = summarizeProbeDetail('Codex CLI\nUsage: codex [options]\nMore help');
     assert.strictEqual(summary, 'Codex CLI');
+  })) passed++; else failed++;
+
+  if (test('filters tool setup smoke to a single requested tool', () => {
+    const output = [];
+    const calls = [];
+    const result = smokeToolSetups({
+      tool: 'codex',
+      platform: 'linux',
+      io: {
+        log: message => output.push(String(message))
+      },
+      spawnImpl: (command, args) => {
+        calls.push(`${command} ${args.join(' ')}`);
+        return { status: 0, stdout: 'codex 1.0.0' };
+      }
+    });
+
+    assert.strictEqual(result.exitCode, 0, output.join('\n'));
+    assert.deepStrictEqual(calls, ['codex --version', 'codex --help']);
+    assert.ok(output.join('\n').includes('- codex: PASS'));
+    assert.ok(!output.join('\n').includes('- claude:'));
+    assert.ok(!output.join('\n').includes('- cursor:'));
+    assert.ok(output.join('\n').includes('Passed: 1'));
+    assert.ok(output.join('\n').includes('Failed: 0'));
+    assert.ok(output.join('\n').includes('Skipped: 0'));
+  })) passed++; else failed++;
+
+  if (test('emits json output for a single requested tool only', () => {
+    const output = [];
+    const result = smokeToolSetups({
+      tool: 'cursor',
+      platform: 'linux',
+      format: 'json',
+      io: {
+        log: message => output.push(String(message))
+      },
+      spawnImpl: () => ({ status: 0, stdout: 'cursor-agent 1.0.0' })
+    });
+
+    assert.strictEqual(result.exitCode, 0);
+    const payload = JSON.parse(output.join('\n'));
+    assert.strictEqual(payload.tools.length, 1);
+    assert.strictEqual(payload.tools[0].tool, 'cursor');
+    assert.strictEqual(payload.passed, 1);
+    assert.strictEqual(payload.failed, 0);
+    assert.strictEqual(payload.skipped, 0);
   })) passed++; else failed++;
 
   if (test('summarizes tools with PASS, SKIP, and FAIL states', () => {
@@ -154,6 +222,39 @@ function runTests() {
     assert.strictEqual(calls.length, 2);
     assert.strictEqual(calls[1].command, 'pwsh');
     assert.deepStrictEqual(calls[1].args, ['-NoProfile', '-File', 'C:\\nvm4w\\nodejs\\codex.ps1', '--help']);
+  })) passed++; else failed++;
+
+  if (test('uses cmd.exe when the resolved Windows shim is a cmd file', () => {
+    const calls = [];
+    const probe = runProbe(
+      { command: 'cursor-agent', args: ['--help'] },
+      {
+        platform: 'win32',
+        spawnImpl: (command, args) => {
+          calls.push({ command, args });
+          if (command === 'pwsh' && args[1] === '-Command') {
+            return {
+              status: 0,
+              stdout: 'C:\\tools\\cursor-agent.cmd\n'
+            };
+          }
+
+          if (command === 'cmd.exe') {
+            return {
+              status: 0,
+              stdout: 'cursor-agent help'
+            };
+          }
+
+          throw new Error(`Unexpected call: ${command} ${args.join(' ')}`);
+        }
+      }
+    );
+
+    assert.strictEqual(probe.status, 'PASS');
+    assert.strictEqual(calls.length, 2);
+    assert.strictEqual(calls[1].command, 'cmd.exe');
+    assert.deepStrictEqual(calls[1].args, ['/d', '/s', '/c', 'C:\\tools\\cursor-agent.cmd', '--help']);
   })) passed++; else failed++;
 
   console.log('\n=== Test Results ===');

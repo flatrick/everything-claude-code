@@ -8,6 +8,9 @@ description: Run a quick MDT sanity check for the current Cursor workspace.
 
 Use this command for a fast Cursor-specific MDT sanity check.
 
+Do not run other-tool smoke probes from this Cursor command unless the user
+explicitly asks for a broader all-tools audit.
+
 ## Goal
 
 Confirm that the current workspace has the expected MDT surfaces without turning
@@ -56,6 +59,7 @@ Next step: ...
 ## Required Behavior
 
 - keep the check short
+- keep the smoke run Cursor-only unless the user asks for the cross-tool audit
 - prefer concrete file/path evidence
 - cite the path you inspected when reporting `MISSING` or `FAIL`
 - do not claim hook runtime behavior is working unless the current session proves it

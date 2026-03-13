@@ -6,11 +6,23 @@ const { TOOL_WORKFLOW_CONTRACT } = require('./lib/tool-workflow-contract');
 const { summarizeTool } = require('./smoke-tool-setups');
 
 function resolveWorkspaceRoot(scriptDir) {
+  const repoRoot = path.join(scriptDir, '..');
+  if (fs.existsSync(path.join(repoRoot, 'commands'))) {
+    return repoRoot;
+  }
+
+  if (path.basename(scriptDir) === 'scripts' && path.basename(path.dirname(scriptDir)) === 'mdt') {
+    const claudeInstallRoot = path.join(scriptDir, '..', '..');
+    if (path.basename(claudeInstallRoot) === '.claude') {
+      return path.join(claudeInstallRoot, '..');
+    }
+  }
+
   const installedRepoRoot = path.join(scriptDir, '..', '..');
   if (fs.existsSync(path.join(installedRepoRoot, '.claude'))) {
     return installedRepoRoot;
   }
-  return path.join(scriptDir, '..');
+  return repoRoot;
 }
 
 function parseArgs(argv) {

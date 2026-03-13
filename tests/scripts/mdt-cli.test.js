@@ -1,5 +1,6 @@
 const assert = require('assert');
 const fs = require('fs');
+const Module = require('module');
 const os = require('os');
 const path = require('path');
 const { test } = require('../helpers/test-runner');
@@ -116,6 +117,74 @@ function runTests() {
     assert.strictEqual(payload.ok, true);
     assert.strictEqual(payload.command, 'smoke workflows codex');
     assert.ok(payload.data.stdout.includes('"ok": true') || payload.data.stdout.includes('Codex workflow smoke'));
+  })) passed++; else failed++;
+
+  if (test('smoke tool-setups forwards an optional tool filter to the smoke runner', () => {
+    const originalLoad = Module._load;
+    let receivedOptions = null;
+
+    try {
+      Module._load = function patchedLoad(request, parent, isMain) {
+        if (parent && parent.filename === require.resolve('../../scripts/mdt') && request === './smoke-tool-setups') {
+          return {
+            smokeToolSetups: (options) => {
+              receivedOptions = options;
+              options.io.log(`- ${options.tool}: PASS`);
+              return { exitCode: 0 };
+            }
+          };
+        }
+        return originalLoad(request, parent, isMain);
+      };
+
+      const result = runMain(['smoke', 'tool-setups', '--tool', 'codex']);
+      assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
+      assert.ok(receivedOptions, 'Expected smokeToolSetups to be invoked');
+      assert.strictEqual(receivedOptions.tool, 'codex');
+      assert.ok(result.stdout.includes('- codex: PASS'));
+    } finally {
+      Module._load = originalLoad;
+    }
+  })) passed++; else failed++;
+
+  if (test('smoke workflows lazily loads only the selected workflow module', () => {
+    const originalLoad = Module._load;
+
+    try {
+      Module._load = function patchedLoad(request, parent, isMain) {
+        if (parent && parent.filename === require.resolve('../../scripts/mdt')) {
+          if (request === './smoke-claude-workflows' || request === './smoke-cursor-workflows') {
+            throw new Error(`Unexpected eager require: ${request}`);
+          }
+        }
+        return originalLoad(request, parent, isMain);
+      };
+
+      const result = runMain(['smoke', 'workflows', '--tool', 'codex']);
+      assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
+      assert.ok(result.stdout.includes('Codex workflow smoke'));
+    } finally {
+      Module._load = originalLoad;
+    }
+  })) passed++; else failed++;
+
+  if (test('smoke workflows surfaces the selected module load failure clearly', () => {
+    const originalLoad = Module._load;
+
+    try {
+      Module._load = function patchedLoad(request, parent, isMain) {
+        if (parent && parent.filename === require.resolve('../../scripts/mdt') && request === './smoke-codex-workflows') {
+          throw new Error("Cannot find module './smoke-codex-workflows'");
+        }
+        return originalLoad(request, parent, isMain);
+      };
+
+      const result = runMain(['smoke', 'workflows', '--tool', 'codex']);
+      assert.strictEqual(result.exitCode, 1);
+      assert.ok(result.stderr.includes('smoke-codex-workflows'));
+    } finally {
+      Module._load = originalLoad;
+    }
   })) passed++; else failed++;
 
   if (test('normalizeJsonResult wraps child output in the shared envelope', () => {

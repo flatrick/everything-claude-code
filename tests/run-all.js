@@ -124,6 +124,7 @@ const testFiles = [
   'compatibility-testing/codex-compatibility.test.js',
   'compatibility-testing/claude-code-compatibility.test.js',
   'compatibility-testing/cursor-agent-compatibility.test.js',
+  'compatibility-testing/live-tool-smoke.test.js',
   'compatibility-testing/cursor-ide-compatibility.test.js',
   'scripts/check-dependencies.test.js',
   'scripts/mdt-cli.test.js',

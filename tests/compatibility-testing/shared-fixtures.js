@@ -73,11 +73,119 @@ function ensureFile(filePath) {
   assert.ok(fs.existsSync(filePath), `Expected file to exist: ${filePath}`);
 }
 
+function resolveInstalledMdtScript(overrideRoot) {
+  return path.join(overrideRoot, 'mdt', 'scripts', 'mdt.js');
+}
+
+function runInstalledMdt(fixture, args = [], options = {}) {
+  return runNodeScript(resolveInstalledMdtScript(fixture.overrideRoot), args, {
+    cwd: options.cwd || repoRoot,
+    env: {
+      ...fixture.env,
+      ...(options.env || {})
+    },
+    profile: options.profile || 'neutral',
+    timeoutMs: options.timeoutMs
+  });
+}
+
+function createCliShimBin(commands) {
+  const binDir = createTestDir('compat-cli-shims-');
+  const commandEntries = Object.entries(commands || {});
+
+  for (const [commandName, responses] of commandEntries) {
+    if (process.platform === 'win32') {
+      const shimPath = path.join(binDir, `${commandName}.cmd`);
+      const lines = [
+        '@echo off',
+        'setlocal'
+      ];
+
+      for (const [args, rawResponse] of Object.entries(responses || {})) {
+        const response = typeof rawResponse === 'string'
+          ? { stdout: rawResponse, exitCode: 0 }
+          : { stdout: '', stderr: '', exitCode: 0, ...rawResponse };
+        lines.push(`if "%*"=="${String(args).replace(/%/g, '%%')}" (`);
+        if (response.stdout) {
+          lines.push(`  echo ${String(response.stdout).replace(/%/g, '%%')}`);
+        }
+        if (response.stderr) {
+          lines.push(`  >&2 echo ${String(response.stderr).replace(/%/g, '%%')}`);
+        }
+        lines.push(`  exit /b ${response.exitCode}`);
+        lines.push(')');
+      }
+
+      lines.push('>&2 echo unexpected args: %*');
+      lines.push('exit /b 1');
+      fs.writeFileSync(shimPath, `${lines.join('\r\n')}\r\n`, 'utf8');
+      continue;
+    }
+
+    const shimPath = path.join(binDir, commandName);
+    const lines = [
+      '#!/bin/sh',
+      'set -eu',
+      'case "$*" in'
+    ];
+
+    for (const [args, rawResponse] of Object.entries(responses || {})) {
+      const response = typeof rawResponse === 'string'
+        ? { stdout: rawResponse, exitCode: 0 }
+        : { stdout: '', stderr: '', exitCode: 0, ...rawResponse };
+      lines.push(`  ${JSON.stringify(args)})`);
+      if (response.stdout) {
+        lines.push(`    printf '%s\\n' ${JSON.stringify(String(response.stdout))}`);
+      }
+      if (response.stderr) {
+        lines.push(`    printf '%s\\n' ${JSON.stringify(String(response.stderr))} >&2`);
+      }
+      lines.push(`    exit ${response.exitCode}`);
+      lines.push('    ;;');
+    }
+
+    lines.push('  *)');
+    lines.push(`    printf '%s\\n' ${JSON.stringify(`unexpected args: ${commandName} $*`)} >&2`);
+    lines.push('    exit 1');
+    lines.push('    ;;');
+    lines.push('esac');
+
+    fs.writeFileSync(shimPath, `${lines.join('\n')}\n`, 'utf8');
+    fs.chmodSync(shimPath, 0o755);
+  }
+
+  return binDir;
+}
+
+function getPathEnvKey(env = process.env) {
+  return Object.keys(env).find((key) => key.toLowerCase() === 'path')
+    || Object.keys(process.env).find((key) => key.toLowerCase() === 'path')
+    || 'PATH';
+}
+
+function prependPath(binDir, env = process.env) {
+  const pathKey = getPathEnvKey(env);
+  const existingPath = env[pathKey]
+    || env.PATH
+    || env.Path
+    || process.env[pathKey]
+    || process.env.PATH
+    || process.env.Path
+    || '';
+  return {
+    [pathKey]: `${binDir}${path.delimiter}${existingPath}`
+  };
+}
+
 module.exports = {
   cleanupInstall,
+  createCliShimBin,
   ensureFile,
   installTarget,
+  prependPath,
   repoRoot,
+  resolveInstalledMdtScript,
+  runInstalledMdt,
   runNodeScript,
   assertSuccess
 };

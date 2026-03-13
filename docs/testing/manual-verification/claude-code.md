@@ -19,12 +19,14 @@ Use this page for quick Claude Code sanity checks and deeper runtime verificatio
 Run:
 
 ```bash
+mdt smoke tool-setups --tool claude
 mdt smoke workflows --tool claude
 ```
 
 Installed-home equivalent:
 
 ```bash
+node ~/.claude/mdt/scripts/mdt.js smoke tool-setups --tool claude
 node ~/.claude/mdt/scripts/mdt.js smoke workflows --tool claude
 ```
 

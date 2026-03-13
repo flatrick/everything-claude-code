@@ -6,6 +6,9 @@ Run a lightweight MDT sanity check for the current tool and workspace.
 
 Use this command for a quick confidence check, not a full verification pass.
 
+Run only the current tool's smoke checks unless the user explicitly asks for a
+cross-tool audit.
+
 It should answer:
 
 - is MDT installed where this tool expects it?
@@ -83,6 +86,7 @@ Next step: ...
 
 - prefer fast checks over exhaustive checks
 - do not run the full test suite unless the user explicitly asks
+- do not probe Claude, Cursor, and Codex from the same `/smoke` run unless the user explicitly asks for the all-tools audit
 - clearly separate `missing`, `skipped`, and `failed`
 - use concrete file/path evidence for every `OK` or `MISSING` claim
 - if the install is absent, say exactly what reinstall command to run

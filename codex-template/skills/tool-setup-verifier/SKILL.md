@@ -28,13 +28,13 @@ In installed global tool mode:
 ### MDT repo mode
 
 1. Run `mdt verify tool-setups`.
-2. If the Codex CLI is installed locally, run `mdt smoke tool-setups`.
+2. If the Codex CLI is installed locally, run `mdt smoke tool-setups --tool codex`.
 3. Run `mdt smoke workflows --tool codex`.
 4. Summarize results by workflow and by Codex readiness.
 
 ### Installed global tool mode
 
-1. Run `node ~/.codex/mdt/scripts/mdt.js smoke tool-setups`.
+1. Run `node ~/.codex/mdt/scripts/mdt.js smoke tool-setups --tool codex`.
 2. Run `node ~/.codex/mdt/scripts/mdt.js smoke workflows --tool codex`.
 3. Summarize readiness from the installed global surfaces only.
 

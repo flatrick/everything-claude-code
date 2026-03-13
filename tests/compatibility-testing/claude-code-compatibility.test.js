@@ -2,11 +2,14 @@ const assert = require('assert');
 const path = require('path');
 const { test } = require('../helpers/test-runner');
 const { probeNodeSubprocess } = require('../helpers/subprocess-capability');
-const { smokeClaudeWorkflows } = require('../../scripts/smoke-claude-workflows');
 const {
   cleanupInstall,
+  createCliShimBin,
   ensureFile,
-  installTarget
+  installTarget,
+  prependPath,
+  repoRoot,
+  runInstalledMdt
 } = require('./shared-fixtures');
 
 function runTests() {
@@ -24,27 +27,47 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  if (test('installed Claude dev surface passes workflow smoke in installed-target mode', () => {
+  if (test('installed Claude dev surface runs isolated smoke through the installed wrapper', () => {
     const fixture = installTarget('claude', ['--dev', 'typescript', 'continuous-learning']);
+    const shimBin = createCliShimBin({
+      claude: {
+        '--version': 'Claude Code 2.1.73',
+        '--help': 'Claude help'
+      }
+    });
 
     try {
       ensureFile(path.join(fixture.overrideRoot, 'commands', 'smoke.md'));
       ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-claude-workflows.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-tool-setups.js'));
 
-      const output = [];
-      const result = smokeClaudeWorkflows({
-        rootDir: path.dirname(fixture.overrideRoot),
-        io: {
-          log: message => output.push(String(message))
-        },
-        spawnImpl: () => ({ status: 0, stdout: '2.1.71' })
-      });
+      const smokeSetup = runInstalledMdt(
+        fixture,
+        ['smoke', 'tool-setups', '--tool', 'claude'],
+        {
+          cwd: repoRoot,
+          env: prependPath(shimBin, fixture.env)
+        }
+      );
+      assert.strictEqual(smokeSetup.status, 0, `${smokeSetup.stdout}\n${smokeSetup.stderr}`);
+      assert.ok(smokeSetup.stdout.includes('- claude: PASS'));
+      assert.ok(!smokeSetup.stdout.includes('- cursor:'));
+      assert.ok(!smokeSetup.stdout.includes('- codex:'));
 
-      assert.strictEqual(result.exitCode, 0, output.join('\n'));
-      assert.ok(output.join('\n').includes('installed-target'));
-      assert.ok(output.join('\n').includes('smoke: PASS'));
-      assert.ok(output.join('\n').includes('verify: PASS'));
+      const workflowSmoke = runInstalledMdt(
+        fixture,
+        ['smoke', 'workflows', '--tool', 'claude'],
+        {
+          cwd: repoRoot,
+          env: prependPath(shimBin, fixture.env)
+        }
+      );
+      assert.strictEqual(workflowSmoke.status, 0, `${workflowSmoke.stdout}\n${workflowSmoke.stderr}`);
+      assert.ok(workflowSmoke.stdout.includes('Claude workflow smoke (installed-target mode):'));
+      assert.ok(workflowSmoke.stdout.includes('smoke: PASS'));
+      assert.ok(workflowSmoke.stdout.includes('verify: PASS'));
     } finally {
+      require('../helpers/test-runner').cleanupTestDir(shimBin);
       cleanupInstall(fixture);
     }
   })) passed++; else failed++;

@@ -28,7 +28,15 @@ agent --version
 agent --help
 cursor-agent --version
 cursor-agent --help
+mdt smoke tool-setups --tool cursor
 mdt smoke workflows --tool cursor
+```
+
+Installed-home equivalents:
+
+```bash
+node ~/.cursor/mdt/scripts/mdt.js smoke tool-setups --tool cursor
+node ~/.cursor/mdt/scripts/mdt.js smoke workflows --tool cursor
 ```
 
 ## Human-Operated IDE Checks

@@ -19,14 +19,14 @@ Run:
 
 ```bash
 mdt verify tool-setups
-mdt smoke tool-setups
+mdt smoke tool-setups --tool codex
 mdt smoke workflows --tool codex
 ```
 
 Installed-home equivalents:
 
 ```bash
-node ~/.codex/mdt/scripts/mdt.js smoke tool-setups
+node ~/.codex/mdt/scripts/mdt.js smoke tool-setups --tool codex
 node ~/.codex/mdt/scripts/mdt.js smoke workflows --tool codex
 ```
 

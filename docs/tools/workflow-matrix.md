@@ -28,7 +28,7 @@ Use this together with [capability-matrix.md](./capability-matrix.md) and the pe
 For each workflow/tool mapping:
 
 1. Run `mdt verify tool-setups` to verify that the documented files still exist and this matrix still matches the machine-readable workflow contracts in `workflow-contracts/`.
-2. Run `mdt smoke tool-setups` when you want a local CLI probe for installed tools.
+2. Run `mdt smoke tool-setups` for the all-tools audit, or `mdt smoke tool-setups --tool <claude|cursor|codex>` when you want one tool's local CLI probe.
 3. If a tool is not installed locally, record the smoke result as `SKIP` instead of guessing.
 
 ## Scope Notes
