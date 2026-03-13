@@ -28,3 +28,4 @@ node ./hardening/apply-codex-home-hardening.mjs --codex-home "/home/someone/.cod
 - On Windows, auth hardening uses `icacls` via Node child-process execution and may require elevation depending on local policy.
 - On Linux and macOS, auth hardening uses `chmod 600` on `auth.json`, which is the closest portable equivalent to the Windows ACL restriction.
 - The scripts only harden `auth.json` directly. Use the prompt in `PROMPT.md` if you also want Codex to inspect and classify other sensitive runtime-state files without modifying unrelated workflow files.
+- Workspace permission verification is now part of MDT's shared `mdt/hardening/` bundle so every current and future MDT tool target can use the same operator-facing workflow.

@@ -22,6 +22,7 @@ const CODEX_SKILLS_SRC = path.join(CODEX_SRC, 'skills');
 const CODEX_RULES_SRC = path.join(CODEX_SRC, 'rules');
 const SHARED_SKILLS_SRC = path.join(REPO_ROOT, 'skills');
 const SHARED_COMMANDS_SRC = path.join(REPO_ROOT, 'commands');
+const SHARED_HARDENING_SRC = path.join(REPO_ROOT, 'hardening');
 const RUNTIME_CI_FILES = [
   'markdown-utils.js',
   'validate-markdown-links.js',
@@ -629,6 +630,7 @@ function buildCodexInstallPlan(lines, selectedPackages, overrideDir, devMode) {
     `[dry-run] Would install Codex rules to ${path.join(userCodexDir, 'rules')}`,
     `[dry-run] Would install Codex skills to ${path.join(userCodexDir, 'skills')}`,
     `[dry-run] Would install Codex runtime scripts to ${path.join(mdtRoot, 'scripts')}`,
+    `[dry-run] Would install shared workspace hardening bundle to ${path.join(mdtRoot, 'hardening')}`,
     ...(devMode
       ? [
         `[dry-run] Would install Codex dev smoke skill to ${path.join(userCodexDir, 'skills')}`,
@@ -651,6 +653,7 @@ function buildClaudeInstallPlan(lines, selectedPackages, overrideDir, devMode = 
     `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${claudeBase}`,
     `[dry-run] Would copy rules, package-selected agents/commands/skills, hooks, and runtime scripts to ${mdtRoot}`,
+    `[dry-run] Would install shared workspace hardening bundle to ${path.join(mdtRoot, 'hardening')}`,
     `[dry-run] Would grant Edit/Write permissions for ${mdtRoot}/ in settings.json`,
     ...(devMode ? [
       `[dry-run] Would install Claude dev smoke command to ${path.join(claudeBase, 'commands')}`,
@@ -668,6 +671,7 @@ function buildCursorInstallPlan(lines, selectedPackages, overrideDir, devMode = 
     `[dry-run] Packages: ${packages}`,
     `[dry-run] Would install into ${cursorBase}`,
     `[dry-run] Would install Cursor rules, package-selected agents/skills/commands, hook config, mcp config, and runtime scripts under ${mdtRoot}`,
+    `[dry-run] Would install shared workspace hardening bundle to ${path.join(mdtRoot, 'hardening')}`,
     ...(devMode ? [`[dry-run] Would install Cursor dev smoke command to ${path.join(cursorBase, 'commands')}`] : []),
     `[dry-run] Local exception bridges, if needed later, would materialize only the missing surface into the active repo`
   ];
@@ -743,9 +747,20 @@ function ensureMdtRoot(installRoot) {
 }
 
 function copyRuntimeScriptsToMdtRoot(installRoot) {
-  const scriptsDest = path.join(ensureMdtRoot(installRoot), 'scripts');
+  const mdtRoot = ensureMdtRoot(installRoot);
+  const scriptsDest = path.join(mdtRoot, 'scripts');
   copyRuntimeScripts(scriptsDest);
+  installSharedHardeningBundle(mdtRoot);
   return scriptsDest;
+}
+
+function installSharedHardeningBundle(mdtRoot) {
+  if (!fs.existsSync(SHARED_HARDENING_SRC)) {
+    return;
+  }
+
+  const hardeningDest = path.join(mdtRoot, 'hardening');
+  copyRecursiveSync(SHARED_HARDENING_SRC, hardeningDest);
 }
 
 function usage(_target) {

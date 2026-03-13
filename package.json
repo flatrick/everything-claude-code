@@ -51,6 +51,7 @@
     "examples/user-CLAUDE.md",
     "examples/statusline.json",
     "hooks/",
+    "hardening/",
     "mcp-configs/",
     "plugins/",
     "packages/",
