@@ -23,7 +23,7 @@ const _counts = { passed: 0, failed: 0, skipped: 0 };
 const _startMs = Date.now();
 
 if (process.env.MDT_SUITE_LOG_FILE) {
-  const { createSuiteLogger } = require('../../scripts/lib/test-run-artifacts');
+  const { createSuiteLogger } = require('../lib/loggers');
   _logger = createSuiteLogger({
     filePath: process.env.MDT_SUITE_LOG_FILE,
     runId: process.env.MDT_TEST_RUN_ID,

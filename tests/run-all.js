@@ -15,11 +15,11 @@ const { probeNodeSubprocess } = require('./helpers/subprocess-capability');
 const { buildTestEnv } = require('./helpers/test-env-profiles');
 const {
   buildArtifactPath,
-  createPipelineLogger,
   ensureArtifactRoot,
   formatRunId,
   toRelativeArtifactPath
 } = require('../scripts/lib/test-run-artifacts');
+const { createPipelineLogger } = require('./lib/loggers');
 
 const TEST_FILES = [
   'helpers/test-env-profiles.test.js',
@@ -331,7 +331,7 @@ function runSuite(testFile, options) {
   const failedLabels = readTestLabelsByStatus(suiteLog, 'fail');
   const skippedLabels = readTestLabelsByStatus(suiteLog, 'skip');
 
-  const counts = suiteSummary
+  let counts = suiteSummary
     ? {
       passed: suiteSummary.passed || 0,
       skipped: suiteSummary.skipped || 0,
@@ -347,23 +347,20 @@ function runSuite(testFile, options) {
     const label = `suite timed out after ${options.suiteTimeoutMs}ms`;
     failedLabels.push(label);
     if (counts.failed === 0) {
-      counts.failed = 1;
-      counts.total += 1;
+      counts = { ...counts, failed: 1, total: counts.total + 1 };
     }
   } else if (result.error) {
     status = 'fail';
     const label = `runner error: ${result.error.code || result.error.message}`;
     failedLabels.push(label);
     if (counts.failed === 0) {
-      counts.failed = 1;
-      counts.total += 1;
+      counts = { ...counts, failed: 1, total: counts.total + 1 };
     }
   } else if (result.signal) {
     status = 'fail';
     failedLabels.push(`suite terminated by signal ${result.signal}`);
     if (counts.failed === 0) {
-      counts.failed = 1;
-      counts.total += 1;
+      counts = { ...counts, failed: 1, total: counts.total + 1 };
     }
   }
 

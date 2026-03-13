@@ -990,7 +990,7 @@ function installClaudeCommands(claudeBase, selectedPackages, devMode) {
   }
 }
 
-function installClaudeSkills(claudeBase, selectedPackages, devMode) {
+function installClaudeSkills(claudeBase, selectedPackages, _devMode) {
   const skillsDest = path.join(claudeBase, 'skills');
   if (!(fs.existsSync(SHARED_SKILLS_SRC) && path.resolve(SHARED_SKILLS_SRC) !== path.resolve(skillsDest))) {
     return;
