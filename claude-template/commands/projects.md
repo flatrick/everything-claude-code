@@ -1,0 +1,40 @@
+---
+name: projects
+description: List known projects and their instinct statistics
+command: true
+
+---
+
+# Projects Command
+
+List project registry entries and per-project instinct/observation counts for continuous-learning-manual.
+
+## Implementation
+
+Run the instinct CLI using `MDT_ROOT` when available:
+
+```bash
+node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" projects
+```
+
+For manual installs, replace `<config>` with your MDT config directory (for example `~/.claude`):
+
+```bash
+node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" projects
+```
+
+## Usage
+
+```bash
+/projects
+```
+
+## What to Do
+
+1. Read `<data>/homunculus/projects.json`
+2. For each project, display:
+   - Project name, id, root, remote
+   - Personal and inherited instinct counts
+   - Observation event count
+   - Last seen timestamp
+3. Also display global instinct totals
