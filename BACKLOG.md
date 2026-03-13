@@ -8,6 +8,7 @@ Current active plan:
 
 ## Active Release Blockers
 
+- [x] Claude `plugin.json` declared no agents/commands/skills/rules — plugin installs delivered zero functional assets. Fixed: added all component arrays and populated `claude-template/` for manual installs.
 - [ ] Keep every current-state verification claim version-stamped and remove any stale value that cannot be re-verified locally.
 - [ ] Generalize or retire the remaining Claude-only example/reference surfaces under `examples/*CLAUDE*.md`.
 - [ ] Keep root docs thin and prevent drift from `docs/` as the source of truth.

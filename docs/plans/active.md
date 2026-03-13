@@ -11,6 +11,7 @@ Status legend:
 Current plans:
 
 - [ ] `in-progress` — [Reach v1.0.0](details/20260312.20.24.reach-v1-0-0.md)
+- [ ] `not-started` — [Fix Claude Plugin Manifest and Template Gap](details/20260313.fix-claude-plugin-and-template.md)
 
 Rules:
 
