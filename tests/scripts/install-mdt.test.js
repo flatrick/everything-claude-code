@@ -87,6 +87,9 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'ci', 'validate-markdown-path-refs.js')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'ci', 'markdown-utils.js')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'smoke-claude-workflows.js')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'hardening', 'verify-workspace-permissions.mjs')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'hardening', 'CODEX-WINDOWS-SANDBOX-ROOT-CHILD-ACL-ISSUE.md')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'hardening', 'WORKSPACE-PERMISSIONS-PROMPT.md')));
           assert.ok(!fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'ci', 'validate-install-packages.js')));
           assert.ok(!fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'install-mdt.js')));
         } finally {
@@ -244,6 +247,9 @@ function runTests() {
 
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'scripts', 'hooks', 'session-start.js')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'scripts', 'mdt.js')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'verify-workspace-permissions.mjs')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'CODEX-WINDOWS-SANDBOX-ROOT-CHILD-ACL-ISSUE.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'WORKSPACE-PERMISSIONS-PROMPT.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'documentation-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'frontend-slides', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'continuous-learning-manual', 'SKILL.md')));
@@ -315,6 +321,9 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'mdt.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'ci', 'validate-markdown-links.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'ci', 'validate-markdown-path-refs.js')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'hardening', 'verify-workspace-permissions.mjs')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'hardening', 'CODEX-WINDOWS-SANDBOX-ROOT-CHILD-ACL-ISSUE.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'hardening', 'WORKSPACE-PERMISSIONS-PROMPT.md')));
         } finally {
           cleanupTestDir(tmpHome);
         }
