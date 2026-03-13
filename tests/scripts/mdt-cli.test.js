@@ -129,11 +129,11 @@ function runTests() {
   if (test('resolveLearningScriptsRoot uses installed Codex skill path when config root is provided', () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdt-cli-learning-'));
     const codexRoot = path.join(tempDir, '.codex');
-    const skillScriptsDir = path.join(codexRoot, 'skills', 'continuous-learning-manual', 'scripts');
+    const skillScriptsDir = path.join(codexRoot, 'skills', 'ai-learning', 'scripts');
 
     try {
       fs.mkdirSync(skillScriptsDir, { recursive: true });
-      fs.writeFileSync(path.join(codexRoot, 'skills', 'continuous-learning-manual', 'SKILL.md'), '# skill\n', 'utf8');
+      fs.writeFileSync(path.join(codexRoot, 'skills', 'ai-learning', 'SKILL.md'), '# skill\n', 'utf8');
 
       const result = resolveLearningScriptsRoot({ configRoot: codexRoot });
       assert.strictEqual(result, skillScriptsDir);
@@ -146,14 +146,14 @@ function runTests() {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdt-cli-learning-cwd-'));
     const workspaceDir = path.join(tempDir, 'workspace');
     const codexRoot = path.join(tempDir, '.codex');
-    const skillScriptsDir = path.join(codexRoot, 'skills', 'continuous-learning-manual', 'scripts');
+    const skillScriptsDir = path.join(codexRoot, 'skills', 'ai-learning', 'scripts');
     const originalCwd = process.cwd();
 
     try {
       fs.mkdirSync(workspaceDir, { recursive: true });
       fs.mkdirSync(skillScriptsDir, { recursive: true });
       fs.writeFileSync(
-        path.join(codexRoot, 'skills', 'continuous-learning-manual', 'SKILL.md'),
+        path.join(codexRoot, 'skills', 'ai-learning', 'SKILL.md'),
         '# skill\n',
         'utf8'
       );

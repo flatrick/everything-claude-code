@@ -53,7 +53,7 @@ function runTests() {
     const fixture = installTarget('claude', ['continuous-learning']);
 
     try {
-      ensureFile(path.join(fixture.overrideRoot, 'skills', 'continuous-learning-automatic', 'hooks', 'observe.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'skills', 'ai-learning', 'hooks', 'observe.js'));
       ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'lib', 'continuous-learning', 'project-detection.js'));
     } finally {
       cleanupInstall(fixture);

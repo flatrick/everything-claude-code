@@ -15,7 +15,7 @@ Analyze your repository's git history to extract coding patterns and generate SK
 /skill-create                    # Analyze current repo
 /skill-create --commits 100      # Analyze last 100 commits
 /skill-create --output ./skills  # Custom output directory
-/skill-create --instincts        # Also generate instincts for continuous-learning-manual
+/skill-create --instincts        # Also generate instincts for ai-learning
 ```
 
 ## What It Does
@@ -23,7 +23,7 @@ Analyze your repository's git history to extract coding patterns and generate SK
 1. **Parses Git History** - Analyzes commits, file changes, and patterns
 2. **Detects Patterns** - Identifies recurring workflows and conventions
 3. **Generates SKILL.md** - Creates valid Claude Code skill files
-4. **Optionally Creates Instincts** - For the continuous-learning-manual system
+4. **Optionally Creates Instincts** - For the ai-learning system
 
 ## Analysis Steps
 
@@ -82,7 +82,7 @@ analyzed_commits: {count}
 
 ### Step 4: Generate Instincts (if --instincts)
 
-For continuous-learning-manual integration:
+For ai-learning integration:
 
 ```yaml
 ---

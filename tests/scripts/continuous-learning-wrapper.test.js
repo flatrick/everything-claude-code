@@ -14,7 +14,7 @@ function writeFile(filePath, content) {
 function withInstalledCodexLayout(wrapperSourcePath, callback) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdt-codex-wrapper-'));
   const codexRoot = path.join(tempDir, '.codex');
-  const skillRoot = path.join(codexRoot, 'skills', 'continuous-learning-manual');
+  const skillRoot = path.join(codexRoot, 'skills', 'ai-learning');
   const wrapperPath = path.join(skillRoot, 'scripts', 'codex-learn.js');
   const runtimePath = path.join(codexRoot, 'mdt', 'scripts', 'lib', 'continuous-learning', 'codex-learn-runtime.js');
 
@@ -58,7 +58,7 @@ function runTests() {
   let failed = 0;
 
   if (test('shared codex-learn wrapper resolves runtime from installed mdt path', () => {
-    const wrapperSourcePath = path.join(repoRoot, 'skills', 'continuous-learning-manual', 'scripts', 'codex-learn.js');
+    const wrapperSourcePath = path.join(repoRoot, 'skills', 'ai-learning', 'scripts', 'codex-learn.js');
     withInstalledCodexLayout(wrapperSourcePath, (wrapperPath) => {
       const loaded = require(wrapperPath);
       assert.strictEqual(typeof loaded.buildCodexEnv, 'function');
@@ -66,7 +66,7 @@ function runTests() {
   })) passed++; else failed++;
 
   if (test('codex-template codex-learn wrapper resolves runtime from installed mdt path', () => {
-    const wrapperSourcePath = path.join(repoRoot, 'codex-template', 'skills', 'continuous-learning-manual', 'scripts', 'codex-learn.js');
+    const wrapperSourcePath = path.join(repoRoot, 'codex-template', 'skills', 'ai-learning', 'scripts', 'codex-learn.js');
     withInstalledCodexLayout(wrapperSourcePath, (wrapperPath) => {
       const loaded = require(wrapperPath);
       assert.strictEqual(typeof loaded.buildCodexEnv, 'function');

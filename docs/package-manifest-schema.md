@@ -27,19 +27,19 @@ per-tool template directories.
   "rules": ["common/testing.md"],
   "agents": [],
   "commands": ["learn.md"],
-  "skills": ["continuous-learning-manual"],
+  "skills": ["ai-learning"],
   "tools": {
     "claude": {
-      "skills": ["continuous-learning-automatic"]
+      "skills": ["ai-learning"]
     },
     "cursor": {
       "rules": ["common-testing.mdc"],
-      "skills": ["continuous-learning-automatic"],
+      "skills": ["ai-learning"],
       "commands": ["learn.md"]
     },
     "codex": {
       "rules": ["common-testing.md"],
-      "skills": ["continuous-learning-manual"],
+      "skills": ["ai-learning"],
       "scripts": ["codex-observer.js"]
     }
   },

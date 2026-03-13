@@ -21,7 +21,7 @@ function runTests() {
   if (test('inferInstalledConfigDir finds installed Codex roots from nested skill paths', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'codex',
-      files: ['skills/continuous-learning-manual/scripts/detect-project.js']
+      files: ['skills/ai-learning/scripts/detect-project.js']
     });
     try {
       const scriptDir = path.join(layout.skillDir, 'scripts');
@@ -40,7 +40,7 @@ function runTests() {
 
   if (test('resolveRepoRootFromEntrypoint finds the workspace root for source-tree entrypoints', () => {
     const repoRoot = path.join(__dirname, '..', '..');
-    const entrypointDir = path.join(repoRoot, 'skills', 'continuous-learning-manual', 'scripts');
+    const entrypointDir = path.join(repoRoot, 'skills', 'ai-learning', 'scripts');
     assert.strictEqual(resolveRepoRootFromEntrypoint(entrypointDir), repoRoot);
   })) passed++; else failed++;
 
@@ -48,9 +48,9 @@ function runTests() {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'codex',
       files: [
-        'skills/continuous-learning-manual/SKILL.md',
-        'skills/continuous-learning-manual/config.json',
-        'skills/continuous-learning-manual/scripts/detect-project.js'
+        'skills/ai-learning/SKILL.md',
+        'skills/ai-learning/config.json',
+        'skills/ai-learning/scripts/detect-project.js'
       ]
     });
     try {
@@ -74,7 +74,7 @@ function runTests() {
     const entrypointDir = path.join(repoRoot, 'scripts');
     assert.strictEqual(
       resolveContinuousLearningSkillRoot({ entrypointDir }),
-      path.join(repoRoot, 'skills', 'continuous-learning-manual')
+      path.join(repoRoot, 'skills', 'ai-learning')
     );
   })) passed++; else failed++;
 

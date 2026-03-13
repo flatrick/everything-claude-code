@@ -1,6 +1,7 @@
 {
   "requires": {
     "rules": [
+      "common/hooks.md",
       "common/development-workflow.md",
       "common/security.md",
       "common/testing.md"

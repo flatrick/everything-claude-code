@@ -14,7 +14,7 @@ Shows learned instincts for the current project plus global instincts, grouped b
 Run the globally installed Cursor instinct CLI:
 
 ```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" status
+node "<config>/skills/ai-learning/scripts/instinct-cli.js" status
 ```
 
 Default `<config>` is `~/.cursor`. If your Cursor config root is overridden, use that instead.
@@ -27,7 +27,7 @@ Do not fall back to:
 - `~/.codex/...`
 - any other tool directory
 
-If `<config>/skills/continuous-learning-manual/scripts/instinct-cli.js` does
+If `<config>/skills/ai-learning/scripts/instinct-cli.js` does
 not exist, report that the global Cursor install is missing or incomplete
 instead of guessing another path.
 

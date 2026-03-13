@@ -472,7 +472,7 @@ function runTests() {
 
   if (test('fails when codex continuous-learning template uses abstract data placeholders', () => {
     const testDir = createTestDir();
-    const codexDir = path.join(testDir, 'codex-template', 'skills', 'continuous-learning-manual');
+    const codexDir = path.join(testDir, 'codex-template', 'skills', 'ai-learning');
     fs.mkdirSync(codexDir, { recursive: true });
     fs.writeFileSync(
       path.join(codexDir, 'SKILL.md'),
@@ -487,11 +487,11 @@ function runTests() {
 
   if (test('fails when codex continuous-learning template uses MDT_ROOT-first examples', () => {
     const testDir = createTestDir();
-    const codexDir = path.join(testDir, 'codex-template', 'skills', 'continuous-learning-manual');
+    const codexDir = path.join(testDir, 'codex-template', 'skills', 'ai-learning');
     fs.mkdirSync(codexDir, { recursive: true });
     fs.writeFileSync(
       path.join(codexDir, 'SKILL.md'),
-      '# Continuous Learning\n\nRun `node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" status`.\n'
+      '# Continuous Learning\n\nRun `node "${MDT_ROOT}/skills/ai-learning/scripts/instinct-cli.js" status`.\n'
     );
 
     const result = runValidatorWithDir('validate-template-doc-boundaries', 'REPO_ROOT', testDir);

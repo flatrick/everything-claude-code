@@ -26,12 +26,12 @@
   ],
   "skills": [
     "documentation-steward",
-    "continuous-learning-manual"
+    "ai-learning"
   ],
   "tools": {
     "claude": {
       "skills": [
-        "continuous-learning-automatic"
+        "ai-learning"
       ]
     },
     "cursor": {
@@ -45,7 +45,7 @@
         "common-testing.md"
       ],
       "skills": [
-        "continuous-learning-automatic"
+        "ai-learning"
       ],
       "commands": [
         "docs-health.md",
@@ -61,7 +61,7 @@
     "codex": {
       "skills": [
         "documentation-steward",
-        "continuous-learning-manual"
+        "ai-learning"
       ]
     }
   },

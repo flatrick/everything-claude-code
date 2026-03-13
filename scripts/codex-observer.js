@@ -25,14 +25,14 @@ const {
 function resolveSkillRoot(scriptDir = __dirname) {
   const context = createContinuousLearningContext({
     entrypointDir: scriptDir,
-    skillName: 'continuous-learning-manual'
+    skillName: 'ai-learning'
   });
 
   if (context.skillDir) {
     return context.skillDir;
   }
 
-  throw new Error('Unable to locate continuous-learning-manual skill');
+  throw new Error('Unable to locate ai-learning skill');
 }
 
 const skillRoot = resolveSkillRoot(__dirname);

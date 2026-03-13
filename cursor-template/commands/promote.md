@@ -7,14 +7,14 @@ command: true
 
 # Promote Command
 
-Promote instincts from project scope to global scope in continuous-learning-manual.
+Promote instincts from project scope to global scope in ai-learning.
 
 ## Implementation
 
 Run the globally installed Cursor instinct CLI:
 
 ```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" promote [instinct-id] [--force] [--dry-run]
+node "<config>/skills/ai-learning/scripts/instinct-cli.js" promote [instinct-id] [--force] [--dry-run]
 ```
 
 Default `<config>` is `~/.cursor`. If your Cursor config root is overridden, use that instead.

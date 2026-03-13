@@ -74,8 +74,8 @@ function runTests() {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'codex',
       files: [
-        'skills/continuous-learning-manual/scripts/instinct-cli.js',
-        'skills/continuous-learning-manual/scripts/detect-project.js'
+        'skills/ai-learning/scripts/instinct-cli.js',
+        'skills/ai-learning/scripts/detect-project.js'
       ]
     });
     try {
@@ -109,10 +109,10 @@ function runTests() {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'codex',
       files: [
-        'skills/continuous-learning-manual/SKILL.md',
-        'skills/continuous-learning-manual/config.json',
-        'skills/continuous-learning-manual/scripts/instinct-cli.js',
-        'skills/continuous-learning-manual/scripts/detect-project.js'
+        'skills/ai-learning/SKILL.md',
+        'skills/ai-learning/config.json',
+        'skills/ai-learning/scripts/instinct-cli.js',
+        'skills/ai-learning/scripts/detect-project.js'
       ]
     });
 
@@ -200,7 +200,7 @@ function runTests() {
       '..',
       'codex-template',
       'skills',
-      'continuous-learning-manual',
+      'ai-learning',
       'scripts',
       'instinct-cli.js'
     ));
@@ -215,7 +215,7 @@ function runTests() {
       '..',
       '..',
       'skills',
-      'continuous-learning-manual',
+      'ai-learning',
       'scripts',
       'codex-learn.js'
     ));
@@ -225,7 +225,7 @@ function runTests() {
       '..',
       'codex-template',
       'skills',
-      'continuous-learning-manual',
+      'ai-learning',
       'scripts',
       'codex-learn.js'
     ));

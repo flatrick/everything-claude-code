@@ -12,7 +12,7 @@ command: true
 Run the globally installed Cursor instinct CLI:
 
 ```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
+node "<config>/skills/ai-learning/scripts/instinct-cli.js" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
 ```
 
 Default `<config>` is `~/.cursor`. If your Cursor config root is overridden, use that instead.

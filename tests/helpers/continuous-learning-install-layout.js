@@ -44,8 +44,8 @@ function createInstalledContinuousLearningLayout(options = {}) {
   return {
     tempDir,
     configDir,
-    skillDir: path.join(configDir, 'skills', 'continuous-learning-manual'),
-    automaticSkillDir: path.join(configDir, 'skills', 'continuous-learning-automatic'),
+    skillDir: path.join(configDir, 'skills', 'ai-learning'),
+    automaticSkillDir: path.join(configDir, 'skills', 'ai-learning'),
     mdtRoot: path.join(configDir, 'mdt')
   };
 }

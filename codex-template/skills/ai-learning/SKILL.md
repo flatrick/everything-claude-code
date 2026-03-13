@@ -1,63 +1,48 @@
 ---
-name: continuous-learning-manual
-description: Instinct-based learning system that turns explicit session summaries, optional tool observations, and retrospectives into reusable instincts, skills, commands, and agents. v2.1 adds project-scoped instincts to prevent cross-project contamination.
+name: ai-learning
+description: "Instinct-based learning system for Codex. Manual-first: explicit capture and analysis baseline, with optional background observer."
 version: 2.1.0
 
 ---
 
-# Continuous Learning v2.1
+# AI Learning v2.1
 
-An instinct-based learning system for MDT that turns repeated behavior into small reusable instincts with confidence scoring, project scoping, and optional evolution into larger assets.
+An instinct-based learning system for Codex that turns repeated behavior into small reusable instincts with confidence scoring, project scoping, and optional evolution into larger assets.
 
 `v2.1` adds project-scoped instincts so project-specific patterns stay local while broader workflow and security patterns can still be shared globally.
 
 ## When To Activate
 
-- Reviewing or capturing reusable workflow patterns
+- Reviewing or capturing reusable workflow patterns in Codex
 - Running explicit Codex learning passes
-- Setting up Claude Code or Cursor observation hooks
 - Reviewing instinct confidence, scope, export, import, or promotion
 - Running weekly retrospectives to find automation candidates
 - Deciding whether repeated work should become a skill, command, script, or MCP-backed integration
 
-## Tool Modes
+## Codex Model
 
-This skill supports different tool modes. The instinct model is shared, but capture and analysis differ by tool.
+Codex is manual-first.
 
-### Codex
+- Global MDT state lives under `~/.codex/mdt/homunculus/`
+- Explicit/manual capture is the baseline
+- Explicit/manual analysis is the baseline
+- Weekly retrospectives are part of the baseline
+- The optional external observer only automates background analysis after observations already exist — it is OFF by default
+- Codex does not use hook-style automatic capture
 
-Codex is manual-first in this repo.
+To opt in to the background observer, run:
 
-- global MDT state lives under `~/.codex/mdt/homunculus/`
-- explicit/manual capture is the baseline
-- explicit/manual analysis is the baseline
-- weekly retrospectives are part of the baseline
-- the optional external observer only automates background analysis after observations already exist
-- Codex does not currently get hook-style automatic capture in this repo
+```bash
+mdt learning observer run
+```
 
-Use `continuous-learning-manual` as the Codex-facing contract.
-
-### Claude Code and Cursor
-
-Claude Code and Cursor are the hook-capable modes.
-
-- they can capture observations via tool hooks
-- they can use the optional observer with the tool's native CLI
-- hook setup is specific to those tools and is not the general model for Codex
-
-### Optional Observer
-
-The observer is an enhancement layer, not the baseline.
-
-- for Claude Code and Cursor, it processes hook-captured observations
-- for Codex, it is analysis-only and remains optional
-- it does not create automatic capture parity where native hook surfaces do not exist
+Or edit `config.json` and set `observer.enabled` to `true`.
 
 ## What's New in v2.1
 
 | Feature | v2.0 | v2.1 |
 |---------|------|------|
-| Storage | Global (`<data>/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
+| Storage | Global (`~/.codex/mdt/homunculus/`) | Project-scoped (`<project-id>/` under homunculus) |
 | Scope | All instincts apply everywhere | Project-scoped + global |
 | Detection | None | git remote URL / repo path |
 | Promotion | N/A | Project -> global when seen in 2+ projects |
@@ -66,23 +51,8 @@ The observer is an enhancement layer, not the baseline.
 
 ## What's New In v2
 
-v2 introduced:
-
-- instinct-sized learning units instead of only full learned assets
-- confidence-weighted evidence
-- observer-assisted analysis where the active tool supports it
-- project-aware storage and evolution paths
-
-The exact observation path is tool-specific:
-
-- Claude Code / Cursor: hook-capable observation
-- Codex: explicit/manual capture by default
-
-Generated skill artifacts should be treated as a separate concern from instincts.
-
-- candidate/generated skills belong under `<data>/generated/skills/learned/`
-- live/promoted skills belong under the tool-facing skill surface such as `<config>/skills/`
-- do not treat MDT-owned generated candidates as already-promoted live skills
+v2 introduced instinct-sized learning units, confidence-weighted evidence,
+observer-assisted analysis, and project-aware storage and evolution paths.
 
 ## The Instinct Model
 
@@ -120,14 +90,10 @@ Properties:
 
 ## Shared Learning Flow
 
-The storage and instinct model are shared even though capture differs by tool.
-
 ```text
 Session activity
       |
-      | Capture path depends on tool:
-      | - Codex: explicit/manual capture
-      | - Claude/Cursor: hook-capable capture
+      | explicit/manual capture
       v
 <project-id>/observations.jsonl
       |
@@ -161,13 +127,11 @@ Project IDs use the current runtime contract:
 - **Git repo, no remote** → `<basename>-<md5(path)>` — path-anchored local fallback
 - **No git project** → `<basename>-<md5(path)>` using the current cwd instead of collapsing into a global project
 
-Only git is currently detected; other VCS systems are in the backlog. A registry file at `<data>/homunculus/projects.json` maps IDs to absolute paths, remotes, and human-readable names, while each project stores its own state under `<data>/homunculus/<project-id>/`.
+Only git is currently detected; other VCS systems are in the backlog. A registry file at `~/.codex/mdt/homunculus/projects.json` maps IDs to absolute paths, remotes, and human-readable names.
 
 ## Quick Start
 
 ### Codex Explicit Workflow
-
-Codex does not rely on Claude/Cursor hook capture in this repo.
 
 Use the explicit `mdt` workflow:
 
@@ -209,61 +173,7 @@ Codex baseline:
 - sparse, explicit capture
 - explicit/manual analysis
 - explicit weekly retrospectives
-- optional external observer for background analysis only
-
-### Claude Code / Cursor Hook Setup
-
-This section applies only to Claude Code and Cursor.
-
-Add hook wiring to the relevant tool config. For Claude Code this is typically `~/.claude/settings.json`.
-
-The hook surface lives in `continuous-learning-automatic`, not in this manual skill.
-
-If installed as a plugin:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "node \"${MDT_ROOT}/skills/continuous-learning-automatic/hooks/observe.js\" pre"
-      }]
-    }],
-    "PostToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "node \"${MDT_ROOT}/skills/continuous-learning-automatic/hooks/observe.js\" post"
-      }]
-    }]
-  }
-}
-```
-
-If installed manually to `<config>/skills` where `<config>` is the tool config dir:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "node <config>/skills/continuous-learning-automatic/hooks/observe.js pre"
-      }]
-    }],
-    "PostToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "node <config>/skills/continuous-learning-automatic/hooks/observe.js post"
-      }]
-    }]
-  }
-}
-```
+- optional external observer for background analysis only (disabled by default)
 
 ## Commands And Workflows
 
@@ -277,14 +187,33 @@ The instinct workflows are:
 - `projects`
 - `weekly`
 
-Tool surface differs:
+For Codex, these are explicit `mdt` workflow entrypoints.
 
-- Codex: explicit script/workflow entrypoints
-- Claude/Cursor: tool commands plus hook-captured observations where supported
+## `mdt learning` CLI Reference
+
+| Command | Description |
+|---------|-------------|
+| `mdt learning status` | Show current learning state, observation count, instinct count |
+| `mdt learning capture` | Capture a session summary (reads from stdin) |
+| `mdt learning analyze` | Run explicit analysis pass on accumulated observations |
+| `mdt learning retrospective weekly --week YYYY-Www` | Generate a weekly retrospective |
+| `mdt learning observer run` | Start the optional background observer (opt-in) |
+| `mdt learning observer stop` | Stop the background observer |
+
+## Instinct Commands
+
+| Command | Description |
+|---------|-------------|
+| `mdt instinct status` | Show all instincts with confidence scores |
+| `mdt instinct evolve` | Evolve high-confidence instincts into skills/commands/agents |
+| `mdt instinct export` | Export instincts to a portable format |
+| `mdt instinct import` | Import instincts from a file or Skill Creator |
+| `mdt instinct promote` | Promote project-scoped instincts to global scope |
+| `mdt instinct projects` | List all known projects with instinct counts |
 
 ## Configuration
 
-Edit `config.json` to control the optional observer:
+Edit `config.json` to control the optional observer. The default has the observer **disabled** — this is the recommended baseline for Codex:
 
 ```json
 {
@@ -306,37 +235,31 @@ Edit `config.json` to control the optional observer:
 }
 ```
 
+To enable the observer, set `"enabled": true` in `config.json`, or run `mdt learning observer run` directly.
+
 | Key | Default | Description |
 |-----|---------|-------------|
 | `observer.enabled` | `false` | Enable the background observer agent |
 | `observer.run_interval_minutes` | `5` | How often the observer analyzes observations |
 | `observer.min_observations_to_analyze` | `20` | Minimum observations before analysis runs |
 | `observer.tool` | `null` | Force a specific native observer runner where supported |
-| `observer.models.claude` | `haiku` | Claude observer model preference |
-| `observer.models.cursor` | `auto` | Cursor observer model preference |
 | `observer.commands.*` | tool default | Override the native CLI command for supported observer runners |
 
 Notes:
 
 - all scripts are Node.js `.js`
-- Claude setups must not depend on Cursor
-- Cursor setups must not depend on Claude
 - Codex observer support is a separate opt-in layer, not the baseline
+- the observer reads and writes under `~/.codex/mdt/`
 
 ## Generated Candidates vs Live Skills
 
 Continuous learning can eventually produce skill-like artifacts, but they are not all equal.
 
-- `homunculus/` stores instincts, evidence, evolution outputs, and project-scoped learning state
-- `<data>/generated/skills/learned/` is MDT-owned staging for candidate/generated skills
-- `<config>/skills/` is the live tool-facing skill directory
+- `~/.codex/mdt/homunculus/` stores instincts, evidence, evolution outputs, and project-scoped learning state
+- `~/.codex/mdt/generated/skills/learned/` is MDT-owned staging for candidate/generated skills
+- `~/.codex/skills/` is the live tool-facing skill directory
 
 Promotion/materialization is the boundary between MDT-owned state and the live tool-facing skill surface. Until a generated skill is explicitly approved and materialized, it should stay under MDT-owned state.
-
-Codex example:
-
-- candidate/generated skills: `~/.codex/mdt/generated/skills/learned/`
-- live/promoted skills: `~/.codex/skills/`
 
 ## Weekly Retrospectives
 
@@ -358,32 +281,38 @@ The goal is not to log more activity. The goal is to highlight:
 ## File Structure
 
 ```text
-<data>/
-+-- homunculus/
-|   +-- identity.json
-|   +-- projects.json
-|   +-- observations.jsonl
-|   +-- instincts/
-|   |   +-- personal/
-|   |   +-- inherited/
-|   +-- evolved/
-|   |   +-- agents/
-|   |   +-- skills/
-|   |   +-- commands/
-|   +-- projects/
-|   |   +-- <project-id>/
-|   |       +-- observations.jsonl
-|   |       +-- observations.archive/
-|   |       +-- instincts/
-|   |       |   +-- personal/
-|   |       |   +-- inherited/
-|   |       +-- evolved/
-|   |           +-- skills/
-|   |           +-- commands/
-|   |           +-- agents/
-+-- generated/
-    +-- skills/
-        +-- learned/
+~/.codex/
++-- AGENTS.md
++-- config.toml
++-- rules/
++-- skills/                 # live/promoted tool-facing skills
++-- mdt/
+    +-- scripts/
+    +-- homunculus/
+    |   +-- identity.json
+    |   +-- projects.json
+    |   +-- observations.jsonl
+    |   +-- instincts/
+    |   |   +-- personal/
+    |   |   +-- inherited/
+    |   +-- evolved/
+    |   |   +-- agents/
+    |   |   +-- skills/
+    |   |   +-- commands/
+    |   +-- projects/
+    |   |   +-- <project-id>/
+    |   |       +-- observations.jsonl
+    |   |       +-- observations.archive/
+    |   |       +-- instincts/
+    |   |       |   +-- personal/
+    |   |       |   +-- inherited/
+    |   |       +-- evolved/
+    |   |           +-- skills/
+    |   |           +-- commands/
+    |   |           +-- agents/
+    +-- generated/
+        +-- skills/
+            +-- learned/   # candidate/generated skills awaiting promotion
 ```
 
 ## Scope Decision Guide
@@ -406,11 +335,9 @@ Project instincts can be promoted to global scope when the same pattern is seen 
 Example:
 
 ```bash
-node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" promote
-node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" promote --dry-run
+node ~/.codex/skills/ai-learning/scripts/instinct-cli.js promote
+node ~/.codex/skills/ai-learning/scripts/instinct-cli.js promote --dry-run
 ```
-
-For manual installs, replace `<config>` with your MDT config directory.
 
 ## Confidence Scoring
 
@@ -423,21 +350,17 @@ For manual installs, replace `<config>` with your MDT config directory.
 
 Confidence increases with repeated consistent evidence and decreases with corrections, contradiction, or lack of reinforcement.
 
-## Hook-Capable vs Manual Capture
+## Manual Capture Contract
 
-Claude Code and Cursor can use hooks for deterministic observation capture.
+Codex is intentionally explicit and manual:
 
-Codex is intentionally different:
-
-- no hook-style automatic capture claim
+- no hook-style automatic capture
 - manual capture and manual analysis are the baseline
-- optional observer is analysis-only for Codex
+- optional observer is analysis-only for Codex, and is OFF by default
 
 ## Backward Compatibility
 
-v2.1 remains compatible with existing instinct storage and evolved assets. Legacy hook-oriented flows remain relevant for Claude Code and Cursor, but they are not the Codex baseline in this repo.
-
-Generated candidate skills should now be treated as MDT-owned staging artifacts under `<data>/generated/skills/learned/`. Live tool-facing skills should remain in `<config>/skills/` and only receive explicitly promoted/materialized outputs.
+v2.1 remains compatible with existing instinct storage and evolved assets. Generated candidate skills should be treated as MDT-owned staging artifacts under `~/.codex/mdt/generated/skills/learned/`. Live tool-facing skills should remain in `~/.codex/skills/` and only receive explicitly promoted/materialized outputs.
 
 ## Privacy
 

@@ -12,7 +12,7 @@ Use this page for quick Claude Code sanity checks and deeper runtime verificatio
 
 1. Start from a clean repo checkout or remove the existing MDT files under `~/.claude/`.
 2. Install MDT into Claude Code with `mdt install typescript continuous-learning`.
-3. Confirm that `~/.claude/settings.json`, `~/.claude/commands/smoke.md`, and `~/.claude/skills/continuous-learning-manual/` exist.
+3. Confirm that `~/.claude/settings.json`, `~/.claude/commands/smoke.md`, and `~/.claude/skills/ai-learning/` exist.
 
 ## Quick Smoke
 

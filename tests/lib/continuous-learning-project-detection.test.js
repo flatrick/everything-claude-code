@@ -39,7 +39,7 @@ function runTests() {
   if (test('private project detection keeps installed config-root inference', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'codex',
-      files: ['skills/continuous-learning-manual/scripts/detect-project.js']
+      files: ['skills/ai-learning/scripts/detect-project.js']
     });
     try {
       const runtime = createProjectDetection({ entrypointDir: path.join(layout.skillDir, 'scripts') });
@@ -54,7 +54,7 @@ function runTests() {
     try {
       const workDir = path.join(tempDir, 'scripts');
       const configDir = path.join(tempDir, '.codex');
-      const runtime = createProjectDetection({ entrypointDir: path.join(__dirname, '..', '..', 'skills', 'continuous-learning-manual', 'scripts') });
+      const runtime = createProjectDetection({ entrypointDir: path.join(__dirname, '..', '..', 'skills', 'ai-learning', 'scripts') });
       const project = withEnv({
         CONFIG_DIR: configDir,
         DATA_DIR: configDir,
@@ -84,7 +84,7 @@ function runTests() {
     try {
       const configDir = path.join(tempDir, '.codex');
       const runtime = createProjectDetection({
-        entrypointDir: path.join(__dirname, '..', '..', 'skills', 'continuous-learning-manual', 'scripts'),
+        entrypointDir: path.join(__dirname, '..', '..', 'skills', 'ai-learning', 'scripts'),
         detectEnv: {
           getWorkspaceInfo: () => ({
             path: '/mnt/c/src/repository',

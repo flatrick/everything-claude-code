@@ -7,14 +7,14 @@ command: true
 
 # Projects Command
 
-List project registry entries and per-project instinct/observation counts for continuous-learning-manual.
+List project registry entries and per-project instinct/observation counts for ai-learning.
 
 ## Implementation
 
 Run the globally installed Cursor instinct CLI:
 
 ```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" projects
+node "<config>/skills/ai-learning/scripts/instinct-cli.js" projects
 ```
 
 Default `<config>` is `~/.cursor`. If your Cursor config root is overridden, use that instead.

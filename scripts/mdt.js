@@ -278,11 +278,11 @@ function resolveLearningScriptsRoot(options = {}) {
     entrypointDir: REPO_ROOT,
     configDir: options.configRoot || installedConfigDir || detectEnv.getConfigDir(),
     repoRoot: REPO_ROOT,
-    skillName: 'continuous-learning-manual'
+    skillName: 'ai-learning'
   });
 
   if (!skillRoot) {
-    throw new Error('Unable to locate continuous-learning-manual skill');
+    throw new Error('Unable to locate ai-learning skill');
   }
 
   return path.join(skillRoot, 'scripts');

@@ -1,5 +1,5 @@
 /**
- * Tests for continuous-learning-manual observer runner selection.
+ * Tests for ai-learning observer runner selection.
  */
 
 const assert = require('assert');
@@ -24,7 +24,7 @@ const {
   resolveWindowsSpawnInvocation,
   resolveObserverStateFile,
   shouldResolveWindowsSpawnCommand
-} = require('../../skills/continuous-learning-manual/agents/start-observer.js');
+} = require('../../skills/ai-learning/agents/start-observer.js');
 
 function runTests() {
   console.log('\n=== Testing continuous-learning observer ===\n');
@@ -64,7 +64,7 @@ function runTests() {
   if (test('inferInstalledConfigDir detects installed project-local Cursor config roots', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'cursor',
-      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+      files: ['skills/ai-learning/agents/start-observer.js']
     });
     try {
       const skillDir = layout.skillDir;
@@ -80,7 +80,7 @@ function runTests() {
   if (test('inferInstalledConfigDir detects installed project-local Codex config roots', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'codex',
-      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+      files: ['skills/ai-learning/agents/start-observer.js']
     });
     try {
       const skillDir = layout.skillDir;
@@ -96,7 +96,7 @@ function runTests() {
   if (test('buildObserverEnv anchors direct launches to installed Cursor config roots', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'cursor',
-      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+      files: ['skills/ai-learning/agents/start-observer.js']
     });
     try {
       const env = buildObserverEnv({}, { skillDir: layout.skillDir });
@@ -122,7 +122,7 @@ function runTests() {
     );
     const layout = createInstalledContinuousLearningLayout({
       tool: 'cursor',
-      files: ['skills/continuous-learning-manual/agents/start-observer.js']
+      files: ['skills/ai-learning/agents/start-observer.js']
     });
     try {
       assert.strictEqual(
@@ -274,9 +274,9 @@ function runTests() {
       const observationsFile = path.join(projectDir, 'observations.jsonl');
       fs.writeFileSync(observationsFile, '{"event":"tool_complete"}\n', 'utf8');
       const runtime = createObserverRuntime({
-        entrypointDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'agents'),
-        skillDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual'),
-        configPath: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'config.json'),
+        entrypointDir: path.join(process.cwd(), 'skills', 'ai-learning', 'agents'),
+        skillDir: path.join(process.cwd(), 'skills', 'ai-learning'),
+        configPath: path.join(process.cwd(), 'skills', 'ai-learning', 'config.json'),
         detectProject: () => ({
           id: 'demo-project',
           name: 'demo-project',
@@ -309,7 +309,7 @@ function runTests() {
   if (test('start writes JSON lease state and reports child PID', () => {
     const tempDir = createTestDir('observer-start-json-');
     try {
-      const skillDir = path.join(process.cwd(), 'skills', 'continuous-learning-manual');
+      const skillDir = path.join(process.cwd(), 'skills', 'ai-learning');
       const configPath = path.join(tempDir, 'config.json');
       fs.writeFileSync(configPath, JSON.stringify({
         observer: {
@@ -374,7 +374,7 @@ function runTests() {
   if (test('stop removes lease and reports clean shutdown path', () => {
     const tempDir = createTestDir('observer-stop-json-');
     try {
-      const skillDir = path.join(process.cwd(), 'skills', 'continuous-learning-manual');
+      const skillDir = path.join(process.cwd(), 'skills', 'ai-learning');
       const configPath = path.join(tempDir, 'config.json');
       fs.writeFileSync(configPath, JSON.stringify({ observer: { enabled: true } }), 'utf8');
       const projectDir = path.join(tempDir, 'project');
@@ -453,9 +453,9 @@ function runTests() {
       }), 'utf8');
 
       const runtime = createObserverRuntime({
-        entrypointDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'agents'),
-        skillDir: path.join(process.cwd(), 'skills', 'continuous-learning-manual'),
-        configPath: path.join(process.cwd(), 'skills', 'continuous-learning-manual', 'config.json'),
+        entrypointDir: path.join(process.cwd(), 'skills', 'ai-learning', 'agents'),
+        skillDir: path.join(process.cwd(), 'skills', 'ai-learning'),
+        configPath: path.join(process.cwd(), 'skills', 'ai-learning', 'config.json'),
         detectProject: () => ({})
       });
 
@@ -505,7 +505,7 @@ function runTests() {
   if (test('start removes lease when detached child dies before startup confirmation', () => {
     const tempDir = createTestDir('observer-start-failed-');
     try {
-      const skillDir = path.join(process.cwd(), 'skills', 'continuous-learning-manual');
+      const skillDir = path.join(process.cwd(), 'skills', 'ai-learning');
       const configPath = path.join(tempDir, 'config.json');
       fs.writeFileSync(configPath, JSON.stringify({ observer: { enabled: true } }), 'utf8');
       const projectDir = path.join(tempDir, 'project');

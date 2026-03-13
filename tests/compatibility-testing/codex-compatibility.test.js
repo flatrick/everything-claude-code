@@ -62,7 +62,7 @@ function runTests() {
       ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'codex-observer.js'));
       ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'lib', 'detached-process-lifecycle.js'));
       ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'lib', 'continuous-learning', 'observer-runtime.js'));
-      ensureFile(path.join(fixture.overrideRoot, 'skills', 'continuous-learning-manual', 'agents', 'start-observer.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'skills', 'ai-learning', 'agents', 'start-observer.js'));
     } finally {
       cleanupInstall(fixture);
     }

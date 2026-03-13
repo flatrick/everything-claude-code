@@ -14,13 +14,13 @@ Shows learned instincts for the current project plus global instincts, grouped b
 Run the instinct CLI using `MDT_ROOT` when available:
 
 ```bash
-node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" status
+node "${MDT_ROOT}/skills/ai-learning/scripts/instinct-cli.js" status
 ```
 
 For manual installs, replace `<config>` with your MDT config directory (for example `~/.claude` or `~/.cursor`):
 
 ```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" status
+node "<config>/skills/ai-learning/scripts/instinct-cli.js" status
 ```
 
 ## Usage

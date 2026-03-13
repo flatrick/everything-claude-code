@@ -7,20 +7,20 @@ command: true
 
 # Promote Command
 
-Promote instincts from project scope to global scope in continuous-learning-manual.
+Promote instincts from project scope to global scope in ai-learning.
 
 ## Implementation
 
 Run the instinct CLI using `MDT_ROOT` when available:
 
 ```bash
-node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" promote [instinct-id] [--force] [--dry-run]
+node "${MDT_ROOT}/skills/ai-learning/scripts/instinct-cli.js" promote [instinct-id] [--force] [--dry-run]
 ```
 
 For manual installs, replace `<config>` with your MDT config directory (for example `~/.claude`):
 
 ```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" promote [instinct-id] [--force] [--dry-run]
+node "<config>/skills/ai-learning/scripts/instinct-cli.js" promote [instinct-id] [--force] [--dry-run]
 ```
 
 ## Usage

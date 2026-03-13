@@ -13,12 +13,12 @@ const { processCursorAfterFileEdit } = require('../../hooks/cursor/scripts/after
 const { processCursorAfterShellExecution } = require('../../hooks/cursor/scripts/after-shell-execution');
 const { processCursorSessionEnd } = require('../../hooks/cursor/scripts/session-end');
 const { processCursorStop } = require('../../hooks/cursor/scripts/stop');
-const { detectProject } = require('../../skills/continuous-learning-manual/scripts/detect-project.js');
+const { detectProject } = require('../../skills/ai-learning/scripts/detect-project.js');
 
 function createCursorHookRunner() {
   return (command, args, options = {}) => {
     const scriptPath = Array.isArray(args) ? args[0] : '';
-    if (scriptPath && scriptPath.endsWith(path.join('continuous-learning-automatic', 'hooks', 'observe.js'))) {
+    if (scriptPath && scriptPath.endsWith(path.join('ai-learning', 'hooks', 'observe.js'))) {
       withEnv(options.env || {}, () => {
         const payload = JSON.parse(String(options.input || '{}'));
         if (payload.cwd) {

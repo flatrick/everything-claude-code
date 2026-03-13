@@ -78,7 +78,7 @@ function applyInstalledToolEnv(env, configDir) {
 }
 
 function getSkillRootCandidates(options) {
-  const skillName = options.skillName || 'continuous-learning-manual';
+  const skillName = options.skillName || 'ai-learning';
   const entrypointDir = path.resolve(options.entrypointDir || process.cwd());
   const explicitSkillDir = options.skillDir ? path.resolve(options.skillDir) : null;
   const configDir = options.configDir ? path.resolve(options.configDir) : inferInstalledConfigDir(entrypointDir);

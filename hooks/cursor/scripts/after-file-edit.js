@@ -4,7 +4,7 @@ const { buildHookEnv, getPluginRoot, readStdin, runExistingHook, transformToClau
 
 function getObserveScriptPath(env = process.env) {
   const hookEnv = buildHookEnv(env);
-  return path.join(hookEnv.MDT_ROOT || getPluginRoot(), 'skills', 'continuous-learning-automatic', 'hooks', 'observe.js');
+  return path.join(hookEnv.MDT_ROOT || getPluginRoot(), 'skills', 'ai-learning', 'hooks', 'observe.js');
 }
 
 async function processCursorAfterFileEdit(raw, options = {}) {

@@ -100,4 +100,4 @@ Understanding what persists helps you compact with confidence:
 
 - [The Longform Guide](https://x.com/affaanmustafa/status/2014040193557471352) — Token optimization section
 - Memory persistence hooks — For state that survives compaction
-- `continuous-learning-manual` skill — Extracts patterns from observed tool activity over time
+- `ai-learning` skill — Extracts patterns from observed tool activity over time

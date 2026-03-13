@@ -15,7 +15,7 @@ const TOOL_PATTERNS = {
 };
 const ALLOWLIST = new Set();
 const CODEX_CONTINUOUS_LEARNING_DOC =
-  'codex-template/skills/continuous-learning-manual/SKILL.md';
+  'codex-template/skills/ai-learning/SKILL.md';
 
 function normalizeSlashes(value) {
   return value.replace(/\\/g, '/');
@@ -103,7 +103,7 @@ function validateCodexContinuousLearningDoc(content, relativePath, io) {
       content,
       relativePath,
       pattern,
-      (_matchText, line) => `ERROR: ${relativePath}:${line} - codex-template continuous-learning-manual must use concrete Codex paths, not '${label}'`,
+      (_matchText, line) => `ERROR: ${relativePath}:${line} - codex-template ai-learning must use concrete Codex paths, not '${label}'`,
       io
     ) || hasErrors;
   }

@@ -7,7 +7,7 @@ const {
   detectProject,
   findProjectRootFromFilesystem,
   inferInstalledConfigDir
-} = require('../../skills/continuous-learning-manual/scripts/detect-project.js');
+} = require('../../skills/ai-learning/scripts/detect-project.js');
 
 function withEnv(overrides, fn) {
   const previous = {};
@@ -42,7 +42,7 @@ function runTests() {
   if (test('inferInstalledConfigDir detects installed Codex config roots', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'codex',
-      files: ['skills/continuous-learning-manual/scripts/detect-project.js']
+      files: ['skills/ai-learning/scripts/detect-project.js']
     });
     try {
       const scriptDir = path.join(layout.skillDir, 'scripts');

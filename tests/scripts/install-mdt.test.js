@@ -252,8 +252,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'WORKSPACE-PERMISSIONS-PROMPT.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'documentation-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'frontend-slides', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'continuous-learning-manual', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'continuous-learning-automatic', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'ai-learning', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'plan.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'install-rules.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'instinct-status.md')));
@@ -312,10 +311,10 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(codexRoot, 'rules', 'common-coding-style.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'coding-standards', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'documentation-steward', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'continuous-learning-manual', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'continuous-learning-manual', 'scripts', 'retrospect-week.js')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'continuous-learning-manual', 'agents', 'openai.yaml')));
-          assert.ok(!fs.existsSync(path.join(codexRoot, 'skills', 'continuous-learning-automatic', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'scripts', 'retrospect-week.js')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'agents', 'openai.yaml')));
+          assert.ok(!fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'hooks')));
           assert.ok(!fs.existsSync(path.join(codexRoot, 'skills', 'python-patterns', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'lib', 'detect-env.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'mdt.js')));
@@ -431,7 +430,7 @@ function runTests() {
           assertSuccess(result, 'codex observer install');
 
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'codex-observer.js')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'continuous-learning-manual', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'SKILL.md')));
         } finally {
           cleanupTestDir(tmpHome);
         }

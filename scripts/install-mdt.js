@@ -1358,6 +1358,13 @@ function installCodexSkills(selectedPackages, destDir, devMode = false) {
   if (installMergedSkillDirectories(SHARED_SKILLS_SRC, CODEX_SKILLS_SRC, skillsDest, codexSkillNames, 'Codex tool skill') > 0) {
     console.log('Installing Codex tool skills -> ' + skillsDest + '/');
   }
+  // ai-learning: the shared skill includes hooks/ for Claude/Cursor, but the
+  // codex-template overlay does not provide hooks/ because Codex has no hook runtime.
+  // The merge copies the base hooks/ first; remove it from the Codex install.
+  const aiLearningHooksInCodex = path.join(skillsDest, 'ai-learning', 'hooks');
+  if (fs.existsSync(aiLearningHooksInCodex)) {
+    fs.rmSync(aiLearningHooksInCodex, { recursive: true });
+  }
 
   if (devMode) {
     if (installMergedSkillDirectories(SHARED_SKILLS_SRC, CODEX_SKILLS_SRC, skillsDest, CODEX_DEV_SKILL_NAMES, 'Codex dev skill') > 0) {

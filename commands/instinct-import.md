@@ -12,13 +12,13 @@ command: true
 Run the instinct CLI using `MDT_ROOT` when available:
 
 ```bash
-node "${MDT_ROOT}/skills/continuous-learning-manual/scripts/instinct-cli.js" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
+node "${MDT_ROOT}/skills/ai-learning/scripts/instinct-cli.js" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
 ```
 
 For manual installs, replace `<config>` with your MDT config directory (for example `~/.claude` or `~/.cursor`):
 
 ```bash
-node "<config>/skills/continuous-learning-manual/scripts/instinct-cli.js" import <file-or-url>
+node "<config>/skills/ai-learning/scripts/instinct-cli.js" import <file-or-url>
 ```
 
 Import instincts from local file paths or HTTP(S) URLs.

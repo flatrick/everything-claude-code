@@ -20,7 +20,7 @@ function runTests() {
   if (test('private observer runtime infers installed Cursor config roots', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'cursor',
-      files: ['skills/continuous-learning-manual/config.json']
+      files: ['skills/ai-learning/config.json']
     });
     try {
       const runtime = createObserverRuntime({
@@ -40,7 +40,7 @@ function runTests() {
   if (test('private observer runtime analyzes observations with the configured tool', () => {
     const layout = createInstalledContinuousLearningLayout({
       tool: 'cursor',
-      files: ['skills/continuous-learning-manual/config.json']
+      files: ['skills/ai-learning/config.json']
     });
     try {
       const projectDir = path.join(layout.tempDir, 'project');
