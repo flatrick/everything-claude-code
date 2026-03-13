@@ -37,13 +37,13 @@ function runTests() {
     });
 
     try {
-      ensureFile(path.join(fixture.overrideRoot, 'commands', 'smoke.md'));
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-claude-workflows.js'));
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-tool-setups.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'commands', 'mdt-dev-smoke.md'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-claude-workflows.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js'));
 
       const smokeSetup = runInstalledMdt(
         fixture,
-        ['smoke', 'tool-setups', '--tool', 'claude'],
+        ['dev', 'smoke', 'tool-setups', '--tool', 'claude'],
         {
           cwd: repoRoot,
           env: prependPath(shimBin, fixture.env)
@@ -56,15 +56,15 @@ function runTests() {
 
       const workflowSmoke = runInstalledMdt(
         fixture,
-        ['smoke', 'workflows', '--tool', 'claude'],
+        ['dev', 'smoke', 'workflows', '--tool', 'claude'],
         {
           cwd: repoRoot,
           env: prependPath(shimBin, fixture.env)
         }
       );
       assert.strictEqual(workflowSmoke.status, 0, `${workflowSmoke.stdout}\n${workflowSmoke.stderr}`);
-      assert.ok(workflowSmoke.stdout.includes('Claude workflow smoke (installed-target mode):'));
-      assert.ok(workflowSmoke.stdout.includes('smoke: PASS'));
+      assert.ok(workflowSmoke.stdout.includes('Claude workflow dev smoke (installed-target mode):'));
+      assert.ok(workflowSmoke.stdout.includes('mdt-dev-smoke: PASS'));
       assert.ok(workflowSmoke.stdout.includes('verify: PASS'));
     } finally {
       require('../helpers/test-runner').cleanupTestDir(shimBin);

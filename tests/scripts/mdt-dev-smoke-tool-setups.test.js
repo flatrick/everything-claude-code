@@ -1,9 +1,9 @@
 const assert = require('assert');
 const { test } = require('../helpers/test-runner');
-const { resolveWindowsShim, runProbe, smokeToolSetups, summarizeProbeDetail } = require('../../scripts/smoke-tool-setups');
+const { resolveWindowsShim, runProbe, smokeToolSetups, summarizeProbeDetail } = require('../../scripts/mdt-dev-smoke-tool-setups');
 
 function runTests() {
-  console.log('\n=== Testing smoke-tool-setups.js ===\n');
+  console.log('\n=== Testing mdt-dev-smoke-tool-setups.js ===\n');
 
   let passed = 0;
   let failed = 0;

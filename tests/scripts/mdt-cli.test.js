@@ -4,6 +4,7 @@ const Module = require('module');
 const os = require('os');
 const path = require('path');
 const { test } = require('../helpers/test-runner');
+const { probeNodeSubprocess } = require('../helpers/subprocess-capability');
 const {
   buildCiCommand,
   main,
@@ -67,15 +68,15 @@ function runTests() {
     assert.ok(result.stderr.includes('Unknown option: --repo'));
   })) passed++; else failed++;
 
-  if (test('smoke workflows cursor dispatch succeeds on the real repository', () => {
-    const result = runMain(['smoke', 'workflows', '--tool', 'cursor']);
+  if (test('dev smoke workflows cursor dispatch succeeds on the real repository', () => {
+    const result = runMain(['dev', 'smoke', 'workflows', '--tool', 'cursor']);
     assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
-    assert.ok(result.stdout.includes('Cursor workflow smoke'));
+    assert.ok(result.stdout.includes('Cursor workflow dev smoke'));
   })) passed++; else failed++;
 
   if (test('emits a WSL performance warning for Windows-mounted workspaces', () => {
     const result = runMain(
-      ['smoke', 'tool-setups', '--cwd', '/mnt/c/src/repository'],
+      ['dev', 'smoke', 'tool-setups', '--cwd', '/mnt/c/src/repository'],
       {
         detectEnv: {
           getWorkspaceInfo: () => ({
@@ -94,7 +95,7 @@ function runTests() {
 
   if (test('does not emit a WSL performance warning for Linux-native workspaces', () => {
     const result = runMain(
-      ['smoke', 'tool-setups', '--cwd', '/home/wsl-user/src/repository'],
+      ['dev', 'smoke', 'tool-setups', '--cwd', '/home/wsl-user/src/repository'],
       {
         detectEnv: {
           getWorkspaceInfo: () => ({
@@ -110,22 +111,22 @@ function runTests() {
     assert.ok(!result.stderr.includes('WSL detected and workspace is on a Windows-mounted filesystem'));
   })) passed++; else failed++;
 
-  if (test('smoke workflows codex supports umbrella json output', () => {
-    const result = runMain(['smoke', 'workflows', '--tool', 'codex', '--format', 'json']);
+  if (test('dev smoke workflows codex supports umbrella json output', () => {
+    const result = runMain(['dev', 'smoke', 'workflows', '--tool', 'codex', '--format', 'json']);
     assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
     const payload = JSON.parse(result.stdout);
     assert.strictEqual(payload.ok, true);
-    assert.strictEqual(payload.command, 'smoke workflows codex');
-    assert.ok(payload.data.stdout.includes('"ok": true') || payload.data.stdout.includes('Codex workflow smoke'));
+    assert.strictEqual(payload.command, 'dev smoke workflows codex');
+    assert.ok(payload.data.stdout.includes('"ok": true') || payload.data.stdout.includes('Codex workflow dev smoke'));
   })) passed++; else failed++;
 
-  if (test('smoke tool-setups forwards an optional tool filter to the smoke runner', () => {
+  if (test('dev smoke tool-setups forwards an optional tool filter to the smoke runner', () => {
     const originalLoad = Module._load;
     let receivedOptions = null;
 
     try {
       Module._load = function patchedLoad(request, parent, isMain) {
-        if (parent && parent.filename === require.resolve('../../scripts/mdt') && request === './smoke-tool-setups') {
+        if (parent && parent.filename === require.resolve('../../scripts/mdt') && request === './mdt-dev-smoke-tool-setups') {
           return {
             smokeToolSetups: (options) => {
               receivedOptions = options;
@@ -137,7 +138,7 @@ function runTests() {
         return originalLoad(request, parent, isMain);
       };
 
-      const result = runMain(['smoke', 'tool-setups', '--tool', 'codex']);
+      const result = runMain(['dev', 'smoke', 'tool-setups', '--tool', 'codex']);
       assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
       assert.ok(receivedOptions, 'Expected smokeToolSetups to be invoked');
       assert.strictEqual(receivedOptions.tool, 'codex');
@@ -147,39 +148,39 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  if (test('smoke workflows lazily loads only the selected workflow module', () => {
+  if (test('dev smoke workflows lazily loads only the selected workflow module', () => {
     const originalLoad = Module._load;
 
     try {
       Module._load = function patchedLoad(request, parent, isMain) {
         if (parent && parent.filename === require.resolve('../../scripts/mdt')) {
-          if (request === './smoke-claude-workflows' || request === './smoke-cursor-workflows') {
+          if (request === './mdt-dev-smoke-claude-workflows' || request === './mdt-dev-smoke-cursor-workflows') {
             throw new Error(`Unexpected eager require: ${request}`);
           }
         }
         return originalLoad(request, parent, isMain);
       };
 
-      const result = runMain(['smoke', 'workflows', '--tool', 'codex']);
+      const result = runMain(['dev', 'smoke', 'workflows', '--tool', 'codex']);
       assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
-      assert.ok(result.stdout.includes('Codex workflow smoke'));
+      assert.ok(result.stdout.includes('Codex workflow dev smoke'));
     } finally {
       Module._load = originalLoad;
     }
   })) passed++; else failed++;
 
-  if (test('smoke workflows surfaces the selected module load failure clearly', () => {
+  if (test('dev smoke workflows surfaces the selected module load failure clearly', () => {
     const originalLoad = Module._load;
 
     try {
       Module._load = function patchedLoad(request, parent, isMain) {
-        if (parent && parent.filename === require.resolve('../../scripts/mdt') && request === './smoke-codex-workflows') {
-          throw new Error("Cannot find module './smoke-codex-workflows'");
+        if (parent && parent.filename === require.resolve('../../scripts/mdt') && request === './mdt-dev-smoke-codex-workflows') {
+          throw new Error("Cannot find module './mdt-dev-smoke-codex-workflows'");
         }
         return originalLoad(request, parent, isMain);
       };
 
-      const result = runMain(['smoke', 'workflows', '--tool', 'codex']);
+      const result = runMain(['dev', 'smoke', 'workflows', '--tool', 'codex']);
       assert.strictEqual(result.exitCode, 1);
       assert.ok(result.stderr.includes('smoke-codex-workflows'));
     } finally {
@@ -212,6 +213,11 @@ function runTests() {
   })) passed++; else failed++;
 
   if (test('learning status defaults to the current workspace instead of the MDT install root', () => {
+    const probe = probeNodeSubprocess();
+    if (!probe.available) {
+      return;
+    }
+
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdt-cli-learning-cwd-'));
     const workspaceDir = path.join(tempDir, 'workspace');
     const codexRoot = path.join(tempDir, '.codex');

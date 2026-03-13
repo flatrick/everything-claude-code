@@ -29,13 +29,13 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  if (test('installed Cursor dev surface includes smoke and install-rules commands', () => {
+  if (test('installed Cursor dev surface includes mdt-dev-smoke and install-rules commands', () => {
     const fixture = installTarget('cursor', ['--dev', 'typescript', 'continuous-learning']);
 
     try {
-      ensureFile(path.join(fixture.overrideRoot, 'commands', 'smoke.md'));
+      ensureFile(path.join(fixture.overrideRoot, 'commands', 'mdt-dev-smoke.md'));
       ensureFile(path.join(fixture.overrideRoot, 'commands', 'install-rules.md'));
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-tool-setups.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js'));
       ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'materialize-mdt-local.js'));
     } finally {
       cleanupInstall(fixture);
@@ -54,12 +54,12 @@ function runTests() {
     });
 
     try {
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-tool-setups.js'));
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-cursor-workflows.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-cursor-workflows.js'));
 
       const smokeSetup = runInstalledMdt(
         fixture,
-        ['smoke', 'tool-setups', '--tool', 'cursor'],
+        ['dev', 'smoke', 'tool-setups', '--tool', 'cursor'],
         {
           cwd: repoRoot,
           env: prependPath(shimBin, fixture.env)
@@ -72,15 +72,15 @@ function runTests() {
 
       const workflowSmoke = runInstalledMdt(
         fixture,
-        ['smoke', 'workflows', '--tool', 'cursor'],
+        ['dev', 'smoke', 'workflows', '--tool', 'cursor'],
         {
           cwd: repoRoot,
           env: prependPath(shimBin, fixture.env)
         }
       );
       assert.strictEqual(workflowSmoke.status, 0, `${workflowSmoke.stdout}\n${workflowSmoke.stderr}`);
-      assert.ok(workflowSmoke.stdout.includes('Cursor workflow smoke (installed-target mode):'));
-      assert.ok(workflowSmoke.stdout.includes('smoke: PASS'));
+      assert.ok(workflowSmoke.stdout.includes('Cursor workflow dev smoke (installed-target mode):'));
+      assert.ok(workflowSmoke.stdout.includes('mdt-dev-smoke: PASS'));
     } finally {
       cleanupTestDir(shimBin);
       cleanupInstall(fixture);

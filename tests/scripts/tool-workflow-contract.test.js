@@ -38,11 +38,11 @@ function runTests() {
     assert.ok(TOOL_WORKFLOW_CONTRACT.workflows.length >= 7);
     assert.deepStrictEqual(TOOL_ORDER, ['claude', 'cursor', 'codex']);
 
-    const smokeWorkflow = TOOL_WORKFLOW_CONTRACT.workflows.find(workflow => workflow.id === 'smoke');
-    assert.ok(smokeWorkflow, 'Expected smoke workflow');
+    const smokeWorkflow = TOOL_WORKFLOW_CONTRACT.workflows.find(workflow => workflow.id === 'mdt-dev-smoke');
+    assert.ok(smokeWorkflow, 'Expected mdt-dev-smoke workflow');
     assert.strictEqual(smokeWorkflow.tools.codex.artifactMappings[0].surfaceType, 'skill');
-    assert.strictEqual(smokeWorkflow.tools.codex.artifactMappings[0].name, 'smoke');
-    assert.ok(smokeWorkflow.tools.codex.requiredFiles.includes('codex-template/skills/smoke/SKILL.md'));
+    assert.strictEqual(smokeWorkflow.tools.codex.artifactMappings[0].name, 'mdt-dev-smoke');
+    assert.ok(smokeWorkflow.tools.codex.requiredFiles.includes('codex-template/skills/mdt-dev-smoke/SKILL.md'));
   })) passed++; else failed++;
 
   if (test('supports reloading the workflow contract from a copied fixture tree', () => {

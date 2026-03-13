@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
-const { smokeCursorWorkflows } = require('../../scripts/smoke-cursor-workflows');
+const { smokeCursorWorkflows } = require('../../scripts/mdt-dev-smoke-cursor-workflows');
 
 function writeFile(rootDir, relativePath, content) {
   const absolutePath = path.join(rootDir, relativePath);
@@ -29,7 +29,7 @@ function createWorkspaceFixtureRoot() {
   writeFile(rootDir, path.join('cursor-template', 'commands', 'tdd.md'), '# TDD');
   writeFile(rootDir, path.join('cursor-template', 'commands', 'code-review.md'), '# Code Review');
   writeFile(rootDir, path.join('cursor-template', 'commands', 'verify.md'), '# Verify');
-  writeFile(rootDir, path.join('cursor-template', 'commands', 'smoke.md'), '# Smoke');
+  writeFile(rootDir, path.join('cursor-template', 'commands', 'mdt-dev-smoke.md'), '# MDT Dev Smoke');
   writeFile(rootDir, path.join('cursor-template', 'commands', 'e2e.md'), '# E2E');
   writeFile(rootDir, path.join('cursor-template', 'rules', 'common-development-workflow.md'), '# Plan before code');
   writeFile(rootDir, path.join('cursor-template', 'rules', 'common-testing.md'), '# Write tests first');
@@ -60,19 +60,19 @@ function createInstalledFixtureRoot() {
   writeFile(cursorRoot, path.join('commands', 'tdd.md'), '# TDD');
   writeFile(cursorRoot, path.join('commands', 'code-review.md'), '# Code Review');
   writeFile(cursorRoot, path.join('commands', 'verify.md'), '# Verify');
-  writeFile(cursorRoot, path.join('commands', 'smoke.md'), '# Smoke');
+  writeFile(cursorRoot, path.join('commands', 'mdt-dev-smoke.md'), '# MDT Dev Smoke');
   writeFile(cursorRoot, path.join('commands', 'e2e.md'), '# E2E');
   writeFile(cursorRoot, path.join('rules', 'common-development-workflow.mdc'), '# Plan');
   writeFile(cursorRoot, path.join('rules', 'common-testing.mdc'), '# Tests');
   writeFile(cursorRoot, path.join('rules', 'common-coding-style.mdc'), '# Coding Style');
   writeFile(cursorRoot, path.join('rules', 'common-security.mdc'), '# Security');
-  writeFile(cursorRoot, path.join('mdt', 'scripts', 'smoke-cursor-workflows.js'), '// smoke');
+  writeFile(cursorRoot, path.join('mdt', 'scripts', 'mdt-dev-smoke-cursor-workflows.js'), '// smoke');
 
   return { workspaceRoot, cursorRoot };
 }
 
 function runTests() {
-  console.log('\n=== Testing smoke-cursor-workflows.js ===\n');
+  console.log('\n=== Testing mdt-dev-smoke-cursor-workflows.js ===\n');
 
   let passed = 0;
   let failed = 0;
@@ -86,12 +86,12 @@ function runTests() {
     });
 
     assert.strictEqual(result.exitCode, 0, output.join('\n'));
-    assert.ok(output.join('\n').includes('Cursor workflow smoke (repo-source mode):'));
+    assert.ok(output.join('\n').includes('Cursor workflow dev smoke (repo-source mode):'));
     assert.ok(output.join('\n').includes('plan: PASS'));
     assert.ok(output.join('\n').includes('tdd: PASS'));
     assert.ok(output.join('\n').includes('code-review: PASS'));
     assert.ok(output.join('\n').includes('verify: PASS'));
-    assert.ok(output.join('\n').includes('smoke: SKIP') || output.join('\n').includes('smoke: PASS'));
+    assert.ok(output.join('\n').includes('mdt-dev-smoke: SKIP') || output.join('\n').includes('mdt-dev-smoke: PASS'));
   })) passed++; else failed++;
 
   if (test('reports repo-source smoke as SKIP when CLI probes are blocked but contract files exist', () => {
@@ -110,8 +110,8 @@ function runTests() {
       });
 
       assert.strictEqual(result.exitCode, 0, 'Expected blocked CLI probes to produce a non-failing smoke result');
-      assert.ok(output.join('\n').includes('smoke: SKIP'));
-      assert.ok(output.join('\n').includes('Cursor CLI smoke was skipped'));
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: SKIP'));
+      assert.ok(output.join('\n').includes('Cursor CLI dev smoke was skipped'));
     } finally {
       cleanupTestDir(workspaceRoot);
     }
@@ -121,7 +121,7 @@ function runTests() {
     const workspaceRoot = createWorkspaceFixtureRoot();
 
     try {
-      fs.rmSync(path.join(workspaceRoot, 'cursor-template', 'commands', 'smoke.md'));
+      fs.rmSync(path.join(workspaceRoot, 'cursor-template', 'commands', 'mdt-dev-smoke.md'));
       const output = [];
       const result = smokeCursorWorkflows({
         workspaceRoot,
@@ -131,9 +131,9 @@ function runTests() {
         spawnImpl: () => ({ status: 0, stdout: 'agent help' })
       });
 
-      assert.strictEqual(result.exitCode, 1, 'Expected missing smoke contract files to fail');
-      assert.ok(output.join('\n').includes('smoke: FAIL'));
-      assert.ok(output.join('\n').includes('cursor-template/commands/smoke.md'));
+      assert.strictEqual(result.exitCode, 1, 'Expected missing dev smoke contract files to fail');
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: FAIL'));
+      assert.ok(output.join('\n').includes('cursor-template/commands/mdt-dev-smoke.md'));
     } finally {
       cleanupTestDir(workspaceRoot);
     }
@@ -178,7 +178,7 @@ function runTests() {
       assert.strictEqual(result.exitCode, 0, output.join('\n'));
       assert.ok(output.join('\n').includes('installed-target'));
       assert.ok(output.join('\n').includes('plan: PASS'));
-      assert.ok(output.join('\n').includes('smoke: PASS'));
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: PASS'));
       assert.ok(output.join('\n').includes('security: PASS'));
       assert.ok(output.join('\n').includes('e2e: PASS'));
     } finally {

@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { probeNodeSubprocess } = require('../helpers/subprocess-capability');
-const { summarizeTool } = require('../../scripts/smoke-tool-setups');
+const { summarizeTool } = require('../../scripts/mdt-dev-smoke-tool-setups');
 const { TOOL_WORKFLOW_CONTRACT } = require('../../scripts/lib/tool-workflow-contract');
 const {
   cleanupInstall,
@@ -64,14 +64,14 @@ function runTests() {
     try {
       const setup = runInstalledMdt(
         fixture,
-        ['smoke', 'tool-setups', '--tool', tool],
+        ['dev', 'smoke', 'tool-setups', '--tool', tool],
         { cwd: repoRoot }
       );
       assert.strictEqual(setup.status, 0, `${setup.stdout}\n${setup.stderr}`);
 
       const workflow = runInstalledMdt(
         fixture,
-        ['smoke', 'workflows', '--tool', tool],
+        ['dev', 'smoke', 'workflows', '--tool', tool],
         { cwd: repoRoot }
       );
       assert.strictEqual(workflow.status, 0, `${workflow.stdout}\n${workflow.stderr}`);

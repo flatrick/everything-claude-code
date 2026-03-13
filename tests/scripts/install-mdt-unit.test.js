@@ -237,16 +237,14 @@ function runTests() {
     assert.ok(manifest.rules.includes('common/coding-style.md'));
     assert.ok(manifest.rules.includes('typescript/coding-style.md'));
     assert.ok(manifest.agents.includes('planner.md'));
-    assert.ok(manifest.commands.includes('docs-health.md'));
     assert.ok(manifest.commands.includes('plan.md'));
-    assert.ok(manifest.skills.includes('documentation-steward'));
     assert.ok(manifest.skills.includes('coding-standards'));
     assert.ok(Array.isArray(manifest.tools.cursor.rules));
     assert.ok(manifest.tools.cursor.rules.includes('typescript-coding-style.md'));
     assert.deepStrictEqual(manifest.tools.cursor.skills, ['frontend-slides']);
-    assert.deepStrictEqual(manifest.tools.cursor.commands, ['docs-health.md', 'plan.md', 'tdd.md', 'verify.md', 'code-review.md', 'smoke.md', 'e2e.md', 'security.md', 'build-fix.md', 'refactor-clean.md']);
+    assert.deepStrictEqual(manifest.tools.cursor.commands, ['plan.md', 'tdd.md', 'verify.md', 'code-review.md', 'e2e.md', 'security.md', 'build-fix.md', 'refactor-clean.md']);
     assert.deepStrictEqual(manifest.tools.codex.rules, ['common-coding-style.md', 'common-testing.md', 'common-security.md', 'common-git-workflow.md']);
-    assert.deepStrictEqual(manifest.tools.codex.skills, ['documentation-steward', 'coding-standards', 'tdd-workflow', 'verification-loop', 'security-review', 'backend-patterns', 'frontend-patterns', 'e2e-testing']);
+    assert.deepStrictEqual(manifest.tools.codex.skills, ['coding-standards', 'tdd-workflow', 'verification-loop', 'security-review', 'backend-patterns', 'frontend-patterns', 'e2e-testing']);
     assert.deepStrictEqual(manifest.requires, {});
   })) passed++; else failed++;
 
@@ -258,13 +256,11 @@ function runTests() {
     assert.ok(manifest.rules.includes('common/coding-style.md'));
     assert.ok(manifest.rules.includes('python/coding-style.md'));
     assert.ok(manifest.agents.includes('python-reviewer.md'));
-    assert.ok(manifest.commands.includes('docs-health.md'));
     assert.ok(manifest.commands.includes('python-review.md'));
-    assert.ok(manifest.skills.includes('documentation-steward'));
     assert.ok(manifest.skills.includes('python-patterns'));
     assert.ok(Array.isArray(manifest.tools.cursor.rules));
     assert.ok(manifest.tools.cursor.rules.includes('python-coding-style.md'));
-    assert.deepStrictEqual(manifest.tools.cursor.commands, ['docs-health.md']);
+    assert.deepStrictEqual(manifest.tools.cursor.commands, []);
     assert.deepStrictEqual(manifest.requires, {});
   })) passed++; else failed++;
 
@@ -278,9 +274,8 @@ function runTests() {
     });
     assert.deepStrictEqual(manifest.tools.claude.skills, ['ai-learning']);
     assert.deepStrictEqual(manifest.tools.cursor.skills, ['ai-learning']);
-    assert.deepStrictEqual(manifest.tools.codex.skills, ['documentation-steward', 'ai-learning']);
+    assert.deepStrictEqual(manifest.tools.codex.skills, ['ai-learning']);
     assert.deepStrictEqual(manifest.tools.cursor.commands, [
-      'docs-health.md',
       'instinct-export.md',
       'instinct-import.md',
       'instinct-status.md',
@@ -332,7 +327,7 @@ function runTests() {
 
     assert.ok(claudePlan.some((line) => line.includes('Claude dev smoke scripts')));
     assert.ok(cursorPlan.some((line) => line.includes('Cursor dev smoke command')));
-    assert.ok(codexPlan.some((line) => line.includes('Codex dev smoke skill')));
+    assert.ok(codexPlan.some((line) => line.includes('Codex dev skills (mdt-dev-smoke, mdt-dev-verify)')));
   })) passed++; else failed++;
 
   if (test('buildInstallPlan claude installs globally by default', () => {
@@ -381,11 +376,11 @@ function runTests() {
     });
   })) passed++; else failed++;
 
-  if (test('installClaudeContentDirs includes dev-only internal doc skill only in dev mode', () => {
+  if (test('installClaudeContentDirs includes public docs skill and dev-only smoke command in dev mode', () => {
     withTempDir('mdt-install-claude-dev-', (tempDir) => {
       installClaudeContentDirs(tempDir, resolveSelectedPackages(['typescript']), true);
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'smoke.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'mdt-dev-smoke.md')));
     });
   })) passed++; else failed++;
 
@@ -399,7 +394,7 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'rust-patterns', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'docs-health.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'docs-audit.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'instinct-status.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'instinct-export.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'instinct-import.md')));
@@ -407,29 +402,26 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'plan.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'projects.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'promote.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'smoke.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
+      assert.ok(!fs.existsSync(path.join(tempDir, 'commands', 'mdt-dev-smoke.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'learn.md')));
-      assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
 
       const planCommand = fs.readFileSync(path.join(tempDir, 'commands', 'plan.md'), 'utf8');
-      const docsHealthCommand = fs.readFileSync(path.join(tempDir, 'commands', 'docs-health.md'), 'utf8');
-      const smokeCommand = fs.readFileSync(path.join(tempDir, 'commands', 'smoke.md'), 'utf8');
+      const docsAuditCommand = fs.readFileSync(path.join(tempDir, 'commands', 'docs-audit.md'), 'utf8');
       const installRulesCommand = fs.readFileSync(path.join(tempDir, 'commands', 'install-rules.md'), 'utf8');
       assert.ok(planCommand.includes('Wait for explicit user confirmation before making code changes.'));
       assert.ok(!planCommand.includes('Use Cursor’s custom command UI'));
-      assert.ok(docsHealthCommand.includes('# Docs Health'));
-      assert.ok(docsHealthCommand.includes('current-state docs under `docs/`'));
-      assert.ok(smokeCommand.includes('SMOKE: PASS|FAIL|PARTIAL'));
+      assert.ok(docsAuditCommand.includes('# Docs Audit'));
+      assert.ok(docsAuditCommand.includes('docs-steward'));
       assert.ok(installRulesCommand.includes('mdt.js bridge materialize --tool cursor --surface rules'));
     });
   })) passed++; else failed++;
 
-  if (test('installCursorCoreDirs adds dev-only internal doc skill in dev mode', () => {
+  if (test('installCursorCoreDirs adds dev-only smoke command in dev mode', () => {
     withTempDir('mdt-install-cursor-dev-', (tempDir) => {
       installCursorCoreDirs(tempDir, resolveSelectedPackages(['typescript']), true);
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'smoke.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'mdt-dev-smoke.md')));
     });
   })) passed++; else failed++;
 
@@ -439,9 +431,8 @@ function runTests() {
 
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'coding-standards', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'coding-standards', 'skill.meta.json')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
-      assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'tool-setup-verifier', 'SKILL.md')));
-      assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'mdt-dev-verify', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'skill.meta.json')));
       // Codex install must not include the hooks/ directory (no hook runtime in Codex)
@@ -450,12 +441,12 @@ function runTests() {
     });
   })) passed++; else failed++;
 
-  if (test('installCodexSkills adds verifier and internal doc maintainer only in dev mode', () => {
+  if (test('installCodexSkills adds only dev verifier and dev smoke skills in dev mode', () => {
     withTempDir('mdt-install-codex-dev-', (tempDir) => {
       installCodexSkills(resolveSelectedPackages(['typescript', 'continuous-learning']), tempDir, true);
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-setup-verifier', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'smoke', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'tool-doc-maintainer', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'mdt-dev-verify', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'mdt-dev-smoke', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
     });
   })) passed++; else failed++;
 
@@ -473,14 +464,14 @@ function runTests() {
         skills: ['ai-learning'],
         tools: {
           codex: {
-            skills: ['documentation-steward']
+            skills: ['docs-steward']
           }
         }
       }), 'utf8');
 
       installCodexSkills(resolveSelectedPackages(['explicit-codex'], { packagesDir }), tempDir);
 
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'SKILL.md')));
     });
   })) passed++; else failed++;
@@ -535,7 +526,7 @@ function runTests() {
     );
   })) passed++; else failed++;
 
-  if (test('assertSkillRequirements rejects missing companion skill in custom selection', () => {
+  if (test('assertSkillRequirements accepts companion skills satisfied by the baseline install set', () => {
     withTempDir('mdt-package-skill-warn-', (tempDir) => {
       const packagesDir = path.join(tempDir, 'packages');
       fs.mkdirSync(path.join(packagesDir, 'demo'), { recursive: true });
@@ -550,10 +541,7 @@ function runTests() {
         tools: {}
       }), 'utf8');
 
-      assert.throws(
-        () => assertSkillRequirements('claude', resolveSelectedPackages(['demo'], { packagesDir })),
-        /skill 'tdd-workflow' declares companion skill 'coding-standards'/
-      );
+      assert.doesNotThrow(() => assertSkillRequirements('claude', resolveSelectedPackages(['demo'], { packagesDir })));
     });
   })) passed++; else failed++;
 

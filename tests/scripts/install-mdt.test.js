@@ -86,7 +86,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'ci', 'validate-markdown-links.js')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'ci', 'validate-markdown-path-refs.js')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'ci', 'markdown-utils.js')));
-          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'smoke-claude-workflows.js')));
+          assert.ok(!fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'mdt-dev-smoke-claude-workflows.js')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'hardening', 'verify-workspace-permissions.mjs')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'hardening', 'CODEX-WINDOWS-SANDBOX-ROOT-CHILD-ACL-ISSUE.md')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'hardening', 'WORKSPACE-PERMISSIONS-PROMPT.md')));
@@ -114,9 +114,9 @@ function runTests() {
           });
           assertSuccess(result, 'claude dev install');
 
-          assert.ok(fs.existsSync(path.join(claudeBase, 'commands', 'smoke.md')));
-          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'smoke-tool-setups.js')));
-          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'smoke-claude-workflows.js')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'commands', 'mdt-dev-smoke.md')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js')));
+          assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'scripts', 'mdt-dev-smoke-claude-workflows.js')));
           assert.ok(fs.existsSync(path.join(claudeBase, 'mdt', 'workflow-contracts', 'metadata.json')));
         } finally {
           cleanupTestDir(tmpHome);
@@ -250,7 +250,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'verify-workspace-permissions.mjs')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'CODEX-WINDOWS-SANDBOX-ROOT-CHILD-ACL-ISSUE.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'WORKSPACE-PERMISSIONS-PROMPT.md')));
-          assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'documentation-steward', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'docs-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'frontend-slides', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'ai-learning', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'plan.md')));
@@ -282,8 +282,8 @@ function runTests() {
           });
           assertSuccess(result, 'cursor dev install');
 
-          assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'smoke.md')));
-          assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'scripts', 'smoke-tool-setups.js')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'mdt-dev-smoke.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'workflow-contracts', 'metadata.json')));
         } finally {
           cleanupTestDir(tmpHome);
@@ -310,7 +310,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(codexRoot, 'AGENTS.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'rules', 'common-coding-style.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'coding-standards', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'documentation-steward', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'docs-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'scripts', 'retrospect-week.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'agents', 'openai.yaml')));
@@ -344,12 +344,12 @@ function runTests() {
           });
           assertSuccess(result, 'codex dev install');
 
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'smoke', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'tool-setup-verifier', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'smoke-tool-setups.js')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'smoke-codex-workflows.js')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'mdt-dev-smoke', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'mdt-dev-verify', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'scripts', 'mdt-dev-smoke-codex-workflows.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'workflow-contracts', 'metadata.json')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'workflow-contracts', 'workflows', 'smoke.json')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'mdt', 'workflow-contracts', 'workflows', 'mdt-dev-smoke.json')));
         } finally {
           cleanupTestDir(tmpHome);
         }

@@ -38,16 +38,16 @@ function runTests() {
     });
 
     try {
-      ensureFile(path.join(fixture.overrideRoot, 'skills', 'smoke', 'SKILL.md'));
+      ensureFile(path.join(fixture.overrideRoot, 'skills', 'mdt-dev-smoke', 'SKILL.md'));
       ensureFile(path.join(fixture.overrideRoot, 'skills', 'tdd-workflow', 'SKILL.md'));
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-codex-workflows.js'));
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-tool-setups.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-codex-workflows.js'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js'));
       ensureFile(path.join(fixture.overrideRoot, 'mdt', 'workflow-contracts', 'metadata.json'));
-      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'workflow-contracts', 'workflows', 'smoke.json'));
+      ensureFile(path.join(fixture.overrideRoot, 'mdt', 'workflow-contracts', 'workflows', 'mdt-dev-smoke.json'));
 
       const smokeSetup = runInstalledMdt(
         fixture,
-        ['smoke', 'tool-setups', '--tool', 'codex'],
+        ['dev', 'smoke', 'tool-setups', '--tool', 'codex'],
         {
           cwd: repoRoot,
           env: prependPath(shimBin, fixture.env)
@@ -60,15 +60,15 @@ function runTests() {
 
       const workflowSmoke = runInstalledMdt(
         fixture,
-        ['smoke', 'workflows', '--tool', 'codex'],
+        ['dev', 'smoke', 'workflows', '--tool', 'codex'],
         {
           cwd: repoRoot,
           env: prependPath(shimBin, fixture.env)
         }
       );
       assert.strictEqual(workflowSmoke.status, 0, `${workflowSmoke.stdout}\n${workflowSmoke.stderr}`);
-      assert.ok(workflowSmoke.stdout.includes('Codex workflow smoke (installed-target mode):'));
-      assert.ok(workflowSmoke.stdout.includes('smoke: PASS'));
+      assert.ok(workflowSmoke.stdout.includes('Codex workflow dev smoke (installed-target mode):'));
+      assert.ok(workflowSmoke.stdout.includes('mdt-dev-smoke: PASS'));
       assert.ok(workflowSmoke.stdout.includes('verify: PASS'));
     } finally {
       require('../helpers/test-runner').cleanupTestDir(shimBin);
@@ -80,12 +80,12 @@ function runTests() {
     const fixture = installTarget('codex', ['--dev', 'typescript', 'continuous-learning']);
 
     try {
-      const missingScript = path.join(fixture.overrideRoot, 'mdt', 'scripts', 'smoke-codex-workflows.js');
+      const missingScript = path.join(fixture.overrideRoot, 'mdt', 'scripts', 'mdt-dev-smoke-codex-workflows.js');
       fs.rmSync(missingScript);
 
       const result = runInstalledMdt(
         fixture,
-        ['smoke', 'workflows', '--tool', 'codex'],
+        ['dev', 'smoke', 'workflows', '--tool', 'codex'],
         {
           cwd: repoRoot
         }

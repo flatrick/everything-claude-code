@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
-const { smokeCodexWorkflows } = require('../../scripts/smoke-codex-workflows');
+const { smokeCodexWorkflows } = require('../../scripts/mdt-dev-smoke-codex-workflows');
 
 function writeFile(rootDir, relativePath, content) {
   const absolutePath = path.join(rootDir, relativePath);
@@ -52,8 +52,8 @@ function createFixtureRoot() {
   writeFile(rootDir, path.join('codex-template', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop Skill');
   writeFile(rootDir, path.join('codex-template', 'skills', 'security-review', 'SKILL.md'), '# Security Review Skill');
   writeFile(rootDir, path.join('codex-template', 'skills', 'e2e-testing', 'SKILL.md'), '# E2E Testing Patterns');
-  writeFile(rootDir, path.join('codex-template', 'skills', 'smoke', 'SKILL.md'), '# Smoke');
-  writeFile(rootDir, path.join('codex-template', 'skills', 'tool-setup-verifier', 'SKILL.md'), '# Tool Setup Verifier');
+  writeFile(rootDir, path.join('codex-template', 'skills', 'mdt-dev-smoke', 'SKILL.md'), '# MDT Dev Smoke');
+  writeFile(rootDir, path.join('codex-template', 'skills', 'mdt-dev-verify', 'SKILL.md'), '# MDT Dev Verify');
   writeFile(rootDir, path.join('docs', 'testing', 'manual-verification', 'codex.md'), '# Codex Manual Verification');
 
   return rootDir;
@@ -82,15 +82,15 @@ function createInstalledFixtureRoot() {
     ].join('\n')
   );
 
-  writeFile(rootDir, path.join('.codex', 'skills', 'smoke', 'SKILL.md'), '# Smoke');
-  writeFile(rootDir, path.join('.codex', 'skills', 'tool-setup-verifier', 'SKILL.md'), '# Tool Setup Verifier');
+  writeFile(rootDir, path.join('.codex', 'skills', 'mdt-dev-smoke', 'SKILL.md'), '# MDT Dev Smoke');
+  writeFile(rootDir, path.join('.codex', 'skills', 'mdt-dev-verify', 'SKILL.md'), '# MDT Dev Verify');
   writeFile(rootDir, path.join('.codex', 'skills', 'tdd-workflow', 'SKILL.md'), '# Test-Driven Development Workflow');
   writeFile(rootDir, path.join('.codex', 'skills', 'coding-standards', 'SKILL.md'), '# Universal coding standards');
   writeFile(rootDir, path.join('.codex', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop Skill');
   writeFile(rootDir, path.join('.codex', 'skills', 'security-review', 'SKILL.md'), '# Security Review Skill');
   writeFile(rootDir, path.join('.codex', 'skills', 'e2e-testing', 'SKILL.md'), '# E2E Testing Patterns');
-  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'smoke-tool-setups.js'), '// smoke');
-  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'smoke-codex-workflows.js'), '// smoke');
+  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js'), '// smoke');
+  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'mdt-dev-smoke-codex-workflows.js'), '// smoke');
 
   return path.join(rootDir, '.codex');
 }
@@ -128,21 +128,21 @@ function createInstalledPreservedConfigFixtureRoot() {
     ].join('\n')
   );
 
-  writeFile(rootDir, path.join('.codex', 'skills', 'smoke', 'SKILL.md'), '# Smoke');
-  writeFile(rootDir, path.join('.codex', 'skills', 'tool-setup-verifier', 'SKILL.md'), '# Tool Setup Verifier');
+  writeFile(rootDir, path.join('.codex', 'skills', 'mdt-dev-smoke', 'SKILL.md'), '# MDT Dev Smoke');
+  writeFile(rootDir, path.join('.codex', 'skills', 'mdt-dev-verify', 'SKILL.md'), '# MDT Dev Verify');
   writeFile(rootDir, path.join('.codex', 'skills', 'tdd-workflow', 'SKILL.md'), '# Test-Driven Development Workflow');
   writeFile(rootDir, path.join('.codex', 'skills', 'coding-standards', 'SKILL.md'), '# Universal coding standards');
   writeFile(rootDir, path.join('.codex', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop Skill');
   writeFile(rootDir, path.join('.codex', 'skills', 'security-review', 'SKILL.md'), '# Security Review Skill');
   writeFile(rootDir, path.join('.codex', 'skills', 'e2e-testing', 'SKILL.md'), '# E2E Testing Patterns');
-  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'smoke-tool-setups.js'), '// smoke');
-  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'smoke-codex-workflows.js'), '// smoke');
+  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'mdt-dev-smoke-tool-setups.js'), '// smoke');
+  writeFile(rootDir, path.join('.codex', 'mdt', 'scripts', 'mdt-dev-smoke-codex-workflows.js'), '// smoke');
 
   return path.join(rootDir, '.codex');
 }
 
 function runTests() {
-  console.log('\n=== Testing smoke-codex-workflows.js ===\n');
+  console.log('\n=== Testing mdt-dev-smoke-codex-workflows.js ===\n');
 
   let passed = 0;
   let failed = 0;
@@ -156,12 +156,12 @@ function runTests() {
     });
 
     assert.strictEqual(result.exitCode, 0, output.join('\n'));
-    assert.ok(output.join('\n').includes('Codex workflow smoke (repo-source mode):'));
+    assert.ok(output.join('\n').includes('Codex workflow dev smoke (repo-source mode):'));
     assert.ok(output.join('\n').includes('plan: PASS'));
     assert.ok(output.join('\n').includes('tdd: PASS'));
     assert.ok(output.join('\n').includes('code-review: PASS'));
     assert.ok(output.join('\n').includes('verify: PASS'));
-    assert.ok(output.join('\n').includes('smoke: SKIP') || output.join('\n').includes('smoke: PASS'));
+    assert.ok(output.join('\n').includes('mdt-dev-smoke: SKIP') || output.join('\n').includes('mdt-dev-smoke: PASS'));
   })) passed++; else failed++;
 
   if (test('fails when the Codex TDD skill is missing', () => {
@@ -227,8 +227,8 @@ function runTests() {
       });
 
       assert.strictEqual(result.exitCode, 0, 'Expected blocked CLI probes to produce a non-failing smoke result');
-      assert.ok(output.join('\n').includes('smoke: SKIP'));
-      assert.ok(output.join('\n').includes('Codex CLI smoke was skipped'));
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: SKIP'));
+      assert.ok(output.join('\n').includes('Codex CLI dev smoke was skipped'));
     } finally {
       cleanupTestDir(rootDir);
     }
@@ -238,7 +238,7 @@ function runTests() {
     const rootDir = createFixtureRoot();
 
     try {
-      fs.rmSync(path.join(rootDir, 'codex-template', 'skills', 'smoke', 'SKILL.md'));
+      fs.rmSync(path.join(rootDir, 'codex-template', 'skills', 'mdt-dev-smoke', 'SKILL.md'));
       const output = [];
       const result = smokeCodexWorkflows({
         rootDir,
@@ -248,9 +248,9 @@ function runTests() {
         spawnImpl: () => ({ status: 0, stdout: 'codex-cli 1.0.0' })
       });
 
-      assert.strictEqual(result.exitCode, 1, 'Expected missing smoke contract files to fail');
-      assert.ok(output.join('\n').includes('smoke: FAIL'));
-      assert.ok(output.join('\n').includes('codex-template/skills/smoke/SKILL.md'));
+      assert.strictEqual(result.exitCode, 1, 'Expected missing dev smoke contract files to fail');
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: FAIL'));
+      assert.ok(output.join('\n').includes('codex-template/skills/mdt-dev-smoke/SKILL.md'));
     } finally {
       cleanupTestDir(rootDir);
     }
@@ -270,8 +270,8 @@ function runTests() {
 
       assert.strictEqual(result.exitCode, 0, output.join('\n'));
       assert.ok(output.join('\n').includes('installed-target'));
-      assert.ok(output.join('\n').includes('~/.codex/skills/smoke/SKILL.md') || output.join('\n').includes('smoke: PASS'));
-      assert.ok(output.join('\n').includes('smoke: PASS'));
+      assert.ok(output.join('\n').includes('~/.codex/skills/mdt-dev-smoke/SKILL.md') || output.join('\n').includes('mdt-dev-smoke: PASS'));
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: PASS'));
       assert.ok(output.join('\n').includes('code-review: PASS'));
       assert.ok(output.join('\n').includes('verify: PASS'));
     } finally {

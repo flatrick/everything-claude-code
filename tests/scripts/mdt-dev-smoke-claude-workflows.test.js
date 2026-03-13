@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
-const { smokeClaudeWorkflows } = require('../../scripts/smoke-claude-workflows');
+const { smokeClaudeWorkflows } = require('../../scripts/mdt-dev-smoke-claude-workflows');
 
 function writeFile(rootDir, relativePath, content) {
   const absolutePath = path.join(rootDir, relativePath);
@@ -32,7 +32,7 @@ function createFixtureRoot() {
   writeFile(rootDir, path.join('agents', 'code-reviewer.md'), '# Code Reviewer');
   writeFile(rootDir, path.join('commands', 'verify.md'), '# Verify');
   writeFile(rootDir, path.join('skills', 'verification-loop', 'SKILL.md'), '# Verification Loop');
-  writeFile(rootDir, path.join('commands', 'smoke.md'), '# Smoke');
+  writeFile(rootDir, path.join('commands', 'mdt-dev-smoke.md'), '# MDT Dev Smoke');
   writeFile(rootDir, path.join('docs', 'testing', 'manual-verification', 'claude-code.md'), '# Claude Manual Verification');
   writeFile(rootDir, path.join('claude-template', 'hooks.json'), '{ "hooks": {} }');
   writeFile(rootDir, path.join('agents', 'security-reviewer.md'), '# Security Reviewer');
@@ -56,9 +56,9 @@ function createInstalledFixtureRoot() {
   writeFile(rootDir, path.join('.claude', 'agents', 'code-reviewer.md'), '# Code Reviewer');
   writeFile(rootDir, path.join('.claude', 'commands', 'verify.md'), '# Verify');
   writeFile(rootDir, path.join('.claude', 'skills', 'verification-loop', 'SKILL.md'), '# Verification Loop');
-  writeFile(rootDir, path.join('.claude', 'commands', 'smoke.md'), '# Smoke');
+  writeFile(rootDir, path.join('.claude', 'commands', 'mdt-dev-smoke.md'), '# MDT Dev Smoke');
   writeFile(rootDir, path.join('.claude', 'settings.json'), '{"hooks":{}}');
-  writeFile(rootDir, path.join('.claude', 'mdt', 'scripts', 'smoke-claude-workflows.js'), '// smoke');
+  writeFile(rootDir, path.join('.claude', 'mdt', 'scripts', 'mdt-dev-smoke-claude-workflows.js'), '// smoke');
   writeFile(rootDir, path.join('.claude', 'agents', 'security-reviewer.md'), '# Security Reviewer');
   writeFile(rootDir, path.join('.claude', 'skills', 'security-review', 'SKILL.md'), '# Security Review');
   writeFile(rootDir, path.join('.claude', 'commands', 'e2e.md'), '# E2E');
@@ -69,7 +69,7 @@ function createInstalledFixtureRoot() {
 }
 
 function runTests() {
-  console.log('\n=== Testing smoke-claude-workflows.js ===\n');
+  console.log('\n=== Testing mdt-dev-smoke-claude-workflows.js ===\n');
 
   let passed = 0;
   let failed = 0;
@@ -83,12 +83,12 @@ function runTests() {
     });
 
     assert.strictEqual(result.exitCode, 0, output.join('\n'));
-    assert.ok(output.join('\n').includes('Claude workflow smoke (repo-source mode):'));
+    assert.ok(output.join('\n').includes('Claude workflow dev smoke (repo-source mode):'));
     assert.ok(output.join('\n').includes('plan: PASS'));
     assert.ok(output.join('\n').includes('tdd: PASS'));
     assert.ok(output.join('\n').includes('code-review: PASS'));
     assert.ok(output.join('\n').includes('verify: PASS'));
-    assert.ok(output.join('\n').includes('smoke: SKIP') || output.join('\n').includes('smoke: PASS'));
+    assert.ok(output.join('\n').includes('mdt-dev-smoke: SKIP') || output.join('\n').includes('mdt-dev-smoke: PASS'));
   })) passed++; else failed++;
 
   if (test('reports repo-source smoke as SKIP when CLI probes are blocked but contract files exist', () => {
@@ -107,8 +107,8 @@ function runTests() {
       });
 
       assert.strictEqual(result.exitCode, 0, 'Expected blocked CLI probes to produce a non-failing smoke result');
-      assert.ok(output.join('\n').includes('smoke: SKIP'));
-      assert.ok(output.join('\n').includes('Claude CLI smoke was skipped'));
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: SKIP'));
+      assert.ok(output.join('\n').includes('Claude CLI dev smoke was skipped'));
     } finally {
       cleanupTestDir(rootDir);
     }
@@ -118,7 +118,7 @@ function runTests() {
     const rootDir = createFixtureRoot();
 
     try {
-      fs.rmSync(path.join(rootDir, 'commands', 'smoke.md'));
+      fs.rmSync(path.join(rootDir, 'commands', 'mdt-dev-smoke.md'));
       const output = [];
       const result = smokeClaudeWorkflows({
         rootDir,
@@ -128,9 +128,9 @@ function runTests() {
         spawnImpl: () => ({ status: 0, stdout: '2.1.71' })
       });
 
-      assert.strictEqual(result.exitCode, 1, 'Expected missing smoke contract files to fail');
-      assert.ok(output.join('\n').includes('smoke: FAIL'));
-      assert.ok(output.join('\n').includes('commands/smoke.md'));
+      assert.strictEqual(result.exitCode, 1, 'Expected missing dev smoke contract files to fail');
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: FAIL'));
+      assert.ok(output.join('\n').includes('commands/mdt-dev-smoke.md'));
     } finally {
       cleanupTestDir(rootDir);
     }
@@ -173,7 +173,7 @@ function runTests() {
 
       assert.strictEqual(result.exitCode, 0, output.join('\n'));
       assert.ok(output.join('\n').includes('installed-target'));
-      assert.ok(output.join('\n').includes('smoke: PASS'));
+      assert.ok(output.join('\n').includes('mdt-dev-smoke: PASS'));
       assert.ok(output.join('\n').includes('verify: PASS'));
       assert.ok(output.join('\n').includes('e2e: PASS'));
     } finally {
