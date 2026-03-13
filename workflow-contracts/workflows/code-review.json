@@ -30,10 +30,10 @@
       "status": "repo-adapter",
       "verificationMode": "installer-target",
       "artifactMappings": [
-        { "surfaceType": "guidance", "name": "codex-agents", "path": "codex-template/AGENTS.md", "role": "review-guidance" },
+        { "surfaceType": "guidance", "name": "codex-agents", "path": ".codex/AGENTS.md", "role": "review-guidance" },
         { "surfaceType": "config", "name": "codex-config", "path": "codex-template/config.toml", "role": "codex-runtime-config" }
       ],
-      "requiredFiles": ["codex-template/config.toml", "codex-template/AGENTS.md"]
+      "requiredFiles": ["codex-template/config.toml", ".codex/AGENTS.md"]
     }
   }
 }

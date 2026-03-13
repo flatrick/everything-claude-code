@@ -26,7 +26,7 @@ function createFixtureRoot() {
 
   writeFile(
     rootDir,
-    path.join('codex-template', 'AGENTS.md'),
+    path.join('.codex', 'AGENTS.md'),
     [
       '# Codex',
       'Complex features, architecture',

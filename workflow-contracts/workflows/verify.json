@@ -30,11 +30,11 @@
       "status": "repo-adapter",
       "verificationMode": "installer-target",
       "artifactMappings": [
-        { "surfaceType": "guidance", "name": "codex-agents", "path": "codex-template/AGENTS.md", "role": "verification-guidance" },
+        { "surfaceType": "guidance", "name": "codex-agents", "path": ".codex/AGENTS.md", "role": "verification-guidance" },
         { "surfaceType": "config", "name": "codex-config", "path": "codex-template/config.toml", "role": "codex-runtime-config" },
         { "surfaceType": "skill", "name": "verification-loop", "path": "codex-template/skills/verification-loop/SKILL.md", "role": "installed-skill" }
       ],
-      "requiredFiles": ["codex-template/config.toml", "codex-template/AGENTS.md", "codex-template/skills/verification-loop/SKILL.md"]
+      "requiredFiles": ["codex-template/config.toml", ".codex/AGENTS.md", "codex-template/skills/verification-loop/SKILL.md"]
     }
   }
 }

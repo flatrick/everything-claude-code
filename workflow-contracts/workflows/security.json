@@ -29,11 +29,11 @@
       "status": "repo-adapter",
       "verificationMode": "installer-target",
       "artifactMappings": [
-        { "surfaceType": "guidance", "name": "codex-agents", "path": "codex-template/AGENTS.md", "role": "security-guidance" },
+        { "surfaceType": "guidance", "name": "codex-agents", "path": ".codex/AGENTS.md", "role": "security-guidance" },
         { "surfaceType": "config", "name": "codex-config", "path": "codex-template/config.toml", "role": "codex-runtime-config" },
         { "surfaceType": "skill", "name": "security-review", "path": "codex-template/skills/security-review/SKILL.md", "role": "installed-skill" }
       ],
-      "requiredFiles": ["codex-template/config.toml", "codex-template/AGENTS.md", "codex-template/skills/security-review/SKILL.md"]
+      "requiredFiles": ["codex-template/config.toml", ".codex/AGENTS.md", "codex-template/skills/security-review/SKILL.md"]
     }
   }
 }

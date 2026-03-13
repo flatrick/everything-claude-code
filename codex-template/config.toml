@@ -1,8 +1,8 @@
 # ModelDev Toolkit — Codex CLI reference config
 #
-# This file is intentionally minimal. Repo guidance belongs in AGENTS.md, not in
-# config.toml. The installer should not overwrite an existing ~/.codex/config.toml
-# with repo assumptions.
+# This file is intentionally minimal. Repo guidance belongs in .codex/AGENTS.md,
+# not in config.toml. The installer should not overwrite an existing
+# ~/.codex/config.toml with repo assumptions.
 
 model = "gpt-5.3-codex"
 model_provider = "openai"

@@ -54,8 +54,8 @@ function buildPlanChecks(files) {
         message: 'root AGENTS.md should expose the planner agent'
       },
       {
-        path: 'codex-template/AGENTS.md',
-        ok: files['codex-template/AGENTS.md'].exists && files['codex-template/AGENTS.md'].content.includes('Complex features, architecture'),
+        path: '.codex/AGENTS.md',
+        ok: files['.codex/AGENTS.md'].exists && files['.codex/AGENTS.md'].content.includes('Complex features, architecture'),
         message: 'Codex AGENTS should recommend the planning model path for complex work'
       }
     ]
@@ -72,8 +72,8 @@ function buildTddChecks(files) {
         message: 'root AGENTS.md should require TDD'
       },
       {
-        path: 'codex-template/AGENTS.md',
-        ok: files['codex-template/AGENTS.md'].exists && files['codex-template/AGENTS.md'].content.includes('tdd-workflow'),
+        path: '.codex/AGENTS.md',
+        ok: files['.codex/AGENTS.md'].exists && files['.codex/AGENTS.md'].content.includes('tdd-workflow'),
         message: 'Codex AGENTS should advertise the tdd-workflow skill'
       },
       {
@@ -98,8 +98,8 @@ function buildVerifyChecks(files) {
     workflow: 'verify',
     checks: [
       {
-        path: 'codex-template/AGENTS.md',
-        ok: files['codex-template/AGENTS.md'].exists && files['codex-template/AGENTS.md'].content.includes('verification-loop'),
+        path: '.codex/AGENTS.md',
+        ok: files['.codex/AGENTS.md'].exists && files['.codex/AGENTS.md'].content.includes('verification-loop'),
         message: 'Codex AGENTS should advertise the verification-loop skill'
       },
       {
@@ -123,10 +123,10 @@ function buildCodeReviewChecks(files) {
     workflow: 'code-review',
     checks: [
       {
-        path: 'codex-template/AGENTS.md',
+        path: '.codex/AGENTS.md',
         ok:
-          files['codex-template/AGENTS.md'].exists &&
-          files['codex-template/AGENTS.md'].content.includes('Complex features, architecture'),
+          files['.codex/AGENTS.md'].exists &&
+          files['.codex/AGENTS.md'].content.includes('Complex features, architecture'),
         message: 'Codex AGENTS should recommend the higher-reasoning review path for complex changes'
       },
       {
@@ -145,10 +145,10 @@ function buildSecurityChecks(files) {
     workflow: 'security',
     checks: [
       {
-        path: 'codex-template/AGENTS.md',
+        path: '.codex/AGENTS.md',
         ok:
-          files['codex-template/AGENTS.md'].exists &&
-          files['codex-template/AGENTS.md'].content.includes('security-review'),
+          files['.codex/AGENTS.md'].exists &&
+          files['.codex/AGENTS.md'].content.includes('security-review'),
         message: 'Codex AGENTS should advertise the security-review skill'
       },
       {
@@ -161,8 +161,8 @@ function buildSecurityChecks(files) {
       {
         path: 'codex-template/config.toml',
         ok:
-          files['codex-template/AGENTS.md'].exists &&
-          files['codex-template/AGENTS.md'].content.includes('Codex security enforcement in MDT is instruction-based:'),
+          files['.codex/AGENTS.md'].exists &&
+          files['.codex/AGENTS.md'].content.includes('Codex security enforcement in MDT is instruction-based:'),
         message: 'Codex AGENTS should carry security guidance instead of config.toml'
       }
     ]
@@ -174,10 +174,10 @@ function buildE2eChecks(files) {
     workflow: 'e2e',
     checks: [
       {
-        path: 'codex-template/AGENTS.md',
+        path: '.codex/AGENTS.md',
         ok:
-          files['codex-template/AGENTS.md'].exists &&
-          files['codex-template/AGENTS.md'].content.includes('e2e-testing'),
+          files['.codex/AGENTS.md'].exists &&
+          files['.codex/AGENTS.md'].content.includes('e2e-testing'),
         message: 'Codex AGENTS should advertise the e2e-testing skill'
       },
       {
@@ -428,7 +428,7 @@ function createCodexFiles(rootDir, installedRepoMode) {
       }
     : {
         'AGENTS.md': readRepoFile(rootDir, 'AGENTS.md'),
-        'codex-template/AGENTS.md': readRepoFile(rootDir, path.join('codex-template', 'AGENTS.md')),
+        '.codex/AGENTS.md': readRepoFile(rootDir, path.join('.codex', 'AGENTS.md')),
         'codex-template/config.toml': readRepoFile(rootDir, path.join('codex-template', 'config.toml')),
         'codex-template/skills/smoke/SKILL.md': readRepoFile(rootDir, path.join('codex-template', 'skills', 'smoke', 'SKILL.md')),
         'docs/testing/manual-verification/codex.md': readRepoFile(rootDir, path.join('docs', 'testing', 'manual-verification', 'codex.md')),
@@ -443,7 +443,7 @@ function createCodexFiles(rootDir, installedRepoMode) {
 function smokeCodexWorkflows(options = {}) {
   const rootDir = options.rootDir || resolveWorkspaceRoot(__dirname);
   const io = options.io || console;
-  const installedRepoMode = !fs.existsSync(path.join(rootDir, 'codex-template', 'AGENTS.md'))
+  const installedRepoMode = !fs.existsSync(path.join(rootDir, 'codex-template', 'config.toml'))
     && fs.existsSync(path.join(rootDir, 'skills'));
   const files = createCodexFiles(rootDir, installedRepoMode);
   const workflowChecks = installedRepoMode ? buildInstalledWorkflowChecks(files, options) : buildWorkflowChecks(files, options);

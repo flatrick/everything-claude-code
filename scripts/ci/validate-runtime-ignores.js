@@ -8,8 +8,11 @@ const REPO_ROOT = path.join(__dirname, '../..');
 const REQUIRED_RUNTIME_IGNORES = Object.freeze([
   '.claude/',
   '.cursor/',
-  '.codex/'
+  '.codex/*'
 ]);
+const REQUIRED_RUNTIME_ALLOW_ENTRIES = Object.freeze({
+  '.codex/': ['!.codex/AGENTS.md']
+});
 
 function parseIgnoreEntries(content) {
   return content
@@ -28,7 +31,7 @@ function normalizePattern(pattern) {
 
 function isRootDirIgnore(pattern, dirName) {
   const normalized = normalizePattern(pattern);
-  return normalized === dirName || normalized === `${dirName}/**`;
+  return normalized === dirName || normalized === `${dirName}/*` || normalized === `${dirName}/**`;
 }
 
 function isChildUnignore(pattern, dirName) {
@@ -36,8 +39,9 @@ function isChildUnignore(pattern, dirName) {
   return normalized.startsWith(`${dirName}/`);
 }
 
-function evaluateRuntimeIgnore(lines, dirWithSlash) {
+function evaluateRuntimeIgnore(lines, dirWithSlash, allowedChildUnignores = []) {
   const dirName = dirWithSlash.replace(/\/+$/, '');
+  const allowed = new Set(allowedChildUnignores.map(normalizePattern));
   let ignored = false;
   let childUnignored = false;
 
@@ -53,7 +57,9 @@ function evaluateRuntimeIgnore(lines, dirWithSlash) {
     }
 
     if (ignored && isNegated && isChildUnignore(line, dirName)) {
-      childUnignored = true;
+      if (!allowed.has(normalizePattern(line))) {
+        childUnignored = true;
+      }
     }
   }
 
@@ -75,7 +81,9 @@ function checkRuntimeIgnores(gitignorePath) {
   const issues = [];
 
   for (const requiredEntry of REQUIRED_RUNTIME_IGNORES) {
-    const evaluation = evaluateRuntimeIgnore(entries, requiredEntry);
+    const dirKey = requiredEntry.startsWith('.codex/') ? '.codex/' : requiredEntry;
+    const allowedChildUnignores = REQUIRED_RUNTIME_ALLOW_ENTRIES[dirKey] || [];
+    const evaluation = evaluateRuntimeIgnore(entries, dirKey, allowedChildUnignores);
 
     if (!evaluation.ignored) {
       issues.push(`Missing runtime ignore entry: ${requiredEntry}`);
@@ -83,7 +91,13 @@ function checkRuntimeIgnores(gitignorePath) {
     }
 
     if (evaluation.childUnignored) {
-      issues.push(`Runtime dir is partially unignored: ${requiredEntry}`);
+      issues.push(`Runtime dir is partially unignored: ${dirKey}`);
+    }
+
+    for (const allowEntry of allowedChildUnignores) {
+      if (!entries.includes(allowEntry) && !entries.includes(allowEntry.replace('!.', '!/.'))) {
+        issues.push(`Missing runtime allow entry: ${allowEntry}`);
+      }
     }
   }
 
@@ -116,6 +130,7 @@ if (require.main === module) {
 
 module.exports = {
   REQUIRED_RUNTIME_IGNORES,
+  REQUIRED_RUNTIME_ALLOW_ENTRIES,
   checkRuntimeIgnores,
   evaluateRuntimeIgnore,
   isChildUnignore,

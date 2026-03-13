@@ -1393,7 +1393,7 @@ function installCodexGlobal(selectedPackages, overrideDir, devMode = false) {
     }
   }
 
-  const agentsMdSrc = path.join(CODEX_SRC, 'AGENTS.md');
+  const agentsMdSrc = path.join(REPO_ROOT, '.codex', 'AGENTS.md');
   if (fs.existsSync(agentsMdSrc)) {
     fs.copyFileSync(agentsMdSrc, path.join(destDir, 'AGENTS.md'));
     console.log('Installing Codex AGENTS.md -> ' + path.join(destDir, 'AGENTS.md'));

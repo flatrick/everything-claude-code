@@ -352,7 +352,7 @@ function runTests() {
     const gitignoreFile = path.join(testDir, '.gitignore');
     fs.writeFileSync(
       gitignoreFile,
-      '# Runtime dirs\n\n.claude/\n.cursor/\n.codex/\n'
+      '# Runtime dirs\n\n.claude/\n.cursor/\n.codex/*\n!.codex/AGENTS.md\n'
     );
 
     const result = runValidatorWithDir('validate-runtime-ignores', 'GITIGNORE_FILE', gitignoreFile);
@@ -363,7 +363,7 @@ function runTests() {
   if (test('accepts rooted runtime ignore entries', () => {
     const testDir = createTestDir();
     const gitignoreFile = path.join(testDir, '.gitignore');
-    fs.writeFileSync(gitignoreFile, '/.claude/\n/.cursor/\n/.codex/\n');
+    fs.writeFileSync(gitignoreFile, '/.claude/\n/.cursor/\n/.codex/*\n!/.codex/AGENTS.md\n');
 
     const result = runValidatorWithDir('validate-runtime-ignores', 'GITIGNORE_FILE', gitignoreFile);
     assert.strictEqual(result.code, 0, 'Should accept rooted runtime ignore entries');
@@ -375,7 +375,7 @@ function runTests() {
     const gitignoreFile = path.join(testDir, '.gitignore');
     fs.writeFileSync(
       gitignoreFile,
-      '.claude/\n.cursor/\n.codex/\n!.codex/AGENTS.md\n'
+      '.claude/\n.cursor/\n.codex/*\n!.codex/AGENTS.md\n!.codex/config.toml\n'
     );
 
     const result = runValidatorWithDir('validate-runtime-ignores', 'GITIGNORE_FILE', gitignoreFile);

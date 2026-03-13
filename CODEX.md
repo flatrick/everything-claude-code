@@ -22,7 +22,8 @@ For durable Codex capability and integration details, use:
 
 Repo-specific Codex note:
 
-- Codex-facing install assets live under [codex-template/](codex-template/)
+- Repo-local Codex guidance lives under [.codex/](.codex/)
+- Codex-facing install assets otherwise live under [codex-template/](codex-template/)
 - MDT-owned runtime helpers and state are installed under `~/.codex/mdt/`
 - workflow smoke checks are script-based, not Claude-style markdown commands
 

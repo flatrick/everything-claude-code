@@ -70,7 +70,8 @@ verify-tool-setups.js.txt
 .cursor/
 
 # Local Codex config installation
-.codex/
+.codex/*
+!.codex/AGENTS.md
 
 
 # Local Codex agent install surface (generated, not committed)

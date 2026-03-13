@@ -107,7 +107,7 @@ Inspect the relevant repo files before making claims:
 
 - Claude: `claude-template/hooks.json`, `commands/`, `agents/`, `skills/`
 - Cursor: `cursor-template/rules/`, `cursor-template/hooks.json`, `cursor-template/hooks/`
-- Codex: `codex-template/config.toml`, `codex-template/AGENTS.md`
+- Codex: `.codex/AGENTS.md`, `codex-template/config.toml`
 
 This tells you what MDT is doing, not what the vendor guarantees.
 

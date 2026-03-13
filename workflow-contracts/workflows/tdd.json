@@ -31,11 +31,11 @@
       "status": "repo-adapter",
       "verificationMode": "installer-target",
       "artifactMappings": [
-        { "surfaceType": "guidance", "name": "codex-agents", "path": "codex-template/AGENTS.md", "role": "tdd-guidance" },
+        { "surfaceType": "guidance", "name": "codex-agents", "path": ".codex/AGENTS.md", "role": "tdd-guidance" },
         { "surfaceType": "config", "name": "codex-config", "path": "codex-template/config.toml", "role": "codex-runtime-config" },
         { "surfaceType": "skill", "name": "tdd-workflow", "path": "codex-template/skills/tdd-workflow/SKILL.md", "role": "installed-skill" }
       ],
-      "requiredFiles": ["codex-template/config.toml", "codex-template/AGENTS.md", "codex-template/skills/tdd-workflow/SKILL.md"]
+      "requiredFiles": ["codex-template/config.toml", ".codex/AGENTS.md", "codex-template/skills/tdd-workflow/SKILL.md"]
     }
   }
 }
