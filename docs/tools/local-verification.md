@@ -56,6 +56,12 @@ codex exec --help
 codex features list
 ```
 
+For Codex on Windows, raw filesystem probes are not sufficient evidence for workspace patchability when the reported failure is internal `apply_patch`. In that case:
+
+- inspect ACLs with `Get-Acl` and `icacls`
+- run the disposable direct-child reproduction from `docs/testing/manual-verification/codex.md`
+- treat the real `apply_patch` outcome as authoritative over any Node.js or shell-level file probe
+
 ## Required Page Footer Data
 
 Every current-state page in `docs/tools/` should keep:
