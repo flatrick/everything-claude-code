@@ -2,6 +2,7 @@ const assert = require('assert');
 const { probeNodeSubprocess } = require('../helpers/subprocess-capability');
 const { summarizeTool } = require('../../scripts/mdt-dev-smoke-tool-setups');
 const { TOOL_WORKFLOW_CONTRACT } = require('../../scripts/lib/tool-workflow-contract');
+const { test, skipTest } = require('../helpers/test-runner');
 const {
   cleanupInstall,
   installTarget,
@@ -30,10 +31,6 @@ function runTests() {
   const probe = probeNodeSubprocess();
   if (!probe.available) {
     console.log(`[subprocess-check] nested Node subprocesses unavailable (${probe.reason}); skipping suite`);
-    console.log('\nPassed: 0');
-    console.log('Failed: 0');
-    console.log('Skipped: 0');
-    console.log('Total:  0\n');
     process.exit(0);
   }
 
@@ -42,49 +39,42 @@ function runTests() {
   let skipped = 0;
 
   for (const tool of Object.keys(LIVE_TOOL_FIXTURES)) {
-    const summary = summarizeTool(tool, TOOL_WORKFLOW_CONTRACT.smokeProbes[tool] || []);
-    const probeDetails = summary.probes.map((probeResult) => `${probeResult.command}: ${probeResult.detail}`).join('; ');
+    const result = test(`${tool} live smoke contract`, () => {
+      const summary = summarizeTool(tool, TOOL_WORKFLOW_CONTRACT.smokeProbes[tool] || []);
+      const probeDetails = summary.probes.map((p) => `${p.command}: ${p.detail}`).join('; ');
 
-    if (summary.status === 'SKIP') {
-      console.log(`  - ${tool}: SKIP (${probeDetails})`);
-      skipped++;
-      continue;
-    }
+      if (summary.status === 'SKIP') {
+        skipTest(probeDetails);
+      }
 
-    if (summary.status === 'FAIL') {
-      console.log(`  ✗ ${tool} live smoke contract`);
-      console.log(`    Error: ${probeDetails}`);
-      failed++;
-      continue;
-    }
+      if (summary.status === 'FAIL') {
+        throw new Error(probeDetails);
+      }
 
-    const fixtureConfig = LIVE_TOOL_FIXTURES[tool];
-    const fixture = installTarget(fixtureConfig.target, fixtureConfig.packages);
+      const fixtureConfig = LIVE_TOOL_FIXTURES[tool];
+      const fixture = installTarget(fixtureConfig.target, fixtureConfig.packages);
+      try {
+        const setup = runInstalledMdt(
+          fixture,
+          ['dev', 'smoke', 'tool-setups', '--tool', tool],
+          { cwd: repoRoot }
+        );
+        assert.strictEqual(setup.status, 0, `${setup.stdout}\n${setup.stderr}`);
 
-    try {
-      const setup = runInstalledMdt(
-        fixture,
-        ['dev', 'smoke', 'tool-setups', '--tool', tool],
-        { cwd: repoRoot }
-      );
-      assert.strictEqual(setup.status, 0, `${setup.stdout}\n${setup.stderr}`);
+        const workflow = runInstalledMdt(
+          fixture,
+          ['dev', 'smoke', 'workflows', '--tool', tool],
+          { cwd: repoRoot }
+        );
+        assert.strictEqual(workflow.status, 0, `${workflow.stdout}\n${workflow.stderr}`);
+      } finally {
+        cleanupInstall(fixture);
+      }
+    });
 
-      const workflow = runInstalledMdt(
-        fixture,
-        ['dev', 'smoke', 'workflows', '--tool', tool],
-        { cwd: repoRoot }
-      );
-      assert.strictEqual(workflow.status, 0, `${workflow.stdout}\n${workflow.stderr}`);
-
-      console.log(`  ✓ ${tool} live smoke contract`);
-      passed++;
-    } catch (error) {
-      console.log(`  ✗ ${tool} live smoke contract`);
-      console.log(`    Error: ${error.message}`);
-      failed++;
-    } finally {
-      cleanupInstall(fixture);
-    }
+    if (result === true) passed++;
+    else if (result === null) skipped++;
+    else failed++;
   }
 
   console.log(`\nPassed: ${passed}`);

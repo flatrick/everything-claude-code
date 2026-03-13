@@ -79,11 +79,12 @@
     "sync:hook-mirrors": "node scripts/sync-hook-mirrors.js",
     "release": "node scripts/release.js",
     "lint": "node scripts/ci/check-dependencies.js eslint markdownlint-cli && eslint . && node scripts/ci/validate-frontmatter-format.js && markdownlint \"**/*.md\" --ignore node_modules",
-    "test": "node scripts/ci/check-dependencies.js eslint markdownlint-cli && node scripts/ci/validate-agents.js && node scripts/ci/validate-commands.js && node scripts/ci/validate-rules.js && node scripts/ci/validate-skills.js && node scripts/ci/validate-hooks.js && node scripts/ci/validate-hook-mirrors.js && node scripts/ci/validate-metadata.js && node scripts/ci/validate-no-hardcoded-paths.js && node scripts/ci/validate-runtime-ignores.js && node scripts/ci/validate-install-packages.js && node scripts/ci/validate-markdown-links.js && node scripts/ci/validate-markdown-path-refs.js && node scripts/ci/validate-docs-consistency.js && node scripts/ci/validate-frontmatter-format.js && node scripts/verify-tool-setups.js && node tests/run-all.js",
-    "test:neutral": "node tests/run-all.js --profile neutral",
-    "test:claude": "node tests/run-all.js --profile claude",
-    "test:cursor": "node tests/run-all.js --profile cursor",
-    "test:codex": "node tests/run-all.js --profile codex",
+    "test": "node scripts/ci/run-test-pipeline.js",
+    "test:verbose": "node scripts/ci/run-test-pipeline.js --verbose",
+    "test:neutral": "node scripts/ci/run-test-pipeline.js --tests-only --profile neutral",
+    "test:claude": "node scripts/ci/run-test-pipeline.js --tests-only --profile claude",
+    "test:cursor": "node scripts/ci/run-test-pipeline.js --tests-only --profile cursor",
+    "test:codex": "node scripts/ci/run-test-pipeline.js --tests-only --profile codex",
     "verify:tool-setups": "node scripts/mdt.js verify tool-setups",
     "smoke:tool-setups": "node scripts/mdt.js smoke tool-setups",
     "smoke:cursor-workflows": "node scripts/mdt.js smoke workflows --tool cursor",
@@ -93,7 +94,8 @@
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
     "globals": "^17.1.0",
-    "markdownlint-cli": "^0.48.0"
+    "markdownlint-cli": "^0.48.0",
+    "pino": "^10.3.1"
   },
   "engines": {
     "node": ">=18"

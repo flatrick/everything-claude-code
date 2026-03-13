@@ -45,6 +45,7 @@ coverage/
 # Log files
 *.log
 npm-debug.log*
+.artifacts/logs/test-runs/
 
 # Pack artifacts
 *.tgz

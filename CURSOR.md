@@ -35,7 +35,10 @@ Use the normal repo verification flow first:
 ```bash
 npm run lint
 npm test
+npm run test:verbose
 ```
+
+`npm test` writes detailed JSONL run artifacts under `.artifacts/logs/test-runs/` and only prints the actionable summary by default.
 
 If you need Cursor-specific workflow verification, also use:
 

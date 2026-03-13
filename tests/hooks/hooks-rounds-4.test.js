@@ -166,12 +166,13 @@ async function runTests() {
 
   console.log('\nRound 29: run-all.js test runner improvements:');
 
-  if (await asyncTest('test runner uses spawnSync to capture stderr on success', async () => {
+  if (await asyncTest('test runner passes structured log env vars to each suite subprocess', async () => {
     const runAllSource = fs.readFileSync(path.join(__dirname, '..', 'run-all.js'), 'utf8');
     assert.ok(runAllSource.includes('spawnSync'), 'Should use spawnSync instead of execSync');
     assert.ok(!runAllSource.includes('execSync'), 'Should not use execSync');
-    // Verify it shows stderr
-    assert.ok(runAllSource.includes('stderr'), 'Should handle stderr output');
+    // Verify suites receive the artifact file path via env var (direct pino logging)
+    assert.ok(runAllSource.includes('MDT_SUITE_LOG_FILE'), 'Should pass log file path to suite subprocesses');
+    assert.ok(runAllSource.includes('MDT_TEST_RUN_ID'), 'Should pass run ID to suite subprocesses');
     // Verify debug preflight support is present
     assert.ok(runAllSource.includes('MDT_TEST_ENV_DEBUG'), 'Should support debug mode toggle');
     assert.ok(runAllSource.includes('[MDT test preflight]'), 'Should print preflight header in debug mode');

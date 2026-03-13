@@ -53,6 +53,14 @@ When your change depends on a specific tool/runtime behavior:
 - use the manual verification pages for human-operated checks
 - do not guess on unverified surfaces
 
+### Logs
+
+#### Test logs
+
+- Logs produced by for example `npm test` are in the JSONL format.
+- Logs are sent to `.artifacts/logs/test-runs/YYYYMMDD.HHmmss/{test}.jsonl`
+- Recommended tool for reading the logs: [fx](https://fx.wtf/)
+
 ## Pull Requests
 
 - use conventional commits

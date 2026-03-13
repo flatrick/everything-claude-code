@@ -19,8 +19,9 @@ function runTests() {
   if (!probe.available) {
     console.log(`[subprocess-check] nested Node subprocesses unavailable (${probe.reason}); skipping suite`);
     console.log('\nPassed: 0');
+    console.log('Skipped: 1');
     console.log('Failed: 0');
-    console.log('Total:  0\n');
+    console.log('Total:  1\n');
     process.exit(0);
   }
 

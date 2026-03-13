@@ -75,7 +75,10 @@ Repository checks:
 ```bash
 npm run lint
 npm test
+npm run test:verbose
 ```
+
+`npm test` now keeps console output focused on failed/skipped items and writes detailed JSONL artifacts under `.artifacts/logs/test-runs/`.
 
 Tool setup checks:
 
