@@ -29,7 +29,9 @@ For each workflow/tool mapping:
 
 1. Run `mdt verify tool-setups` to verify that the documented files still exist and this matrix still matches the machine-readable workflow contracts in `workflow-contracts/`.
 2. Run `mdt smoke tool-setups` for the all-tools audit, or `mdt smoke tool-setups --tool <claude|cursor|codex>` when you want one tool's local CLI probe.
-3. If a tool is not installed locally, record the smoke result as `SKIP` instead of guessing.
+3. Run `mdt smoke workflows --tool <claude|cursor|codex>` for the tool you are validating.
+4. If the scripted smoke passes, run the corresponding checklist under `docs/testing/manual-verification/` before calling the tool fully verified.
+5. If a tool is not installed locally, record the smoke result as `SKIP` instead of guessing.
 
 ## Scope Notes
 

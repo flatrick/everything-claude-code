@@ -64,4 +64,5 @@ Next step: ...
 ## Suggested Follow-Up
 
 - use `verify` for deeper repo validation
-- use the manual verification docs for tool-specific runtime checks
+- after scripted smoke passes, run the Claude runtime checklist in `docs/testing/manual-verification/claude-code.md`
+- do not call the setup fully verified until the Claude-native runtime checks have been exercised in a real Claude session

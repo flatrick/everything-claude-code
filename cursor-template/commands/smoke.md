@@ -69,4 +69,5 @@ Next step: ...
 ## Useful Follow-Up
 
 - use `verify` for deeper validation
-- use the Cursor manual verification checklist for runtime behavior beyond this smoke pass
+- after scripted smoke passes, run the Cursor runtime checklist in `docs/testing/manual-verification/cursor.md`
+- do not call the setup fully verified until the human-operated Cursor runtime checks have been exercised

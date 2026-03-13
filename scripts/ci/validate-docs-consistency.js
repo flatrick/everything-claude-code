@@ -33,6 +33,7 @@ function validateDocsConsistency(options = {}) {
   const root = options.rootDir || path.join(__dirname, '../..');
   const io = options.io || { log: console.log, error: console.error };
   const failures = [];
+  const absoluteMarkdownLinkPattern = /\[[^\]]*]\((?:file:\/\/|[A-Za-z]:[\\/]|\/(?![.#]))[^)]*\)/;
 
   function read(relPath) {
     return fs.readFileSync(path.join(root, relPath), 'utf8');
@@ -57,6 +58,7 @@ function validateDocsConsistency(options = {}) {
   for (const relPath of currentDocs) {
     checkNoPattern(relPath, /(^|[^~])\bnode scripts\/mdt\.js\b/m, 'bare `node scripts/mdt.js` is not allowed in current-state docs');
     checkNoPattern(relPath, /\/security-scan\b/, 'current-state docs must not claim `/security-scan` as a universal command');
+    checkNoPattern(relPath, absoluteMarkdownLinkPattern, 'absolute markdown link targets are not allowed in current-state docs');
   }
 
   for (const relPath of [

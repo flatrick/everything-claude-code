@@ -15,8 +15,9 @@ Codex setup may have drifted from the documented MDT contract.
 
 1. Run `node ~/.codex/mdt/scripts/mdt.js smoke tool-setups --tool codex`.
 2. Run `node ~/.codex/mdt/scripts/mdt.js smoke workflows --tool codex`.
-3. Summarize the result as `PASS`, `FAIL`, or `SKIP`.
-4. If anything fails, name the missing file or broken surface before proposing broader changes.
+3. If the scripted smoke passes, point to `docs/testing/manual-verification/codex.md` for the required real Codex session check before calling the setup fully verified.
+4. Summarize the scripted smoke result as `PASS`, `FAIL`, or `SKIP`.
+5. If anything fails, name the missing file or broken surface before proposing broader changes.
 
 ## Output Format
 
@@ -31,4 +32,5 @@ Return:
 - Do not guess from memory.
 - Do not require network access or a live model session.
 - Treat `EPERM` or `EACCES` subprocess failures as environment limitations and report `SKIP`, not `FAIL`.
+- Make it explicit that scripted smoke proves install surfaces, not every runtime behavior inside a live Codex session.
 - Use `tool-setup-verifier` when the user wants a deeper Codex readiness audit beyond this smoke pass.

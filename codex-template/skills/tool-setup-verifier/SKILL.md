@@ -30,13 +30,15 @@ In installed global tool mode:
 1. Run `mdt verify tool-setups`.
 2. If the Codex CLI is installed locally, run `mdt smoke tool-setups --tool codex`.
 3. Run `mdt smoke workflows --tool codex`.
-4. Summarize results by workflow and by Codex readiness.
+4. If the scripted smoke passes, point to `docs/testing/manual-verification/codex.md` for the required real Codex session check.
+5. Summarize results by workflow, by Codex readiness, and by any remaining manual-runtime checks.
 
 ### Installed global tool mode
 
 1. Run `node ~/.codex/mdt/scripts/mdt.js smoke tool-setups --tool codex`.
 2. Run `node ~/.codex/mdt/scripts/mdt.js smoke workflows --tool codex`.
-3. Summarize readiness from the installed global surfaces only.
+3. Point to `docs/testing/manual-verification/codex.md` for the required real Codex session check.
+4. Summarize readiness from the installed global surfaces and clearly separate scripted smoke from pending manual-runtime checks.
 
 ## Rules
 
@@ -44,3 +46,4 @@ In installed global tool mode:
 - Do not require authentication, network access, or a live model session to count a local smoke check as useful.
 - If the Codex CLI is not installed locally, mark its smoke status as `SKIP`.
 - If the docs and the contract disagree, fix the disagreement before expanding scope.
+- Do not treat script-only smoke output as proof that Codex runtime surfaces such as real-session patching are healthy.

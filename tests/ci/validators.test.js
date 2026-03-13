@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 const { test, createTestDir, cleanupTestDir } = require('../helpers/test-runner');
 const { runValidatorWithDir, runValidatorWithDirs, runValidator } = require('../helpers/validator-test-utils');
+const { validateDocsConsistency } = require('../../scripts/ci/validate-docs-consistency');
 
 function runTests() {
   console.log('\n=== Testing CI Validators ===\n');
@@ -374,6 +375,69 @@ function runTests() {
 
     const result = runValidatorWithDir('validate-no-hardcoded-paths', 'REPO_ROOT', testDir);
     assert.strictEqual(result.code, 0, `Should accept safe tool-home notation, got stderr: ${result.stderr}`);
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  // ==========================================
+  // validate-docs-consistency.js
+  // ==========================================
+  console.log('\nvalidate-docs-consistency.js:');
+
+  if (test('passes on real project docs consistency', () => {
+    const logs = [];
+    const errors = [];
+    const result = validateDocsConsistency({
+      io: {
+        log: msg => logs.push(String(msg)),
+        error: msg => errors.push(String(msg))
+      }
+    });
+    assert.strictEqual(result.exitCode, 0, `Should pass, got stderr: ${errors.join('\n')}`);
+    assert.ok(logs.join('\n').includes('Docs consistency validation passed'), 'Should report validation success');
+  })) passed++; else failed++;
+
+  if (test('fails on absolute markdown link target in current-state docs', () => {
+    const testDir = createTestDir();
+    fs.writeFileSync(
+      path.join(testDir, 'README.md'),
+      '[Install guide](C:\\src\\github\\flatrick\\mdt\\docs\\INSTALLATION.md)\n',
+      'utf8'
+    );
+
+    const logs = [];
+    const errors = [];
+    const result = validateDocsConsistency({
+      rootDir: testDir,
+      io: {
+        log: msg => logs.push(String(msg)),
+        error: msg => errors.push(String(msg))
+      }
+    });
+
+    assert.strictEqual(result.exitCode, 1, 'Should fail on absolute markdown link target');
+    assert.ok(errors.join('\n').includes('absolute markdown link targets are not allowed'), 'Should report absolute markdown link target');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('accepts relative markdown link target in current-state docs', () => {
+    const testDir = createTestDir();
+    fs.writeFileSync(
+      path.join(testDir, 'README.md'),
+      '[Install guide](./docs/INSTALLATION.md)\n',
+      'utf8'
+    );
+
+    const logs = [];
+    const errors = [];
+    const result = validateDocsConsistency({
+      rootDir: testDir,
+      io: {
+        log: msg => logs.push(String(msg)),
+        error: msg => errors.push(String(msg))
+      }
+    });
+
+    assert.strictEqual(result.exitCode, 0, `Should accept relative markdown link, got stderr: ${errors.join('\n')}`);
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 

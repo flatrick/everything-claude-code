@@ -32,14 +32,16 @@ In installed global tool mode:
 1. Run `mdt verify tool-setups`.
 2. If the relevant CLIs are installed locally, run `mdt smoke tool-setups`.
 3. For deeper tool coverage, run `mdt smoke workflows --tool <tool>`.
-4. Summarize results by workflow and by tool.
-5. If something fails, identify the missing file, stale doc claim, or broken local probe before proposing broader changes.
+4. For any tool whose scripted smoke passes, require the tool-specific runtime checklist under `docs/testing/manual-verification/` before calling the setup fully verified.
+5. Summarize results by workflow, by tool, and by remaining manual-runtime checks.
+6. If something fails, identify the missing file, stale doc claim, or broken local probe before proposing broader changes.
 
 ### Installed global tool mode
 
 1. Run `node ~/.codex/mdt/scripts/mdt.js smoke tool-setups`.
 2. Run `node ~/.codex/mdt/scripts/mdt.js smoke workflows --tool codex`.
-3. Summarize readiness from the installed global surfaces only.
+3. Point to `docs/testing/manual-verification/codex.md` for the required real Codex session check.
+4. Summarize readiness from the installed global surfaces and clearly separate scripted smoke from pending manual-runtime checks.
 
 ## Rules
 
@@ -47,3 +49,4 @@ In installed global tool mode:
 - Do not require authentication, network access, or a live model session to count a local smoke check as useful.
 - If a tool is not installed locally, mark its smoke status as `SKIP`.
 - If the docs and the contract disagree, fix the disagreement before expanding scope.
+- Do not treat script-only smoke output as proof that the in-tool runtime surfaces are healthy when a manual verification page exists for that tool.

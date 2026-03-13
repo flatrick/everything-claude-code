@@ -132,6 +132,11 @@ Tool-specific manual checks live under:
 - [docs/testing/manual-verification/cursor.md](./testing/manual-verification/cursor.md)
 - [docs/testing/manual-verification/codex.md](./testing/manual-verification/codex.md)
 
+Readiness rule:
+
+- `mdt verify tool-setups` and `mdt smoke ...` confirm the install surface and workflow contract
+- the matching page in `docs/testing/manual-verification/` is still required for runtime behaviors inside Claude, Cursor, or Codex before calling the setup fully verified
+
 Dev-only verification helpers:
 
 - `--dev` guarantees a smoke-verification surface for Claude, Cursor, and Codex. It also installs MDT-internal surfaces such as `tool-setup-verifier` and `tool-doc-maintainer` plus the backing smoke scripts under the global MDT root

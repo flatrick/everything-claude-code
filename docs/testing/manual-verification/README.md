@@ -14,3 +14,8 @@ Current checklists:
 - [Cursor](./cursor.md)
 
 Use [docs/tools/local-verification.md](../../tools/local-verification.md) for the higher-level verification playbook and CLI-first evidence rules.
+
+Completion rule:
+- `mdt verify tool-setups` plus `mdt smoke ...` proves the install surface and workflow contract
+- these manual verification pages prove runtime behavior inside the real tool
+- do not collapse those into a single pass when documenting readiness

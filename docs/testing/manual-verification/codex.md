@@ -37,6 +37,15 @@ node ~/.codex/mdt/scripts/mdt.js smoke workflows --tool codex
 - explicit/manual continuous-learning flows
 - optional external observer behavior when installed
 
+## Required Real-Session Check
+
+After the scripted smoke passes, open a real Codex session in this repo and verify one small end-to-end MDT-guided task:
+
+1. Ask Codex to make a tiny disposable documentation or test-only edit.
+2. Confirm it follows repo guidance from `AGENTS.md`, uses the expected MDT workflow behavior, and can complete the edit loop in-session.
+3. If the environment is Windows and patchability is in doubt, use the `apply_patch` ACL procedure below instead of trusting raw filesystem probes.
+4. Record any mismatch between scripted smoke and Codex session behavior before calling the setup fully verified.
+
 ## Windows `apply_patch` ACL Check
 
 Use this when a Windows operator reports:

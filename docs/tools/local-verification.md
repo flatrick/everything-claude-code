@@ -12,8 +12,9 @@ Version-stamp rule:
 2. Check whether the tool is installed locally.
 3. Run local CLI probes first.
 4. Run the local setup verification scripts.
-5. Inspect MDT's repo adapter/config files.
-6. Only then open vendor docs if the local version changed, the page is stale, local behavior conflicts with current docs, or a claim is still `experimental` or `repo-adapter`.
+5. Run the corresponding manual verification checklist under `docs/testing/manual-verification/` for any tool whose scripted smoke passes.
+6. Inspect MDT's repo adapter/config files.
+7. Only then open vendor docs if the local version changed, the page is stale, local behavior conflicts with current docs, or a claim is still `experimental` or `repo-adapter`.
 
 ## Local Commands
 
@@ -64,6 +65,10 @@ For Codex on Windows, raw filesystem probes are not sufficient evidence for work
 - inspect ACLs with `Get-Acl` and `icacls`
 - run the disposable direct-child reproduction from `docs/testing/manual-verification/codex.md`
 - treat the real `apply_patch` outcome as authoritative over any Node.js or shell-level file probe
+
+## Runtime Completion Rule
+
+Scripted smoke verifies install surfaces and workflow contracts. A tool is only fully verified when its matching manual verification page has been completed for the runtime behaviors that cannot be proven well by CLI probes alone.
 
 ## Required Page Footer Data
 

@@ -45,3 +45,12 @@ node ~/.cursor/mdt/scripts/mdt.js smoke workflows --tool cursor
 - verify that installed commands and skills are visible in Cursor
 - verify that the exact Cursor IDE version used for the check is recorded at the top of this page
 - verify that any hook-dependent behavior is treated as experimental, not vendor-native
+
+## Required Real-Session Check
+
+After the scripted smoke passes, run one small human-operated task in Cursor itself:
+
+1. Open this repo in Cursor with the expected global install and any needed rules bridge already in place.
+2. Trigger one MDT workflow surface that should be visible in Cursor, such as a command, rule-driven planning step, or installed skill.
+3. Ask Cursor to make one tiny disposable documentation or test-only edit and confirm the repo guidance is reflected in the response.
+4. If the runtime behavior only appears in the IDE, treat that IDE observation as authoritative over CLI-only evidence.

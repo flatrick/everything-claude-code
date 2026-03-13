@@ -36,3 +36,12 @@ node ~/.claude/mdt/scripts/mdt.js smoke workflows --tool claude
 - session summary persistence
 - continuous-learning observation capture
 - Claude-native commands, agents, and memory behavior
+
+## Required Real-Session Check
+
+After the scripted smoke passes, open a real Claude Code session in this repo and verify at least one small end-to-end MDT-guided task:
+
+1. Ask Claude to make a tiny disposable documentation or test-only edit in the repo.
+2. Confirm it follows repo guidance from `AGENTS.md` and prefers MDT workflow behavior rather than free-form ad hoc edits.
+3. If hooks or continuous-learning are installed, confirm the expected runtime side effect appears where the install says it should.
+4. Record any mismatch between scripted smoke and Claude session behavior before calling the setup fully verified.
