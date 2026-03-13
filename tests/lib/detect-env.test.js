@@ -344,6 +344,48 @@ function runTests() {
     passed++;
   else failed++;
 
+  if (
+    test('classifies non-WSL workspaces as default', () => {
+      const d = createDetectEnv({ platform: 'linux', readFileSync: () => 'Linux version' });
+      const info = d.getWorkspaceInfo('/mnt/c/repo');
+      assert.strictEqual(info.isWSL, false);
+      assert.strictEqual(info.workspaceKind, 'default');
+      assert.strictEqual(info.shouldWarnPerformance, false);
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('classifies Windows-mounted WSL workspaces and enables warnings', () => {
+      const d = createDetectEnv({
+        platform: 'linux',
+        readFileSync: () => 'Linux version 5.15.90.1-microsoft-standard-WSL2'
+      });
+      const info = d.getWorkspaceInfo('/mnt/c/src/repository');
+      assert.strictEqual(info.isWSL, true);
+      assert.strictEqual(info.workspaceKind, 'wsl-windows-mounted');
+      assert.strictEqual(info.shouldWarnPerformance, true);
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('classifies Linux-native WSL workspaces without warnings', () => {
+      const d = createDetectEnv({
+        platform: 'linux',
+        readFileSync: () => 'Linux version 5.15.90.1-microsoft-standard-WSL2'
+      });
+      const info = d.getWorkspaceInfo('/home/wsl-user/src/repository');
+      assert.strictEqual(info.isWSL, true);
+      assert.strictEqual(info.workspaceKind, 'wsl-native');
+      assert.strictEqual(info.shouldWarnPerformance, false);
+    })
+  )
+    passed++;
+  else failed++;
+
   // Session ID
   console.log('\nSession ID Resolution:');
 

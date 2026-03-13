@@ -20,9 +20,9 @@ function createIo() {
   };
 }
 
-function runMain(argv) {
+function runMain(argv, options = {}) {
   const output = createIo();
-  const exitCode = main(argv, output);
+  const exitCode = main(argv, { ...output, ...options });
   return {
     exitCode,
     stdout: output.stdout.join('\n'),
@@ -66,6 +66,43 @@ function runTests() {
     const result = runMain(['smoke', 'workflows', '--tool', 'cursor']);
     assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
     assert.ok(result.stdout.includes('Cursor workflow smoke'));
+  })) passed++; else failed++;
+
+  if (test('emits a WSL performance warning for Windows-mounted workspaces', () => {
+    const result = runMain(
+      ['smoke', 'tool-setups', '--cwd', '/mnt/c/src/repository'],
+      {
+        detectEnv: {
+          getWorkspaceInfo: () => ({
+            path: '/mnt/c/src/repository',
+            isWSL: true,
+            workspaceKind: 'wsl-windows-mounted',
+            shouldWarnPerformance: true
+          })
+        }
+      }
+    );
+    assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
+    assert.ok(result.stderr.includes('WSL detected and workspace is on a Windows-mounted filesystem'));
+    assert.ok(result.stderr.includes('/mnt/c/src/repository'));
+  })) passed++; else failed++;
+
+  if (test('does not emit a WSL performance warning for Linux-native workspaces', () => {
+    const result = runMain(
+      ['smoke', 'tool-setups', '--cwd', '/home/wsl-user/src/repository'],
+      {
+        detectEnv: {
+          getWorkspaceInfo: () => ({
+            path: '/home/wsl-user/src/repository',
+            isWSL: true,
+            workspaceKind: 'wsl-native',
+            shouldWarnPerformance: false
+          })
+        }
+      }
+    );
+    assert.strictEqual(result.exitCode, 0, result.stderr || result.stdout);
+    assert.ok(!result.stderr.includes('WSL detected and workspace is on a Windows-mounted filesystem'));
   })) passed++; else failed++;
 
   if (test('smoke workflows codex supports umbrella json output', () => {

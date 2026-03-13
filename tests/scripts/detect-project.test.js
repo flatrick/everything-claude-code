@@ -110,6 +110,11 @@ function runTests() {
       assert.ok(/^scripts-[0-9a-f]{8}$/.test(project.id), `expected scripts-<md5> but got: ${project.id}`);
       assert.strictEqual(project.name, 'scripts');
       assert.strictEqual(project.root, nonGitDir);
+      assert.deepStrictEqual(project.environment, {
+        isWSL: false,
+        workspaceKind: 'default',
+        shouldWarnPerformance: false
+      });
     } finally {
       cleanupTestDir(tempDir);
     }

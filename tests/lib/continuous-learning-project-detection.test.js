@@ -69,6 +69,48 @@ function runTests() {
 
       assert.ok(/^scripts-[0-9a-f]{8}$/.test(project.id), `expected scripts-<md5> but got: ${project.id}`);
       assert.strictEqual(project.root, workDir);
+      assert.deepStrictEqual(project.environment, {
+        isWSL: false,
+        workspaceKind: 'default',
+        shouldWarnPerformance: false
+      });
+    } finally {
+      cleanupTestDir(tempDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('private project detection marks WSL mounted workspaces in environment metadata', () => {
+    const tempDir = createTestDir('private-project-detect-wsl-');
+    try {
+      const configDir = path.join(tempDir, '.codex');
+      const runtime = createProjectDetection({
+        entrypointDir: path.join(__dirname, '..', '..', 'skills', 'continuous-learning-manual', 'scripts'),
+        detectEnv: {
+          getWorkspaceInfo: () => ({
+            path: '/mnt/c/src/repository',
+            isWSL: true,
+            workspaceKind: 'wsl-windows-mounted',
+            shouldWarnPerformance: true
+          })
+        }
+      });
+      const project = withEnv({
+        CONFIG_DIR: configDir,
+        DATA_DIR: configDir,
+        CODEX_AGENT: '1',
+        MDT_PROJECT_ROOT: undefined,
+        CLAUDE_PROJECT_DIR: undefined
+      }, () => {
+        require('fs').mkdirSync(configDir, { recursive: true });
+        return runtime.detectProject('/mnt/c/src/repository');
+      });
+
+      assert.ok(/^repository-[0-9a-f]{8}$/.test(project.id), `expected repository-<md5> but got: ${project.id}`);
+      assert.deepStrictEqual(project.environment, {
+        isWSL: true,
+        workspaceKind: 'wsl-windows-mounted',
+        shouldWarnPerformance: true
+      });
     } finally {
       cleanupTestDir(tempDir);
     }

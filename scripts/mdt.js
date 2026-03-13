@@ -3,6 +3,7 @@
 
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { createDetectEnv } = require('./lib/detect-env');
 
 const REPO_ROOT = path.join(__dirname, '..');
 const SCRIPTS_ROOT = path.join(REPO_ROOT, 'scripts');
@@ -275,6 +276,49 @@ function renderResult(result, io) {
     io.error(result.stderr.replace(/\n$/, ''));
   }
   return result.exitCode;
+}
+
+function getExplicitCwdFromArgv(argv) {
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--cwd' && argv[i + 1]) {
+      return path.resolve(argv[i + 1]);
+    }
+    if (arg.startsWith('--cwd=')) {
+      return path.resolve(arg.split('=')[1]);
+    }
+  }
+  return null;
+}
+
+function buildWslMountedWorkspaceWarning(workspaceInfo) {
+  if (!workspaceInfo.shouldWarnPerformance) {
+    return '';
+  }
+
+  return [
+    `[mdt] WSL detected and workspace is on a Windows-mounted filesystem: ${workspaceInfo.path}`,
+    '[mdt] MDT performance may be significantly worse under /mnt/<drive>/ paths.',
+    '[mdt] Prefer a Linux-native workspace such as /home/<user>/... when possible.'
+  ].join('\n');
+}
+
+function appendWarningToResult(result, warning) {
+  if (!warning) {
+    return result;
+  }
+
+  return {
+    ...result,
+    stderr: result.stderr ? `${warning}\n${result.stderr}` : warning
+  };
+}
+
+function addWorkspaceWarningIfNeeded(result, argv, options = {}) {
+  const targetPath = getExplicitCwdFromArgv(argv) || process.cwd();
+  const detectEnv = options.detectEnv || createDetectEnv({ env: options.env || process.env });
+  const workspaceInfo = detectEnv.getWorkspaceInfo(targetPath);
+  return appendWarningToResult(result, buildWslMountedWorkspaceWarning(workspaceInfo));
 }
 
 function runInProcess(executor, options = {}) {
@@ -694,13 +738,14 @@ function dispatch(argv, options = {}) {
   const io = createIo(options.io);
   const command = normalizeCommand(argv);
   const rootHandler = ROOT_COMMAND_HANDLERS[command.root];
-  const result = command.root === 'bridge' && command.rest[0] === 'materialize'
+  const baseResult = command.root === 'bridge' && command.rest[0] === 'materialize'
     ? buildBridgeCommand(command.rest.slice(1))
     : command.root === 'verify' && command.rest[0] === 'tool-setups'
       ? buildVerifyCommand(command.rest.slice(1))
       : rootHandler
         ? rootHandler(command.rest)
         : (() => { throw createUsageError(buildHelpText()); })();
+  const result = addWorkspaceWarningIfNeeded(baseResult, argv, options);
   return renderResult(result, io);
 }
 

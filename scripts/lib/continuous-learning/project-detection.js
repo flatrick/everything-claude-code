@@ -57,10 +57,11 @@ function findGitRepo(startDir) {
   return { root, remote };
 }
 
-function getPathSet(entrypointDir) {
+function getPathSet(entrypointDir, options = {}) {
   const context = createContinuousLearningContext({ entrypointDir });
   const homunculusDir = path.join(context.dataDir, 'homunculus');
   return {
+    detectEnv: options.detectEnv || context.detectEnv,
     dataDir: context.dataDir,
     homunculusDir,
     projectsDir: homunculusDir,
@@ -119,12 +120,13 @@ function ensureProjectSubdirs(projectDir) {
   }
 }
 
-function buildProjectResult(projectsDir, registryFile, projectRoot, remoteUrl) {
+function buildProjectResult(projectsDir, registryFile, projectRoot, remoteUrl, detectEnv) {
   const projectName = path.basename(projectRoot);
   const projectId = remoteUrl
     ? `${repoNameFromUrl(remoteUrl)}-git`
     : `${projectName}-${md5_8(projectRoot)}`;
   const projectDir = path.join(projectsDir, projectId);
+  const workspaceInfo = detectEnv.getWorkspaceInfo(projectRoot);
   ensureProjectSubdirs(projectDir);
   updateRegistry(registryFile, projectId, projectName, projectRoot, remoteUrl);
 
@@ -137,7 +139,12 @@ function buildProjectResult(projectsDir, registryFile, projectRoot, remoteUrl) {
     instincts_personal: path.join(projectDir, 'instincts', 'personal'),
     instincts_inherited: path.join(projectDir, 'instincts', 'inherited'),
     evolved_dir: path.join(projectDir, 'evolved'),
-    observations_file: path.join(projectDir, 'observations.jsonl')
+    observations_file: path.join(projectDir, 'observations.jsonl'),
+    environment: {
+      isWSL: workspaceInfo.isWSL,
+      workspaceKind: workspaceInfo.workspaceKind,
+      shouldWarnPerformance: workspaceInfo.shouldWarnPerformance
+    }
   };
 }
 
@@ -151,11 +158,11 @@ function getExplicitProjectRoot() {
   return null;
 }
 
-function resolveProjectRootWithGit(projectsDir, registryFile, rootDir) {
+function resolveProjectRootWithGit(projectsDir, registryFile, rootDir, detectEnv) {
   const repo = findGitRepo(rootDir);
-  if (repo) return buildProjectResult(projectsDir, registryFile, repo.root, repo.remote);
+  if (repo) return buildProjectResult(projectsDir, registryFile, repo.root, repo.remote, detectEnv);
   if (fs.existsSync(path.join(rootDir, '.git'))) {
-    return buildProjectResult(projectsDir, registryFile, rootDir, '');
+    return buildProjectResult(projectsDir, registryFile, rootDir, '', detectEnv);
   }
   return null;
 }
@@ -168,21 +175,21 @@ function createProjectDetection(options = {}) {
   }
 
   function detectProject(cwd) {
-    const { projectsDir, registryFile } = getPathSet(entrypointDir);
+    const { detectEnv, projectsDir, registryFile } = getPathSet(entrypointDir, options);
     const effectiveCwd = path.resolve(cwd || process.cwd());
 
     const explicitRoot = getExplicitProjectRoot();
     if (explicitRoot) {
-      const explicitProject = resolveProjectRootWithGit(projectsDir, registryFile, explicitRoot);
+      const explicitProject = resolveProjectRootWithGit(projectsDir, registryFile, explicitRoot, detectEnv);
       if (explicitProject) {
         return explicitProject;
       }
     }
 
     const repo = findGitRepo(effectiveCwd);
-    if (repo) return buildProjectResult(projectsDir, registryFile, repo.root, repo.remote);
+    if (repo) return buildProjectResult(projectsDir, registryFile, repo.root, repo.remote, detectEnv);
 
-    return buildProjectResult(projectsDir, registryFile, effectiveCwd, '');
+    return buildProjectResult(projectsDir, registryFile, effectiveCwd, '', detectEnv);
   }
 
   function getHomunculusDir() {

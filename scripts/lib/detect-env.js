@@ -166,6 +166,42 @@ function detectPlatform(ctx) {
   return ctx.cache.platformInfo;
 }
 
+function resolvePathForPlatform(ctx, targetPath = process.cwd()) {
+  const pathApi = ctx.platform === 'win32' ? path.win32 : path.posix;
+  return pathApi.resolve(targetPath || process.cwd());
+}
+
+function classifyWorkspacePath(ctx, targetPath = process.cwd()) {
+  const platformInfo = detectPlatform(ctx);
+  const resolvedPath = resolvePathForPlatform(ctx, targetPath);
+  const isWindowsMountedPath = /^\/mnt\/[a-z](?:\/|$)/i.test(resolvedPath);
+
+  if (!platformInfo.isWSL) {
+    return {
+      path: resolvedPath,
+      isWSL: false,
+      workspaceKind: 'default',
+      shouldWarnPerformance: false
+    };
+  }
+
+  if (isWindowsMountedPath) {
+    return {
+      path: resolvedPath,
+      isWSL: true,
+      workspaceKind: 'wsl-windows-mounted',
+      shouldWarnPerformance: true
+    };
+  }
+
+  return {
+    path: resolvedPath,
+    isWSL: true,
+    workspaceKind: 'wsl-native',
+    shouldWarnPerformance: false
+  };
+}
+
 function resolveSessionId(ctx) {
   if (ctx.cache.sessionId) return ctx.cache.sessionId;
 
@@ -210,6 +246,7 @@ function createDetectEnv(overrides = {}) {
     getDataDir: () => resolveDataDir(ctx),
     getSessionId: () => resolveSessionId(ctx),
     getPlatformInfo: () => detectPlatform(ctx),
+    getWorkspaceInfo: (targetPath) => classifyWorkspacePath(ctx, targetPath),
     getPaths: () => getDerivedPaths(ctx),
 
     get tool() {
