@@ -13,8 +13,10 @@ Current plans:
 - Priority 1: [Install Dependency and Tool Support Manifests](details/20260314.install-dependency-and-tool-support-manifests.md)
 
 - [ ] `in-progress` — [Reach v1.0.0](details/20260312.20.24.reach-v1-0-0.md)
-- [ ] `in-progress` — [Fix Claude Plugin Manifest and Template Gap](details/20260313.fix-claude-plugin-and-template.md)
-- [ ] `not-started` — [Install Dependency and Tool Support Manifests](details/20260314.install-dependency-and-tool-support-manifests.md)
+- [ ] `in-progress` — [Fix Claude Plugin Manifest and Template Gap](details/20260313.01.50.fix-claude-plugin-and-template.md)
+- [ ] `not-started` — [Install Dependency and Tool Support Manifests](details/20260314.02.03.install-dependency-and-tool-support-manifests.md)
+- [ ] `not-started` — [Skill Stocktake Consolidation](details/20260314.02.57.skill-stocktake-consolidation.md)
+- [ ] `not-started` — [Skill Stocktake Review](details/20260314.03.06.skill-stocktake-plan-review.md)
 
 Rules:
 
