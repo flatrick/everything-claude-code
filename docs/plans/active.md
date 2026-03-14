@@ -11,9 +11,7 @@ Status legend:
 Current plans:
 
 - [ ] `in-progress` — [Reach v1.0.0](details/20260312.20.24.reach-v1-0-0.md)
-- [ ] `not-started` — [Fix Claude Plugin Manifest and Template Gap](details/20260313.fix-claude-plugin-and-template.md)
-- [ ] `not-started` — [Command Tool Metadata](details/20260314.command-tool-metadata.md)
-- [x] `finished` — [Merge continuous-learning-* into ai-learning](details/20260313.merge-continuous-learning-to-ai-learning.md)
+- [ ] `in-progress` — [Fix Claude Plugin Manifest and Template Gap](details/20260313.fix-claude-plugin-and-template.md)
 
 Rules:
 

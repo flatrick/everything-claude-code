@@ -4,7 +4,10 @@ This page points to plans whose execution is complete and whose final document h
 
 Current finished plans:
 
-- [ ] None listed yet
+- [x] [Merge continuous-learning-* into ai-learning](archive/20260313.merge-continuous-learning-to-ai-learning.md)
+  Archive reason: completed implementation shipped; archived on `2026-03-14`.
+- [x] [Command Tool Metadata](archive/20260314.command-tool-metadata.md)
+  Archive reason: completed implementation shipped; archived on `2026-03-14`.
 
 Rules:
 
