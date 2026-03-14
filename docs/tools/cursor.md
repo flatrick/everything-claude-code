@@ -74,11 +74,22 @@ The installed Cursor custom command `/install-rules` is the in-product equivalen
 
 ## Hooks: Known Limitation (Windows)
 
-On Windows, hooks that receive large payloads (e.g. **beforeReadFile** when the file or context includes large `content`) can fail with **`spawn ENAMETOOLONG`** before the hook script runs. Cursor passes the payload via spawn arguments/environment rather than stdin, exceeding the OS command-line length limit. This is a [known Cursor bug](https://forum.cursor.com/t/pretooluse-hook-fails-with-enametoolong-for-large-files/150346); no ETA for a fix.
+**Important:** On Windows, when a hook receives a **large payload**, Cursor may pass it via spawn arguments or environment instead of stdin. That exceeds the OS command-line length limit and causes **`spawn ENAMETOOLONG`** **before** the hook script runs—so the script cannot work around it. If you see this error, use the workarounds below.
+
+**Affected hooks (large payloads):**
+
+- **beforeReadFile** — file content or context can be large
+- **afterFileEdit** — edit payload can be large
+- **beforeSubmitPrompt** — prompt/content can be large
+- **sessionEnd** — full session (messages, state) can be very large
+
+Any other hook that receives a large payload from Cursor may also be affected.
+
+Reference: [known Cursor bug](https://forum.cursor.com/t/pretooluse-hook-fails-with-enametoolong-for-large-files/150346); no ETA for a fix.
 
 **Workarounds:**
 
-1. **Remove the hook** — Remove the `beforeReadFile` (or other affected) entry from `.cursor/hooks.json` so Cursor does not invoke that hook. The script cannot avoid the error because the spawn fails before it starts.
+1. **Remove the hook** — Remove the affected entry (e.g. `beforeReadFile`, `afterFileEdit`, `beforeSubmitPrompt`, `sessionEnd`) from `.cursor/hooks.json` so Cursor does not invoke that hook.
 2. **Payload via temp file (when supported)** — If the caller writes the payload to a temp file and invokes the hook with only that path, set **`MDT_HOOK_PAYLOAD_FILE`** to the temp file path before invoking. MDT hooks that use the adapter’s `readHookPayload()` will read from that file and delete it after use. Today Cursor does not set this; this is for future Cursor support or custom wrappers.
 
 ## What Not To Assume

@@ -27,6 +27,8 @@ Cursor IDE note:
   `mdt bridge materialize --tool cursor --surface rules`
 - Cursor IDE runtime verification is manual and human-operated
 
+**Windows + Cursor hooks:** On Windows, Cursor may pass large hook payloads via spawn arguments instead of stdin. That can trigger **`spawn ENAMETOOLONG`** before the hook script runs—so the script cannot fix it. Affected hooks include **beforeReadFile**, **afterFileEdit**, **beforeSubmitPrompt**, and **sessionEnd**. See [Cursor hooks limitation](docs/tools/cursor.md#hooks-known-limitation-windows) for workarounds (remove the hook or use payload-via-temp-file when Cursor supports it).
+
 ## Fast-Find Docs
 
 Root entrypoints:
