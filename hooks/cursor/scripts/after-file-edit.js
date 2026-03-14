@@ -1,6 +1,18 @@
 #!/usr/bin/env node
+/**
+ * afterFileEdit: run post-edit format, typecheck, console-warn, and observe.
+ *
+ * Payload source: stdin, or MDT_HOOK_PAYLOAD_FILE (read then delete) so a
+ * caller can pass large payloads via a temp file and avoid ENAMETOOLONG.
+ *
+ * Known Cursor limitation (Windows): when the payload is large, Cursor may
+ * pass it via spawn args/env instead of stdin, causing spawn ENAMETOOLONG
+ * before this script runs. Workaround: remove the afterFileEdit entry from
+ * .cursor/hooks.json, or (when supported) have the caller set
+ * MDT_HOOK_PAYLOAD_FILE to a temp file path. See docs/tools/cursor.md.
+ */
 const path = require('path');
-const { buildHookEnv, getPluginRoot, readStdin, runExistingHook, transformToClaude } = require('./adapter');
+const { buildHookEnv, getPluginRoot, readHookPayload, runExistingHook, transformToClaude } = require('./adapter');
 
 function getObserveScriptPath(env = process.env) {
   const hookEnv = buildHookEnv(env);
@@ -42,7 +54,7 @@ async function processCursorAfterFileEdit(raw, options = {}) {
   return raw;
 }
 
-readStdin().then(async (raw) => {
+readHookPayload().then(async (raw) => {
   const output = await processCursorAfterFileEdit(raw);
   process.stdout.write(output);
 }).catch(() => process.exit(0));

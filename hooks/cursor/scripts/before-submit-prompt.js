@@ -1,6 +1,18 @@
 #!/usr/bin/env node
-const { readStdin } = require('./adapter');
-readStdin().then(raw => {
+/**
+ * beforeSubmitPrompt: warn when prompt contains secret-like patterns (sk-, ghp_, AKIA, etc.).
+ *
+ * Payload source: stdin, or MDT_HOOK_PAYLOAD_FILE (read then delete) so a
+ * caller can pass large payloads via a temp file and avoid ENAMETOOLONG.
+ *
+ * Known Cursor limitation (Windows): when the payload is large, Cursor may
+ * pass it via spawn args/env instead of stdin, causing spawn ENAMETOOLONG
+ * before this script runs. Workaround: remove the beforeSubmitPrompt entry from
+ * .cursor/hooks.json, or (when supported) have the caller set
+ * MDT_HOOK_PAYLOAD_FILE to a temp file path. See docs/tools/cursor.md.
+ */
+const { readHookPayload } = require('./adapter');
+readHookPayload().then(raw => {
   try {
     const input = JSON.parse(raw);
     const prompt = input.prompt || input.content || input.message || '';

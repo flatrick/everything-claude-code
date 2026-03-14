@@ -4,7 +4,7 @@
 const path = require('path');
 const {
   hookEnabled,
-  readStdin,
+  readHookPayload,
   resolveRuntimeModule,
   runExistingHook,
   transformToClaude
@@ -275,12 +275,32 @@ function trackCursorCost(input, utilsOverride) {
   return { tracked: true, metricsFile, usage };
 }
 
+const UTF8_BOM = '\uFEFF';
+
+function parseSessionPayload(raw) {
+  if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {
+    return {};
+  }
+  const str = typeof raw === 'string' ? raw : String(raw);
+  const trimmed = str.startsWith(UTF8_BOM) ? str.slice(UTF8_BOM.length) : str;
+  let input = JSON.parse(trimmed);
+  if (typeof input === 'string') {
+    input = JSON.parse(input);
+  }
+  return input && typeof input === 'object' ? input : {};
+}
+
 async function processCursorSessionEnd(raw) {
   let input = {};
   try {
-    input = JSON.parse(raw || '{}');
-  } catch {
+    input = parseSessionPayload(raw);
+  } catch (err) {
     console.error('[CursorSessionEnd] Invalid Cursor payload; skipping session persistence');
+    if (process.env.MDT_DEBUG_HOOKS) {
+      console.error('[CursorSessionEnd] Parse error:', err.message);
+      const preview = typeof raw === 'string' ? raw.slice(0, 120) : String(raw).slice(0, 120);
+      console.error('[CursorSessionEnd] Raw preview:', JSON.stringify(preview));
+    }
     return raw;
   }
 
@@ -303,7 +323,7 @@ async function processCursorSessionEnd(raw) {
 
 async function main() {
   try {
-    const raw = await readStdin();
+    const raw = await readHookPayload();
     const output = await processCursorSessionEnd(raw);
     process.stdout.write(output);
   } catch {
@@ -325,6 +345,7 @@ module.exports = {
   getCursorSessionIdShort,
   normalizeTextContent,
   normalizeUsage,
+  parseSessionPayload,
   persistCursorSession,
   processCursorSessionEnd,
   trackCursorCost
