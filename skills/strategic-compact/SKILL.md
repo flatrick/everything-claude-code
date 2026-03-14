@@ -7,6 +7,7 @@ description: Suggests manual context compaction at logical intervals to preserve
 # Strategic Compact Skill
 
 Suggests manual `/compact` at strategic points in your workflow rather than relying on arbitrary auto-compaction.
+**NOTE** In Cursor, this is called `/Summarize` , not `/compact` **END NOTE**
 
 ## When to Activate
 
