@@ -1,6 +1,6 @@
 # Cursor
 
-Audit date: `2026-03-12`
+Audit date: `2026-03-14` (rules: only `.cursor/rules/` is read; `~/.cursor/rules/` ignored)
 
 Status:
 - `official`
@@ -14,8 +14,7 @@ Tested with version:
 
 ## MDT-Relevant Native Surfaces
 
-- project rules
-- user-global rules for `cursor-agent`
+- project rules (`.cursor/rules/` only; `~/.cursor/rules/` is ignored by Cursor IDE and cursor-agent)
 - `AGENTS.md`
 - custom commands
 - skills
@@ -28,7 +27,7 @@ Tested with version:
 
 | MDT Concern | Cursor surface | Repo status |
 |---|---|---|
-| Rules / project guidance | `.cursor/rules/` for project scope and `~/.cursor/rules/*.mdc` for `cursor-agent` user scope | `official`, `locally-verified` |
+| Rules / project guidance | `.cursor/rules/` only; `~/.cursor/rules/` is not read by Cursor or cursor-agent | `official` (project only) |
 | Commands | Cursor custom commands | `official` |
 | Agents / delegation | custom modes, background agents, terminal agent | `official` |
 | Skills / reusable workflows | `.cursor/skills/` and `~/.cursor/skills/` | `official` |
@@ -38,8 +37,8 @@ Tested with version:
 
 ## MDT Mapping Notes
 
-- Treat Cursor IDE project rules and Cursor Agent user-global rules as distinct install surfaces.
-- Do not describe `~/.cursor/rules/*.mdc` as a vendor-wide user rule surface for every Cursor experience.
+- **Rules:** Cursor and cursor-agent **only** read rules from the **currently opened project/folder** (`.cursor/rules/`). The path `~/.cursor/rules/` is **ignored** (verified 2026-03-14). MDT must expect that Cursor rules only work when added to the current project. A command that installs rules into the opened project is required (e.g. `/mdt-install` or equivalent).
+- Do not describe `~/.cursor/rules/` as a surface that Cursor reads; it is not.
 - Treat `cursor-template/hooks.json` and `cursor-template/hooks/*.js` as MDT's experimental adapter, not as vendor-native truth.
 - Cursor IDE verification is manual and human-operated.
 
@@ -72,6 +71,15 @@ mdt bridge materialize --tool cursor --surface rules
 ```
 
 The installed Cursor custom command `/install-rules` is the in-product equivalent.
+
+## Hooks: Known Limitation (Windows)
+
+On Windows, hooks that receive large payloads (e.g. **beforeReadFile** when the file or context includes large `content`) can fail with **`spawn ENAMETOOLONG`** before the hook script runs. Cursor passes the payload via spawn arguments/environment rather than stdin, exceeding the OS command-line length limit. This is a [known Cursor bug](https://forum.cursor.com/t/pretooluse-hook-fails-with-enametoolong-for-large-files/150346); no ETA for a fix.
+
+**Workarounds:**
+
+1. **Remove the hook** — Remove the `beforeReadFile` (or other affected) entry from `.cursor/hooks.json` so Cursor does not invoke that hook. The script cannot avoid the error because the spawn fails before it starts.
+2. **Payload via temp file (when supported)** — If the caller writes the payload to a temp file and invokes the hook with only that path, set **`MDT_HOOK_PAYLOAD_FILE`** to the temp file path before invoking. MDT hooks that use the adapter’s `readHookPayload()` will read from that file and delete it after use. Today Cursor does not set this; this is for future Cursor support or custom wrappers.
 
 ## What Not To Assume
 

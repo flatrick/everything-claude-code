@@ -11,6 +11,33 @@ const path = require('path');
 
 const MAX_STDIN = 1024 * 1024;
 
+/**
+ * If the caller set MDT_HOOK_PAYLOAD_FILE to a path, read payload from that file,
+ * then delete the file (remove upon digestion). Otherwise read from stdin.
+ * Use this in hooks that may receive large payloads; when Cursor (or a wrapper)
+ * passes payload via a temp file to avoid ENAMETOOLONG, we are ready.
+ */
+function readHookPayload() {
+  const payloadPath = process.env.MDT_HOOK_PAYLOAD_FILE;
+  if (payloadPath && typeof payloadPath === 'string') {
+    const p = path.resolve(payloadPath);
+    try {
+      if (fs.existsSync(p)) {
+        const data = fs.readFileSync(p, 'utf8');
+        try {
+          fs.unlinkSync(p);
+        } catch (_unlinkErr) {
+          // best-effort cleanup; ignore
+        }
+        return Promise.resolve(data);
+      }
+    } catch (_readErr) {
+      // fall through to stdin
+    }
+  }
+  return readStdin();
+}
+
 function readStdin() {
   return new Promise((resolve) => {
     let data = '';
@@ -172,6 +199,7 @@ module.exports = {
   getCursorRoot,
   getPluginRoot,
   hookEnabled,
+  readHookPayload,
   readStdin,
   resolveDelegatedHook,
   resolveRuntimeModule,
