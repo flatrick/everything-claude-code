@@ -42,7 +42,7 @@ const BASELINE_SHARED_SKILL_NAMES = [
   'coding-standards',
   'content-hash-cache-pattern',
   'database-migrations',
-  'docs-steward',
+  'documentation-steward',
   'deployment-patterns',
   'eval-harness',
   'frontend-patterns',

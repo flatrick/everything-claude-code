@@ -250,7 +250,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'verify-workspace-permissions.mjs')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'CODEX-WINDOWS-SANDBOX-ROOT-CHILD-ACL-ISSUE.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'mdt', 'hardening', 'WORKSPACE-PERMISSIONS-PROMPT.md')));
-          assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'docs-steward', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'documentation-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'frontend-slides', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'skills', 'ai-learning', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(cursorRoot, 'commands', 'plan.md')));
@@ -311,7 +311,7 @@ function runTests() {
           assert.ok(fs.existsSync(path.join(codexRoot, 'AGENTS.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'rules', 'common-coding-style.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'coding-standards', 'SKILL.md')));
-          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'docs-steward', 'SKILL.md')));
+          assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'documentation-steward', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'SKILL.md')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'scripts', 'retrospect-week.js')));
           assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'ai-learning', 'agents', 'openai.yaml')));

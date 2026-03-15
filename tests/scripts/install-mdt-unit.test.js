@@ -426,7 +426,7 @@ function runTests() {
   if (test('installClaudeContentDirs includes public docs skill and dev-only smoke command in dev mode', () => {
     withTempDir('mdt-install-claude-dev-', (tempDir) => {
       installClaudeContentDirs(tempDir, resolveSelectedPackages(['typescript']), true);
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'mdt-dev-smoke.md')));
     });
   })) passed++; else failed++;
@@ -451,7 +451,7 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'projects.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'promote.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'commands', 'mdt-dev-smoke.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'learn.md')));
 
       const planCommand = fs.readFileSync(path.join(tempDir, 'commands', 'plan.md'), 'utf8');
@@ -468,7 +468,7 @@ function runTests() {
   if (test('installCursorCoreDirs adds dev-only smoke command in dev mode', () => {
     withTempDir('mdt-install-cursor-dev-', (tempDir) => {
       installCursorCoreDirs(tempDir, resolveSelectedPackages(['typescript']), true);
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'commands', 'mdt-dev-smoke.md')));
     });
   })) passed++; else failed++;
@@ -479,7 +479,7 @@ function runTests() {
 
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'coding-standards', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'coding-standards', 'skill.meta.json')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'mdt-dev-verify', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'skill.meta.json')));
@@ -494,7 +494,7 @@ function runTests() {
       installCodexSkills(resolveSelectedPackages(['typescript', 'ai-learning']), tempDir, true);
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'mdt-dev-verify', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'mdt-dev-smoke', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
     });
   })) passed++; else failed++;
 
@@ -512,14 +512,14 @@ function runTests() {
         skills: ['ai-learning'],
         tools: {
           codex: {
-            skills: ['docs-steward']
+            skills: ['documentation-steward']
           }
         }
       }), 'utf8');
 
       installCodexSkills(resolveSelectedPackages(['explicit-codex'], { packagesDir }), tempDir);
 
-      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'docs-steward', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(tempDir, 'skills', 'documentation-steward', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(tempDir, 'skills', 'ai-learning', 'SKILL.md')));
     });
   })) passed++; else failed++;

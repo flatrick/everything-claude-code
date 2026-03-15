@@ -1,10 +1,10 @@
 ---
-name: docs-steward
+name: documentation-steward
 description: Keep repository documentation current, accurate, well-placed, and easy to follow for both humans and LLMs. Use when auditing doc drift, correcting stale claims, deciding where docs belong, or validating documentation quality before a commit.
 
 ---
 
-# Docs Steward
+# Documentation Steward
 
 Use this skill when the task is about keeping repository documentation correct, current, and easy to navigate.
 

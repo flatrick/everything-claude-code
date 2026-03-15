@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "requires": [
     { "type": "rule", "id": "common/testing.md" },
-    { "type": "skill", "id": "docs-steward" },
+    { "type": "skill", "id": "documentation-steward" },
     { "type": "skill", "id": "optional-skill", "optional": true }
   ],
   "capabilities": [
@@ -15,7 +15,7 @@
     "codex": {
       "requires": [
         { "type": "rule", "id": "common/testing.md" },
-        { "type": "skill", "id": "docs-steward" }
+        { "type": "skill", "id": "documentation-steward" }
       ],
       "capabilities": [
         { "type": "runtimeScripts" },

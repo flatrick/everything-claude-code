@@ -141,7 +141,7 @@ Readiness rule:
 Dev-only verification helpers:
 
 - `--dev` guarantees a smoke-verification surface for Claude, Cursor, and Codex. It also installs `mdt-dev-smoke`, `mdt-dev-verify`, and the backing smoke scripts under the global MDT root
-- normal end-user installs still include `docs-steward` as the general documentation skill
+- normal end-user installs still include `documentation-steward` as the general documentation skill
 
 ## Pre-v1 Policy
 

@@ -31,7 +31,7 @@ tool config, use the installed validator copies instead:
 - Codex: `node .agents/scripts/ci/validate-markdown-links.js`
 - Codex: `node .agents/scripts/ci/validate-markdown-path-refs.js`
 
-2. Use the `docs-steward` skill.
+2. Use the `documentation-steward` skill.
 
 3. If the task touches tool capability claims, treat `docs/tools/` plus local
 verification as the source of truth instead of copying older references.
