@@ -29,6 +29,7 @@ const SCRIPT_STEPS = [
   { name: 'validate-install-packages', script: 'scripts/ci/validate-install-packages.js' },
   { name: 'validate-support-maps', script: 'scripts/ci/validate-support-maps.js' },
   { name: 'validate-dependency-sidecars', script: 'scripts/ci/validate-dependency-sidecars.js' },
+  { name: 'validate-resolver-closure', script: 'scripts/ci/validate-resolver-closure.js' },
   { name: 'validate-addon-allowlist', script: 'scripts/ci/validate-addon-allowlist.js' },
   { name: 'validate-markdown-links', script: 'scripts/ci/validate-markdown-links.js' },
   { name: 'validate-markdown-path-refs', script: 'scripts/ci/validate-markdown-path-refs.js' },

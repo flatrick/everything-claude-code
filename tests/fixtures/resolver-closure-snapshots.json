@@ -1,0 +1,190 @@
+{
+  "claude": {
+    "ai-learning": {
+      "success": true,
+      "packages": [
+        "ai-learning"
+      ]
+    },
+    "bash": {
+      "success": true,
+      "packages": [
+        "bash"
+      ]
+    },
+    "context-compaction": {
+      "success": true,
+      "packages": [
+        "context-compaction"
+      ]
+    },
+    "continuous-learning-observer": {
+      "success": false,
+      "errors": [
+        "Package requires tools [codex] but install target is 'claude'"
+      ]
+    },
+    "dotnet": {
+      "success": true,
+      "packages": [
+        "dotnet"
+      ]
+    },
+    "powershell": {
+      "success": true,
+      "packages": [
+        "powershell"
+      ]
+    },
+    "python": {
+      "success": true,
+      "packages": [
+        "python"
+      ]
+    },
+    "rust": {
+      "success": true,
+      "packages": [
+        "rust"
+      ]
+    },
+    "sql": {
+      "success": true,
+      "packages": [
+        "sql"
+      ]
+    },
+    "typescript": {
+      "success": true,
+      "packages": [
+        "typescript"
+      ]
+    }
+  },
+  "cursor": {
+    "ai-learning": {
+      "success": true,
+      "packages": [
+        "ai-learning"
+      ]
+    },
+    "bash": {
+      "success": true,
+      "packages": [
+        "bash"
+      ]
+    },
+    "context-compaction": {
+      "success": false,
+      "errors": [
+        "Required capability 'hooks' is experimental for target 'cursor'; pass --experimental to install"
+      ]
+    },
+    "continuous-learning-observer": {
+      "success": false,
+      "errors": [
+        "Package requires tools [codex] but install target is 'cursor'"
+      ]
+    },
+    "dotnet": {
+      "success": true,
+      "packages": [
+        "dotnet"
+      ]
+    },
+    "powershell": {
+      "success": true,
+      "packages": [
+        "powershell"
+      ]
+    },
+    "python": {
+      "success": true,
+      "packages": [
+        "python"
+      ]
+    },
+    "rust": {
+      "success": true,
+      "packages": [
+        "rust"
+      ]
+    },
+    "sql": {
+      "success": true,
+      "packages": [
+        "sql"
+      ]
+    },
+    "typescript": {
+      "success": true,
+      "packages": [
+        "typescript"
+      ]
+    }
+  },
+  "codex": {
+    "ai-learning": {
+      "success": true,
+      "packages": [
+        "ai-learning"
+      ]
+    },
+    "bash": {
+      "success": true,
+      "packages": [
+        "bash"
+      ]
+    },
+    "context-compaction": {
+      "success": false,
+      "errors": [
+        "Required capability 'hooks' is unsupported for target 'codex'",
+        "Package requires tools [claude, cursor] but install target is 'codex'"
+      ]
+    },
+    "continuous-learning-observer": {
+      "success": true,
+      "packages": [
+        "ai-learning",
+        "continuous-learning-observer"
+      ]
+    },
+    "dotnet": {
+      "success": true,
+      "packages": [
+        "dotnet"
+      ]
+    },
+    "powershell": {
+      "success": true,
+      "packages": [
+        "powershell"
+      ]
+    },
+    "python": {
+      "success": true,
+      "packages": [
+        "python"
+      ]
+    },
+    "rust": {
+      "success": true,
+      "packages": [
+        "rust"
+      ]
+    },
+    "sql": {
+      "success": true,
+      "packages": [
+        "sql"
+      ]
+    },
+    "typescript": {
+      "success": true,
+      "packages": [
+        "typescript"
+      ]
+    }
+  }
+}

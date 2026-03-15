@@ -60,6 +60,7 @@ const TEST_FILES = [
   'ci/hook-mirror-validator.test.js',
   'ci/support-maps-validator.test.js',
   'ci/dependency-sidecars-validator.test.js',
+  'ci/resolver-closure-validator.test.js',
   'ci/addon-allowlist-validator.test.js',
   'ci/validators-rounds.test.js',
   'ci/validators-rounds-3.test.js',
