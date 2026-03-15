@@ -70,3 +70,21 @@ Document or harden the command-scope precedence once Cursor behavior is stable e
 ### Revisit OpenCode after `v1.0.0` plus `.mjs` migration
 
 **Status:** Deferred until after the v1 baseline and runtime-format decision are both complete.
+
+### `mdt.js` learning commands: never silent on non-zero exit
+
+**Status:** Open.
+
+When a subcommand fails (e.g. `mdt learning analyze`), the user must always see a clear message instead of an empty terminal and `$LastExitCode = 1`.
+
+**Expected behavior for `mdt learning analyze` (success):**
+
+- On success: at least one line of output, e.g. `Analyzed observations for <project name>` (from `codex-learn.js` via the runtime).
+- If no observations: `No observations available to analyze.`
+
+**Current failure mode:** If the analyze subprocess is killed (e.g. by `mdt.js`’s 60s spawn timeout) or exits with code ≠ 0 without writing to stdout/stderr, the caller only forwards captured stdout/stderr. Result: empty terminal and exit code 1 with no explanation.
+
+**Scope:**
+
+- Ensure `mdt.js` (or the learning/analyze path) **always** emits a user-visible message when the process exits non-zero—e.g. when `exitCode !== 0` and both stdout and stderr are empty, print a fallback such as: `Learning command failed with exit code N (no output from subprocess).`
+- Optionally ensure `codex-learn.js` / the observer analyze path always write a brief error line to stderr before exiting with a non-zero code (e.g. timeout, observer failure, missing config).
