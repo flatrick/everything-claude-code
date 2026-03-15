@@ -3,7 +3,7 @@
 /**
  * Dependency resolver for MDT install. Computes install closure from selected
  * packages, validates capability requirements against tool support maps, and
- * detects cycles. Used when install-mdt.js is run with --new-resolver.
+ * detects cycles. This is the only install path used by install-mdt.js.
  */
 
 const fs = require('fs');

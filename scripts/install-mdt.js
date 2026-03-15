@@ -96,7 +96,6 @@ function createDefaultCliArgs() {
     listMode: false,
     dryRun: false,
     devMode: false,
-    newResolver: false,
     experimental: false,
     format: null,
     projectDir: null,
@@ -110,7 +109,6 @@ const SIMPLE_CLI_FLAGS = {
   '--list': 'listMode',
   '--dry-run': 'dryRun',
   '--dev': 'devMode',
-  '--new-resolver': 'newResolver',
   '--experimental': 'experimental'
 };
 
@@ -1530,19 +1528,6 @@ function handleListMode(target, listMode) {
   }
 }
 
-function handleDryRun(target, dryRun, devMode, overrideDir, packageNames) {
-  if (dryRun) {
-    try {
-      const plan = buildInstallPlan({ target, devMode, overrideDir, packageNames });
-      plan.forEach((line) => console.log(line));
-      process.exit(0);
-    } catch (error) {
-      console.error(`Error: ${error.message}`);
-      usage(target);
-    }
-  }
-}
-
 function runInstallForTarget(target, packageNames, overrideDir, devMode) {
   if (target === 'claude') installClaude(packageNames, overrideDir, devMode);
   else if (target === 'cursor') installCursor(packageNames, overrideDir, devMode);
@@ -1550,50 +1535,45 @@ function runInstallForTarget(target, packageNames, overrideDir, devMode) {
 }
 
 function main() {
-  const { target, globalScope, listMode, dryRun, devMode, newResolver, experimental, format, projectDir, overrideDir, packageNames } = parseArgs();
+  const { target, globalScope, listMode, dryRun, devMode, experimental, format, projectDir, overrideDir, packageNames } = parseArgs();
   handleRetiredProjectDir(projectDir);
   assertSupportedTarget(target);
   handleListMode(target, listMode);
 
-  if (newResolver) {
-    const { resolveInstallClosure } = require('./lib/install-resolver');
-    const result = resolveInstallClosure(packageNames, target, { experimental });
-    if (!result.success) {
-      for (const e of result.errors) {
-        console.error('ERROR: ' + e);
-      }
-      process.exit(1);
+  const { resolveInstallClosure } = require('./lib/install-resolver');
+  const result = resolveInstallClosure(packageNames, target, { experimental });
+  if (!result.success) {
+    for (const e of result.errors) {
+      console.error('ERROR: ' + e);
     }
-    for (const w of result.warnings) {
-      console.warn('Warning: ' + w);
-    }
-    if (dryRun) {
-      if (format === 'json') {
-        console.log(JSON.stringify(result.closure, null, 2));
-      } else {
-        const lines = [
-          `[dry-run] New resolver: target=${target}`,
-          `[dry-run] Packages: ${result.closure.packages.join(', ') || '(none)'}`
-        ];
-        if (result.closure.warnings && result.closure.warnings.length > 0) {
-          lines.push(...result.closure.warnings.map((w) => `[dry-run] Warning: ${w}`));
-        }
-        lines.push('[dry-run] Would proceed with install (closure valid).');
-        console.log(lines.join('\n'));
-      }
-      return;
-    }
-    console.error('ERROR: --new-resolver without --dry-run is not yet supported for actual install');
     process.exit(1);
-  } else {
-    handleDryRun(target, dryRun, devMode, overrideDir, packageNames);
+  }
+  for (const w of result.warnings) {
+    console.warn('Warning: ' + w);
   }
 
-  try {
-    if (globalScope) {
-      console.log('Note: --global is now optional; MDT installs globally by default.');
+  if (dryRun) {
+    if (format === 'json') {
+      console.log(JSON.stringify(result.closure, null, 2));
+    } else {
+      const lines = [
+        `[dry-run] target=${target}`,
+        `[dry-run] Packages: ${result.closure.packages.join(', ') || '(none)'}`
+      ];
+      if (result.closure.warnings && result.closure.warnings.length > 0) {
+        lines.push(...result.closure.warnings.map((w) => `[dry-run] Warning: ${w}`));
+      }
+      lines.push('[dry-run] Would proceed with install (closure valid).');
+      console.log(lines.join('\n'));
     }
-    runInstallForTarget(target, packageNames, overrideDir, devMode);
+    return;
+  }
+
+  if (globalScope) {
+    console.log('Note: --global is now optional; MDT installs globally by default.');
+  }
+  try {
+    runInstallForTarget(target, result.closure.packages, overrideDir, devMode);
   } catch (error) {
     console.error(`Error: ${error.message}`);
     usage(target);
