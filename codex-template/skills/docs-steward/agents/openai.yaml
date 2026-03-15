@@ -1,7 +1,0 @@
-interface:
-  display_name: "Docs Steward"
-  short_description: "Audit repo docs for correctness, placement, and readability"
-  brand_color: "#2563EB"
-  default_prompt: "Run a docs-audit style audit. Start with validate-markdown-links.js and validate-markdown-path-refs.js, then classify any doc drift into current truth, roadmap, target state, history, or generated reference. Use docs/tools/ as the source of truth for audited tool support claims when this repo has tool docs."
-policy:
-  allow_implicit_invocation: true
