@@ -168,6 +168,7 @@ Do **not** use memory for things derivable from the code or git history. Memory 
 ### Other known limits
 
 - **`get_symbols_overview` is per-file** — it does not accept a directory path. Use `list_dir` first, then call it per file.
+- **`find_file` requires `file_mask` and `relative_path` params** — not `file_name_substring`. If the call errors, use the `Glob` tool instead for simple filename searches (e.g., `Glob("**/validate-*.js")`).
 - **Dynamic references are invisible** — `require(someVar)`, computed property names, and metaprogramming patterns will not appear in `find_referencing_symbols` results.
 - **Renamed/moved files** — LSP caches can lag after a bulk rename. If results look stale, try `search_for_pattern` as a cross-check.
 - **Generated or minified files** — symbol names are mangled; use `Read` or `search_for_pattern` with regex instead.
@@ -240,15 +241,15 @@ Given MDT's JavaScript codebase with some untyped modules:
 get_symbols_overview(relative_path="scripts/lib/install-resolver.js")
 
 # Understand the main resolution function
-find_symbol(name_path_pattern="resolveInstallPlan", include_body=true,
+find_symbol(name_path_pattern="resolveInstallClosure", include_body=true,
             relative_path="scripts/lib/install-resolver.js")
 
 # See who calls it
-find_referencing_symbols(name_path_pattern="resolveInstallPlan",
+find_referencing_symbols(name_path_pattern="resolveInstallClosure",
                          relative_path="scripts/lib/install-resolver.js")
 
 # NOTE: dynamic require() calls in install-mdt.js may NOT appear in results.
-# Cross-check with: search_for_pattern(pattern="resolveInstallPlan")
+# Cross-check with: search_for_pattern(pattern="resolveInstallClosure")
 ```
 
 This pattern — symbol overview → targeted body read → reference check → pattern cross-check — is the standard loop for any non-trivial edit in this repo.

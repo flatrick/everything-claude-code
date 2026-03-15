@@ -61,6 +61,7 @@ of lines when warnings accumulate. Print only failures.
 ```
 node scripts/ci/validate-install-packages.js   →  ctx_execute(...)
 node scripts/ci/validate-dependency-sidecars.js →  ctx_execute(...)
+node scripts/ci/validate-resolver-closure.js    →  ctx_execute(...)
 ```
 
 These 5–17 KB validators print per-package/per-file results. Filter to
@@ -85,6 +86,29 @@ gh run view  →  ctx_execute("gh run view ...")
 
 `gh` returns JSON arrays that flood context if piped raw. Use `--jq` or filter
 inside `ctx_execute`.
+
+---
+
+## ctx_batch_execute: Working Directory Pitfall
+
+`ctx_batch_execute` sandboxed subprocesses do **not** inherit the shell's
+current working directory. Relative paths will fail silently with
+`No such file or directory`. Always prefix commands with an explicit `cd`:
+
+```
+# WRONG — relative path silently fails
+{ "command": "ls packages/*/deps.json" }
+
+# CORRECT — absolute path always works
+{ "command": "ls C:/src/github/flatrick/mdt/packages/*/deps.json" }
+
+# ALSO CORRECT — explicit cd prefix
+{ "command": "cd C:/src/github/flatrick/mdt && npm test 2>&1" }
+```
+
+Also note: `ctx_batch_execute` search results can surface **stale cached
+content** from earlier batch runs in the same session. If a result looks
+wrong, use `ctx_execute` directly to re-run the command fresh.
 
 ---
 
