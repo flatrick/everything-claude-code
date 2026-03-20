@@ -16,7 +16,7 @@ function runTests() {
   const repoRoot = path.join(__dirname, '..', '..');
   const claudeSource = path.join(repoRoot, 'claude-template', 'hooks.json');
   const claudeMirror = path.join(repoRoot, 'hooks', 'hooks.json');
-  const cursorSourceScripts = path.join(repoRoot, 'hooks', 'cursor', 'scripts');
+  const cursorSourceScripts = path.join(repoRoot, 'hooks', 'scripts');
   const cursorMirrorScripts = path.join(repoRoot, 'cursor-template', 'hooks');
 
   if (test('Claude hook source matches native Claude mirror', () => {

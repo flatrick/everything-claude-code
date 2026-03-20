@@ -441,6 +441,54 @@ function runTests() {
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 
+  if (test('checks docs/tools/authoring.md as a current-state doc', () => {
+    const testDir = createTestDir();
+    fs.mkdirSync(path.join(testDir, 'docs', 'tools'), { recursive: true });
+    fs.writeFileSync(
+      path.join(testDir, 'docs', 'tools', 'authoring.md'),
+      'Use `node scripts/mdt.js` here.\n',
+      'utf8'
+    );
+
+    const logs = [];
+    const errors = [];
+    const result = validateDocsConsistency({
+      rootDir: testDir,
+      io: {
+        log: msg => logs.push(String(msg)),
+        error: msg => errors.push(String(msg))
+      }
+    });
+
+    assert.strictEqual(result.exitCode, 1, 'Should fail when authoring.md uses bare node scripts/mdt.js');
+    assert.ok(errors.join('\n').includes('authoring.md'), 'Should report the authoring guide path');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (test('checks docs/tools/surfaces/hooks.md as a current-state doc', () => {
+    const testDir = createTestDir();
+    fs.mkdirSync(path.join(testDir, 'docs', 'tools', 'surfaces'), { recursive: true });
+    fs.writeFileSync(
+      path.join(testDir, 'docs', 'tools', 'surfaces', 'hooks.md'),
+      '[bad](C:\\absolute\\path\\hooks.md)\n',
+      'utf8'
+    );
+
+    const logs = [];
+    const errors = [];
+    const result = validateDocsConsistency({
+      rootDir: testDir,
+      io: {
+        log: msg => logs.push(String(msg)),
+        error: msg => errors.push(String(msg))
+      }
+    });
+
+    assert.strictEqual(result.exitCode, 1, 'Should fail when hooks surface doc uses an absolute markdown link');
+    assert.ok(errors.join('\n').includes('docs/tools/surfaces/hooks.md'), 'Should report the hooks surface doc path');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
   // ==========================================
   // validate-runtime-ignores.js
   // ==========================================

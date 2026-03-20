@@ -101,14 +101,14 @@ function validateCommandMetadata(options = {}) {
     return { exitCode: 0, validatedCount: 0, hasErrors: false };
   }
 
-  const commandFiles = listMarkdownFiles(commandsDir);
+  const commandFiles = listMarkdownFiles(commandsDir).filter((fileName) => fileName !== 'AGENTS.md');
   let hasErrors = false;
 
   for (const commandFile of commandFiles) {
     hasErrors = validateCommandMetaFile(commandFile, commandsDir, io) || hasErrors;
   }
 
-  for (const cursorCommandFile of listMarkdownFiles(cursorCommandsDir)) {
+  for (const cursorCommandFile of listMarkdownFiles(cursorCommandsDir).filter((fileName) => fileName !== 'AGENTS.md')) {
     hasErrors = validateCursorOverrideFile(cursorCommandFile, commandsDir, cursorCommandsDir, io) || hasErrors;
   }
 

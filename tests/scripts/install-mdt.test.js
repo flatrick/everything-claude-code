@@ -330,6 +330,31 @@ function runTests() {
       }
     },
     {
+      name: 'repo layered AGENTS files are not installed as generic end-user content',
+      run: () => {
+        const tmpHome = createTestDir('mdt-install-layered-agents-home-');
+        const codexRoot = path.join(tmpHome, '.codex');
+
+        try {
+          const result = runInstaller(['--target', 'codex', 'typescript', 'ai-learning'], {
+            overrideDir: codexRoot,
+            env: {
+              HOME: tmpHome,
+              USERPROFILE: tmpHome
+            }
+          });
+          assertSuccess(result, 'codex install layered agents boundary');
+
+          assert.ok(fs.existsSync(path.join(codexRoot, 'AGENTS.md')), 'Codex should still receive its shipped AGENTS.md');
+          assert.ok(!fs.existsSync(path.join(codexRoot, 'mdt', 'docs', 'AGENTS.md')), 'repo-local docs/AGENTS.md should not be installed');
+          assert.ok(!fs.existsSync(path.join(codexRoot, 'mdt', 'commands', 'AGENTS.md')), 'repo-local commands/AGENTS.md should not be installed');
+          assert.ok(!fs.existsSync(path.join(codexRoot, 'mdt', 'tests', 'AGENTS.md')), 'repo-local tests/AGENTS.md should not be installed');
+        } finally {
+          cleanupTestDir(tmpHome);
+        }
+      }
+    },
+    {
       name: 'codex dev install always materializes smoke skill and smoke scripts',
       run: () => {
         const tmpHome = createTestDir('mdt-install-codex-dev-home-');

@@ -23,6 +23,10 @@ function collectMarkdownFiles(rootDir, relativeDir = '') {
       continue;
     }
 
+    if (entry.isDirectory() && entry.name.startsWith('.')) {
+      continue;
+    }
+
     const nextRelative = path.join(relativeDir, entry.name);
     const fullPath = path.join(rootDir, nextRelative);
 

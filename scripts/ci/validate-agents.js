@@ -40,7 +40,7 @@ function validateAgents(options = {}) {
     return { exitCode: 0, validatedCount: 0, hasErrors: false };
   }
 
-  const files = fs.readdirSync(agentsDir).filter(f => f.endsWith('.md'));
+  const files = fs.readdirSync(agentsDir).filter(f => f.endsWith('.md') && f !== 'AGENTS.md');
   let hasErrors = false;
 
   for (const file of files) {

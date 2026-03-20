@@ -121,6 +121,7 @@ function validateTemplateDocBoundaries(options = {}) {
   for (const filePath of markdownFiles) {
     const relativePath = normalizeSlashes(path.relative(repoRoot, filePath));
     if (ALLOWLIST.has(relativePath)) continue;
+    if (path.basename(relativePath).toLowerCase() === 'agents.md') continue;
 
     const owningTool = getToolFromRelativePath(relativePath);
     const content = stripCodeBlocks(fs.readFileSync(filePath, 'utf8'));
