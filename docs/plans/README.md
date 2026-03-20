@@ -37,6 +37,7 @@ Example: `docs/plans/details/20260314.02.03.install-dependency-and-tool-support-
 | File | Purpose |
 |------|---------|
 | `active.md` | Plans that are `not-started`, `in-progress`, or `halted` |
+| `deferred.md` | Intentionally deferred ideas that are not active OpenSpec changes |
 | `finished.md` | Completed plans |
 | `rejected.md` | Abandoned or superseded plans with rejection reasons |
 | `TEMPLATE.md` | Blank plan template — copy this to start a new plan |

@@ -14,7 +14,7 @@ This repository is the MDT fork (`flatrick/modeldev-toolkit`). Submit issues and
 
 - read [AGENTS.md](AGENTS.md)
 - read the nearest local `AGENTS.md` for the subtree you are changing
-- check [BACKLOG.md](BACKLOG.md)
+- check [openspec/changes](openspec/changes)
 - check [docs/plans/active.md](docs/plans/active.md)
 - if the work is substantial, add or update a plan under `docs/plans/details/`
 
@@ -69,4 +69,5 @@ When your change depends on a specific tool/runtime behavior:
 
 - use conventional commits
 - summarize the behavior change, verification, and any remaining gaps
-- if you leave a real cross-tool gap unresolved, add it to [BACKLOG.md](BACKLOG.md)
+- if you leave a real scoped cross-tool gap unresolved, create or update the relevant item under [openspec/changes](openspec/changes)
+- if the remaining work is not yet scoped enough for OpenSpec, record it in the relevant plan under [docs/plans/](docs/plans)

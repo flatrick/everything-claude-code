@@ -39,7 +39,8 @@ Root entrypoints:
 - [CURSOR.md](CURSOR.md) for the Cursor entry shim
 - [CODEX.md](CODEX.md) for the Codex entry shim
 - [README.POST-CLONE.md](README.POST-CLONE.md) for local post-clone setup
-- [BACKLOG.md](BACKLOG.md) for active work and remaining tool-agnostic gaps
+- [openspec/changes](openspec/changes) for active scoped changes
+- [docs/plans/active.md](docs/plans/active.md) for broader plan coordination
 
 Current-state docs:
 

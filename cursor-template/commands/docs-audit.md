@@ -13,14 +13,16 @@ Use this command to audit repository documentation health without guessing.
 - current-state docs under `docs/`
 - root fast-find docs
 - active plans under `docs/plans/`
-- backlog items in `BACKLOG.md`
+- scoped OpenSpec changes under `openspec/changes/`
+- broader planning context under `docs/plans/`
 - runtime prompt Markdown that teaches tool/workflow behavior
 
 ## Current Rules
 
 - `docs/` is the current-truth surface
 - `docs/plans/` is the planning surface
-- `BACKLOG.md` is the active gap/deferred work surface
+- `openspec/changes/` is the active scoped-change surface
+- `docs/plans/` is the broader planning surface
 - `docs/upstream-rename-map.md` is the ECC comparison surface
 - current-state docs should use the documented public entrypoints
 - environment-specific verification claims should be version-stamped

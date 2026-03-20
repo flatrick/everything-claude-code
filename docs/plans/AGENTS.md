@@ -9,13 +9,14 @@ Read [../../AGENTS.md](../../AGENTS.md) and [../AGENTS.md](../AGENTS.md) first. 
 ## Local Invariants
 
 - Follow the naming and lifecycle rules in [README.md](./README.md).
-- Keep `active.md`, `finished.md`, and `rejected.md` in sync with the detail files.
+- Keep `active.md`, `deferred.md`, `finished.md`, and `rejected.md` in sync with the detail files where applicable.
 - When all workstreams are implemented, stop and ask whether to archive or extend the plan.
 
 ## When Editing Here Also Update
 
 - [README.md](./README.md)
 - [active.md](./active.md)
+- [deferred.md](./deferred.md)
 - [finished.md](./finished.md)
 - [rejected.md](./rejected.md)
 

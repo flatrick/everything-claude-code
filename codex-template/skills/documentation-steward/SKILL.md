@@ -42,7 +42,8 @@ Destination rules:
 - `docs/plans/details/`: live plan files
 - `docs/plans/archive/`: finished and rejected plans
 - `docs/upstream-rename-map.md`: MDT-to-ECC translation only
-- `BACKLOG.md`: active gaps and deferred work
+- `openspec/changes/`: scoped active deltas
+- `docs/plans/`: broader planning and coordination
 
 ## Required Workflow
 

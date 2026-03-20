@@ -52,7 +52,6 @@ const ROOT_DIR_NAMES = [
 
 const ROOT_FILE_NAMES = new Set([
   'AGENTS.md',
-  'BACKLOG.md',
   'CLAUDE.md',
   'CONTRIBUTING.md',
   'LICENSE',
