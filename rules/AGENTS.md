@@ -17,6 +17,7 @@ Read [../AGENTS.md](../AGENTS.md) first. This file adds local rules for `rules/`
 
 - [README.md](./README.md)
 - [../docs/tools/authoring.md](../docs/tools/authoring.md)
+- [../docs/tools/surfaces/rules.md](../docs/tools/surfaces/rules.md) when cross-tool rule realization changes
 - [../cursor-template/rules](../cursor-template/rules) when Cursor materialization changes
 
 ## Local Validation

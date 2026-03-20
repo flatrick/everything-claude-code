@@ -54,6 +54,8 @@ Create or update shared rules in `rules/` first.
 
 When a new rule becomes install-relevant, also check package manifests under `packages/` and any affected tool support docs.
 
+For a cross-tool comparison, see [surfaces/rules.md](./surfaces/rules.md).
+
 ## Commands
 
 Create shared commands in `commands/`.

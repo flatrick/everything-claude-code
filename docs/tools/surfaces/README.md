@@ -4,6 +4,7 @@ Use these pages when the question is not just "where do I edit?" but "how does t
 
 Pages in this section compare the supported authoring model for one surface at a time:
 
+- [rules.md](./rules.md)
 - [hooks.md](./hooks.md)
 - [agents.md](./agents.md)
 - [commands.md](./commands.md)

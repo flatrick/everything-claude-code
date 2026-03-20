@@ -11,7 +11,7 @@ Use this pack when you need current truth about:
 ## Files
 
 - [authoring.md](./authoring.md) - contributor guide for creating MDT rules, commands, hooks, skills, agents, and workflows across tools
-- [surfaces/README.md](./surfaces/README.md) - surface-by-surface comparisons for hooks, agents, commands, and skills
+- [surfaces/README.md](./surfaces/README.md) - surface-by-surface comparisons for rules, hooks, agents, commands, and skills
 - [capability-matrix.md](./capability-matrix.md) - side-by-side capability view
 - [workflow-matrix.md](./workflow-matrix.md) - workflow realization by tool
 - [claude-code.md](./claude-code.md) - Claude Code reference page
