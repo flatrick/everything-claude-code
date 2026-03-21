@@ -36,7 +36,7 @@ Rules:
 
 | Agent | Purpose | When to Use |
 |-------|---------|-------------|
-| planner | Implementation planning | Complex features, refactoring |
+| planner | Implementation planning | Quick plans, refactoring, or when openspec is not appropriate |
 | architect | System design and scalability | Architectural decisions |
 | tdd-guide | Test-driven development | New features, bug fixes |
 | code-reviewer | Code quality and maintainability | After writing/modifying code |
@@ -60,7 +60,7 @@ The `agents/` directory is authoritative if this table drifts.
 ## Agent Orchestration
 
 Use agents proactively without user prompt:
-- Complex feature requests → **planner**
+- Complex feature requests → **openspec workflow** (`/opsx:new` or `openspec-new-change` skill), then **planner** agent for quick/informal planning
 - Code just written/modified → **code-reviewer**
 - Bug fix or new feature → **tdd-guide**
 - Architectural decision → **architect**
@@ -118,6 +118,8 @@ Troubleshoot failures: check test isolation → verify mocks → fix implementat
 
 ## Plans
 
+> **Note:** The OpenSpec artifact-driven workflow stores structured changes under `openspec/changes/<name>/` with a proposal → design → specs → tasks sequence. The `docs/plans/` directory is for traditional planner-agent output. Prefer openspec for new feature scoping; use `docs/plans/` for quick or informal planning.
+
 Implementation plans live under `docs/plans/` and follow a strict lifecycle.
 
 **File locations:**
@@ -154,7 +156,9 @@ Implementation plans live under `docs/plans/` and follow a strict lifecycle.
 
 ## Development Workflow
 
-1. **Plan** — Use planner agent, identify dependencies and risks, break into phases
+1. **Plan** — Choose based on scope:
+   - **Structured feature work** → Use the OpenSpec workflow (`/opsx:new` or `openspec-new-change` skill). Scaffolds a change at `openspec/changes/<name>/` with artifact sequence: proposal → design → specs → tasks.
+   - **Quick planning / refactoring** → Use the `planner` agent for free-form implementation plans stored under `docs/plans/`.
 2. **TDD** — Use tdd-guide agent, write tests first, implement, refactor
 3. **Review** — Use code-reviewer agent immediately, address CRITICAL/HIGH issues
 4. **Commit** — Conventional commits format, comprehensive PR summaries
